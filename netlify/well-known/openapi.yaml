@@ -8,14 +8,15 @@ paths:
   /generate-template:
     post:
       operationId: generateTemplate
-      summary: Generate a customized contract template (HTML/PDF)
+      summary: Generate a docuseal contract using placeholders
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: 
+              required:
+                - template
                 - party1
                 - party2
                 - date
@@ -25,36 +26,36 @@ paths:
                 - end_date
                 - termination_clause
               properties:
-                party1:
-                  type: string
-                  description: Name of the first party
-                party2:
-                  type: string
-                  description: Name of the second party
-                date:
-                  type: string
-                  description: Contract start date (e.g. 14/01/2025)
-                scope_of_work:
-                  type: string
-                  description: Description of the work or service
-                payment_terms:
-                  type: string
-                  description: Terms of payment (e.g. "Total of £20 on completion")
-                start_date:
-                  type: string
-                  description: Contract start date
-                end_date:
-                  type: string
-                  description: Contract end date
-                termination_clause:
-                  type: string
-                  description: Clause explaining termination conditions
                 template:
                   type: string
-                  description: HTML template with placeholders
+                  description: "HTML contract template with placeholders (e.g. {{party1}}, {{party2}})"
+                party1:
+                  type: string
+                  description: "Name of the first party"
+                party2:
+                  type: string
+                  description: "Name of the second party"
+                date:
+                  type: string
+                  description: "Date in DD/MM/YYYY format"
+                scope_of_work:
+                  type: string
+                  description: "Details of the work or services"
+                payment_terms:
+                  type: string
+                  description: "Payment agreement, e.g. '$5,000 in two installments'"
+                start_date:
+                  type: string
+                  description: "Contract start date"
+                end_date:
+                  type: string
+                  description: "Contract end date"
+                termination_clause:
+                  type: string
+                  description: "Termination conditions or notice period"
       responses:
         '200':
-          description: Template generated successfully
+          description: Contract generated successfully
           content:
             application/json:
               schema:
@@ -64,16 +65,12 @@ paths:
                     type: boolean
                   contractHtml:
                     type: string
-                    description: HTML output with placeholders filled
+                    description: "Generated HTML contract with placeholders replaced"
                   pdfBase64:
                     type: string
-                    description: Base64-encoded PDF of the contract
+                    description: "Base64-encoded PDF"
                   message:
                     type: string
-                  templateId:
-                    type: string
-                  contractLink:
-                    type: string
-                    description: Link to the contract webpage
+                    description: "Status message"
 components:
   schemas: {}
