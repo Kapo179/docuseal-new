@@ -2,50 +2,38 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { StripePaymentElement } from './StripePaymentElement';
 import { usePaymentFlow } from '../hooks/usePaymentFlow';
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-
-// Initialize Firebase (ensure this is done in your project)
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 export default function ContractViewer() {
-  const { docusealId } = useParams();
-  const [docusealPdfUrl, setDocusealPdfUrl] = useState<string | null>(null);
+  const { templateId } = useParams();
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const { createPaymentIntent, clientSecret } = usePaymentFlow();
 
   useEffect(() => {
     const fetchContract = async () => {
       try {
-        console.log(`Fetching contract data for templateId: ${docusealId}`);
-        const doc = await db.collection('contracts').doc(docusealId).get();
+        const headers = new Headers({
+          'X-Auth-Token': process.env.REACT_APP_DOCUSEAL_AUTH_TOKEN,
+          'Content-Type': 'application/json',
+        });
 
-        if (!doc.exists) {
-          throw new Error('No such document!');
-        }
+        const response = await fetch(
+          `https://api.docuseal.com/templates/${templateId}`,
+          {
+            headers: headers,
+          }
+        );
 
-        const data = doc.data();
-        console.log('Fetched contract data:', data);
-
-        // Assuming your Firestore document has a `documents` field with the PDF URL
-        if (data?.documents && data.documents[0]?.url) {
-          setDocusealPdfUrl(data.documents[0].url);
-        } else {
-          console.warn('No PDF URL found in fetched contract data.');
+        const data = await response.json();
+        if (data.documents && data.documents.length > 0) {
+          setPdfUrl(data.documents[0].url); // PDF link provided by DocuSeal
         }
       } catch (error) {
-        console.error('Error fetching contract data:', error);
+        console.error('Error fetching contract:', error);
       }
     };
 
     fetchContract();
-  }, [docusealId]);
+  }, [templateId]);
 
   const handlePaymentSuccess = () => {
     console.log('Payment successful!');
@@ -58,29 +46,27 @@ export default function ContractViewer() {
 
   return (
     <div className="contract-viewer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-      
-      {/* PDF PREVIEW CONTAINER */}
+      <h1>Contract Viewer</h1>
       <div className="pdf-preview" style={{ width: '100%', maxWidth: '800px', height: '600px', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '8px' }}>Contract PDF</h2>
-        {docusealPdfUrl ? (
+        {pdfUrl ? (
           <iframe
-            src={docusealPdfUrl}
+            src={pdfUrl}
             width="100%"
             height="100%"
             title="Contract PDF"
             style={{ border: 'none' }}
           />
         ) : (
-          <p style={{ textAlign: 'center', marginTop: '20px' }}>Loading PDF...</p>
+          <p style={{ textAlign: 'center', marginTop: '20px' }}>Loading contract...</p>
         )}
       </div>
 
       {/* DOWNLOAD BUTTON */}
       <div className="download-button" style={{ marginBottom: '16px' }}>
-        {docusealPdfUrl && (
+        {pdfUrl && (
           <a
-            href={docusealPdfUrl}
-            download={`contract-${docusealId}.pdf`}
+            href={pdfUrl}
+            download={`contract-${templateId}.pdf`}
             className="btn-download"
             style={{
               display: 'inline-block',
