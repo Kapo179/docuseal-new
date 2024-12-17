@@ -13,12 +13,14 @@ interface PaymentState {
   error: string | null;
   clientSecret: string | null;
   paymentIntent: PaymentIntent | null;
+  paymentIntentId: string | null; 
   savedState: SavedState;
   createPaymentIntent: () => Promise<void>;
   setError: (error: string | null) => void;
   setComplete: (complete: boolean) => void;
   setSavedState: (state: SavedState) => void;
   setPaymentIntent: (intent: PaymentIntent | null) => void;
+  setPaymentIntentId: (id: string | null) => void;
   reset: () => void;
 }
 
@@ -28,6 +30,7 @@ const initialState = {
   error: null,
   clientSecret: null,
   paymentIntent: null,
+  paymentIntentId: null,
   savedState: {},
 };
 
@@ -54,6 +57,11 @@ const usePaymentStore = create<PaymentState>()(
       setPaymentIntent: (intent: PaymentIntent | null) => {
         console.log('Setting payment intent:', intent?.id);
         set({ paymentIntent: intent });
+      },
+
+      setPaymentIntentId: (id: string | null) => { // Add this function
+        console.log('Setting payment intent ID:', id);
+        set({ paymentIntentId: id });
       },
 
       createPaymentIntent: async () => {
@@ -84,6 +92,7 @@ const usePaymentStore = create<PaymentState>()(
           set({ 
             clientSecret: data.clientSecret,
             paymentIntent: data.paymentIntent,
+            paymentIntentId: data.paymentIntent?.id, 
             isComplete: false,
             error: null
           });
@@ -129,12 +138,14 @@ export const usePaymentFlow = () => {
     error: store.error,
     clientSecret: store.clientSecret,
     paymentIntent: store.paymentIntent,
+    paymentIntentId: store.paymentIntentId, 
     savedState: store.savedState,
     createPaymentIntent: store.createPaymentIntent,
     setError: store.setError,
     setComplete: store.setComplete,
     setSavedState: store.setSavedState,
     setPaymentIntent: store.setPaymentIntent,
+    setPaymentIntentId: store.setPaymentIntentId,
     reset: store.reset,
   };
 };
