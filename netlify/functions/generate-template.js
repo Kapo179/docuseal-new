@@ -91,7 +91,11 @@ export const handler = async (event) => {
     // Send the generated HTML to DocuSeal to create a template record
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
-      { html: htmlTemplate },
+      {
+        html: htmlTemplate,
+        name: 'Service Agreement Template',
+        size: 'Letter'
+      },
       {
         headers: {
           'X-Auth-Token': authToken,
@@ -106,6 +110,29 @@ export const handler = async (event) => {
     if (!templateResponse.data?.id) {
       throw new Error('Template creation failed: Missing template ID');
     }
+
+    // Optional: Create a submission if required
+    const submissionResponse = await axios.post(
+      `https://api.docuseal.com/templates/${templateResponse.data.id}/submissions`,
+      {
+        submitters: [
+          {
+            name: 'Signer Name',
+            email: 'signer.email@example.com',
+            role: 'Signer'
+          }
+        ]
+      },
+      {
+        headers: {
+          'X-Auth-Token': authToken,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    console.log('Submission created:', submissionResponse.data);
 
     // Generate the link to the webpage
     const contractLink = `${process.env.WEB_APP_URL}/contract/${templateResponse.data.id}`;
