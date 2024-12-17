@@ -15,10 +15,25 @@ export function SigningStatus() {
       return;
     }
 
-    // Simulate status check for demonstration purposes
-    setTimeout(() => {
-      setStatus('completed');
-    }, 5000);
+    // Simulate checking status
+    const checkStatus = async () => {
+      try {
+        // Simulate API call
+        const result = { status: 'completed', message: 'Document signed successfully' };
+        if (result.status === 'completed') {
+          setStatus('completed');
+        } else if (result.status === 'expired') {
+          setStatus('expired');
+          setError(result.message || 'Signing session has expired');
+        }
+      } catch (err) {
+        setStatus('expired');
+        setError(err instanceof Error ? err.message : 'Failed to check signing status');
+      }
+    };
+
+    const interval = setInterval(checkStatus, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleContinue = () => {

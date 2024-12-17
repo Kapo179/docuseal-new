@@ -1,18 +1,18 @@
 {
-    "schema_version": "v1",
-    "name_for_human": "Contract Template Generator",
-    "name_for_model": "contract_template_generator",
-    "description_for_human": "Generate Legal Contract templates, or Upload and review risks in your contracts.",
-    "description_for_model": "Send customized DocuSeal HTML template data to the specified endpoint.",
-    "auth": {
-      "type": "none"
-    },
-    "api": {
-      "type": "openapi",
-      "url": "/openapi.yaml",
-      "is_user_authenticated": false
-    },
-    "logo_url": "https://contractquickly.com/Logo.png",
-    "contact_email": "team@blueswissgroup.com",
-    "legal_info_url": "https://contractquickly.com/legal"
-  }
+  "schema_version": "v1",
+  "name_for_human": "Contract Template Generator",
+  "name_for_model": "contract_template_generator",
+  "description_for_human": "Generate Legal Contract templates, or Upload and review risks in your contracts.",
+  "description_for_model": "Send customized DocuSeal HTML template data to the specified endpoint.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://contractquickly.com/netlify/functions/well-known/openapi.yaml",  
+    "is_user_authenticated": false
+  },
+  "logo_url": "https://contractquickly.com/Logo.png",
+  "contact_email": "team@blueswissgroup.com",
+  "legal_info_url": "https://contractquickly.com/legal"
+}
