@@ -11,10 +11,9 @@ export default function ContractViewer() {
   useEffect(() => {
     const fetchContract = async () => {
       try {
-        const headers = new Headers({
-          'X-Auth-Token': process.env.REACT_APP_DOCUSEAL_AUTH_TOKEN,
-          'Content-Type': 'application/json',
-        });
+        const headers = new Headers();
+        headers.append('X-Auth-Token', process.env.REACT_APP_DOCUSEAL_AUTH_TOKEN || '');
+        headers.append('Content-Type', 'application/json');
 
         const response = await fetch(
           `https://api.docuseal.com/templates/${templateId}`,
