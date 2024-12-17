@@ -7,21 +7,51 @@ servers:
 paths:
   /generate-template:
     post:
-      operationId: generateTemplate 
-      summary: Generate a customized Contract template and PDF
+      operationId: generateTemplate
+      summary: Generate a customized contract template (HTML/PDF)
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: 
+                - party1
+                - party2
+                - date
+                - scope_of_work
+                - payment_terms
+                - start_date
+                - end_date
+                - termination_clause
               properties:
-                formData:
-                  type: object
-                  description: Data for the form fields
+                party1:
+                  type: string
+                  description: Name of the first party
+                party2:
+                  type: string
+                  description: Name of the second party
+                date:
+                  type: string
+                  description: Contract start date (e.g. 14/01/2025)
+                scope_of_work:
+                  type: string
+                  description: Description of the work or service
+                payment_terms:
+                  type: string
+                  description: Terms of payment (e.g. "Total of £20 on completion")
+                start_date:
+                  type: string
+                  description: Contract start date
+                end_date:
+                  type: string
+                  description: Contract end date
+                termination_clause:
+                  type: string
+                  description: Clause explaining termination conditions
                 template:
                   type: string
-                  description: Customized HTML template
+                  description: HTML template with placeholders
       responses:
         '200':
           description: Template generated successfully
@@ -32,13 +62,16 @@ paths:
                 properties:
                   success:
                     type: boolean
+                  contractHtml:
+                    type: string
+                    description: HTML output with placeholders filled
+                  pdfBase64:
+                    type: string
+                    description: Base64-encoded PDF of the contract
                   message:
                     type: string
                   templateId:
                     type: string
-                  pdfBase64:
-                    type: string
-                    description: Base64-encoded PDF
                   contractLink:
                     type: string
                     description: Link to the contract webpage
