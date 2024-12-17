@@ -3,11 +3,11 @@ info:
   title: ContractQuickly Template Generator API
   version: 1.0.0
 servers:
-  - url: "https://contractquickly.com/netlify/functions"  # Ensure this is a valid URL
+  - url: "https://contractquickly.com/api" 
 paths:
   /generate-template:
     post:
-      operationId: generateTemplate  # Add this line
+      operationId: generateTemplate 
       summary: Generate a customized Contract template and PDF
       requestBody:
         required: true
