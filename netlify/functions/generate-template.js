@@ -1,5 +1,6 @@
 import axios from 'axios';
-import chromium from 'chrome-aws-lambda'; // Use chrome-aws-lambda for Netlify
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer';
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -159,9 +160,8 @@ function generateHTMLTemplate(template, placeholders) {
 }
 
 async function generatePDF(htmlContent) {
-  const browser = await chromium.puppeteer.launch({
+  const browser = await puppeteer.launch({
     args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
     executablePath: await chromium.executablePath,
     headless: chromium.headless,
   });
