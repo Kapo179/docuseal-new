@@ -1,5 +1,6 @@
 import axios from 'axios';
 import puppeteer from 'puppeteer';
+import admin from 'firebase-admin';
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -7,6 +8,16 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
+
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)),
+    databaseURL: process.env.FIREBASE_DATABASE_URL
+  });
+}
+
+const db = admin.firestore();
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -73,6 +84,13 @@ export const handler = async (event) => {
     if (!templateResponse.data?.id) {
       throw new Error('Template creation failed: Missing template ID');
     }
+
+    // Store the DocuSeal response in Firestore
+    await db.collection('contracts').doc(templateResponse.data.id).set({
+      ...templateResponse.data,
+      pdfBase64: pdfBase64,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
 
     // Generate the link to the webpage
     const contractLink = `${process.env.WEB_APP_URL}/contract/${templateResponse.data.id}`;

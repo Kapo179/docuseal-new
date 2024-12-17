@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { StripePaymentElement } from './StripePaymentElement';
 import { usePaymentFlow } from '../hooks/usePaymentFlow';
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+
+// Initialize Firebase (ensure this is done in your project)
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export default function ContractViewer() {
   const { docusealId } = useParams();
@@ -12,18 +24,18 @@ export default function ContractViewer() {
     const fetchContract = async () => {
       try {
         console.log(`Fetching contract data for templateId: ${docusealId}`);
-        const response = await fetch(`/docuseal/templates/${docusealId}`);
+        const doc = await db.collection('contracts').doc(docusealId).get();
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch contract data (status: ${response.status})`);
+        if (!doc.exists) {
+          throw new Error('No such document!');
         }
 
-        const data = await response.json();
+        const data = doc.data();
         console.log('Fetched contract data:', data);
 
-        // Assuming your API returns a `docusealPdfUrl` field with the PDF URL
-        if (data.docusealPdfUrl) {
-          setDocusealPdfUrl(data.docusealPdfUrl);
+        // Assuming your Firestore document has a `documents` field with the PDF URL
+        if (data?.documents && data.documents[0]?.url) {
+          setDocusealPdfUrl(data.documents[0].url);
         } else {
           console.warn('No PDF URL found in fetched contract data.');
         }
