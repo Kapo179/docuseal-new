@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: ContractQuickly Template Generator API
+  version: 1.0.0
+paths:
+  /generate-template:
+    post:
+      summary: Generate a customized Contract template and PDF
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                formData:
+                  type: object
+                  description: Data for the form fields
+                template:
+                  type: string
+                  description: Customized HTML template
+      responses:
+        '200':
+          description: Template generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  templateId:
+                    type: string
+                  pdfBase64:
+                    type: string
+                    description: Base64-encoded PDF
+                  contractLink:
+                    type: string
+                    description: Link to the contract webpage

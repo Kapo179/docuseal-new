@@ -10,6 +10,8 @@ import { EmbeddedSigning } from './components/EmbeddedSigning';
 import { SigningStatus } from './components/SigningStatus';
 import { PaymentSuccessPage } from './components/PaymentSuccessPage';
 import type { ContractType, FormStep } from './types';
+import ContractViewer from './components/ContractViewer';
+
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -45,6 +47,7 @@ export default function App() {
                 />
               )
             } />
+             <Route path="/contract/:templateId" element={<ContractViewer />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/signing-setup" element={<SigningFlow />} />
             <Route 

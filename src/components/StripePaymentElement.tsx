@@ -8,9 +8,10 @@ import { usePaymentFlow } from '../hooks/usePaymentFlow';
 interface Props {
   onSuccess: () => void;
   onCancel: () => void;
+  onError: (error: Error) => void;
 }
 
-export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel }) => {
+export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel, onError }) => {
   const navigate = useNavigate();
   const stripe = useStripe();
   const elements = useElements();
@@ -30,7 +31,7 @@ export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel }) => {
       const { error: paymentError } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: '${window.location.origin}/signing-setup',
+          return_url: `${window.location.origin}/signing-setup`,
           payment_method_data: {
             billing_details: {
               name: 'Vehicle Agreement Signing',
@@ -42,6 +43,7 @@ export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel }) => {
       if (paymentError) {
         console.error('Payment confirmation error:', paymentError);
         setError(paymentError.message || 'Payment failed. Please try again.');
+        onError(new Error(paymentError.message)); // Convert StripeError to Error
         return;
       }
 
@@ -55,6 +57,7 @@ export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel }) => {
     } catch (err) {
       console.error('Unexpected payment error:', err);
       setError('An unexpected error occurred. Please try again.');
+      onError(err instanceof Error ? err : new Error('Unexpected error')); // Handle unknown type
     } finally {
       setIsSubmitting(false);
     }

@@ -28,27 +28,7 @@ export interface DocumentStatus {
   inspectionNotes?: string;
 }
 
-export interface FormData extends VehicleDetails, DocumentStatus {
-  signature: string;
-  privacyAccepted: boolean;
-}
-
-export interface SigningData {
-  formData: FormData;
-  seller: ContractParty;
-  buyer: ContractParty;
-}
-
-export interface Contract {
-  id: string;
-  type: 'vehicle' | 'influencer';
-  status: ContractStatus;
-  formData: FormData;
-  createdAt: string;
-  updatedAt: string;
-  paymentStatus: PaymentStatus;
-  parties?: {
-    seller: ContractParty;
-    buyer: ContractParty;
-  };
+// Make FormData more flexible
+export interface FormData {
+  [key: string]: any;
 }

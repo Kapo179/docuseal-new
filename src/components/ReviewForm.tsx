@@ -171,6 +171,7 @@ export default function ReviewForm({ data, onBack }: Props) {
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
                   <StripePaymentElement
                     onSuccess={handlePaymentSuccess}
+                    onError={(error) => console.error('Payment error:', error)}
                     onCancel={() => setShowPayment(false)}
                   />
                 </Elements>
