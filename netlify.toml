@@ -35,6 +35,12 @@
   to = "/index.html"
   status = 200
 
+[[redirects]]
+  from = "/api/contracts/:templateId"
+  to = "/.netlify/functions/get-contract?templateId=:templateId"
+  status = 200
+
+
 [functions]
   node_bundler = "esbuild"
 
