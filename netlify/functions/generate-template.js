@@ -130,6 +130,8 @@ export const handler = async (event) => {
 
     const contractLink = `${process.env.WEB_APP_URL}/contract/${templateResponse.data.id}`;
     const previewImageUrl = templateResponse.data.documents[0]?.preview_image_url;
+    const contractViewerLink = `https://contractquickly.com/ContractViewer/${templateResponse.data.id}`;
+
 
     return {
       statusCode: 200,
@@ -140,7 +142,8 @@ export const handler = async (event) => {
         templateId: templateResponse.data.id,
         pdfBase64: pdfBase64,
         contractLink: contractLink,
-        previewImageUrl: previewImageUrl
+        previewImageUrl: previewImageUrl,
+        contractViewerLink: contractViewerLink
       })
     };
   } catch (error) {
