@@ -7,12 +7,14 @@ interface DocuSealResponse {
   submissionId?: string;
   error?: boolean;
   message?: string;
+  documentUrl?: string; // Add this line
 }
 
 interface GenerateTemplateData {
   formData: Record<string, any>;
   template: string;
 }
+
 
 export async function generateDocuSealTemplate(data: GenerateTemplateData): Promise<DocuSealResponse> {
   const response = await axios.post<DocuSealResponse>(
@@ -43,4 +45,9 @@ export async function generateDocuSealTemplate(data: GenerateTemplateData): Prom
   }
 
   return response.data;
+}
+
+// Define and export generateAgreementTemplate
+export async function generateAgreementTemplate(data: GenerateTemplateData): Promise<DocuSealResponse> {
+  return generateDocuSealTemplate(data);
 }

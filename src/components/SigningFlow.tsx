@@ -1,21 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Mail, CheckCircle } from 'lucide-react';
+import { FileText, Mail } from 'lucide-react';
 import { generateAgreementTemplate } from '../services/docusealApi';
 import { useContractFlow } from '../hooks/useContractFlow';
-import { useContractStorage } from '../hooks/useContractStorage';
 import { PartyDetailsForm } from './SigningFlow/PartyDetailsForm';
 import type { ContractParty } from '../types';
 
 export function SigningFlow() {
   const navigate = useNavigate();
   const contractFlow = useContractFlow();
-  const contractStorage = useContractStorage();
   
   const [isLoading, setIsLoading] = useState(false);
   const [showEmailNotification, setShowEmailNotification] = useState(false);
-  const [seller, setSeller] = useState<ContractParty>({ name: '', email: '' });
-  const [buyer, setBuyer] = useState<ContractParty>({ name: '', email: '' });
+  const [partyOne, setPartyOne] = useState<ContractParty>({ name: '', email: '' });
+  const [partyTwo, setPartyTwo] = useState<ContractParty>({ name: '', email: '' });
 
   useEffect(() => {
     if (!contractFlow.formData || !contractFlow.paymentComplete) {
@@ -41,19 +39,10 @@ export function SigningFlow() {
         return;
       }
 
-      // Validate required fields
-      if (!seller.name || !seller.email || !buyer.name || !buyer.email) {
-        return;
-      }
-
-      setIsLoading(true);
-      setShowEmailNotification(true);
-
       // Generate agreement template with DocuSeal
       const { templateId, documentUrl } = await generateAgreementTemplate({
         formData: contractFlow.formData,
-        seller,
-        buyer
+        template: '<html>Your template here with placeholders like {{name}}</html>'
       });
 
       // Store template ID for status checking
@@ -62,11 +51,8 @@ export function SigningFlow() {
       // Reset contract flow
       contractFlow.reset();
 
-      // Show email notification for 3 seconds before redirecting
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
       // Redirect to DocuSeal signing page
-      window.location.href = documentUrl;
+      window.location.href = documentUrl || '/';
     } catch (err) {
       console.error('DocuSeal flow error:', err);
       setIsLoading(false);
@@ -106,10 +92,10 @@ export function SigningFlow() {
         </div>
 
         <PartyDetailsForm
-          seller={seller}
-          buyer={buyer}
-          onSellerChange={setSeller}
-          onBuyerChange={setBuyer}
+          partyOne={partyOne}
+          partyTwo={partyTwo}
+          onPartyOneChange={setPartyOne}
+          onPartyTwoChange={setPartyTwo}
           onSubmit={handleSubmit}
           isLoading={isLoading}
         />
