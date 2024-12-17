@@ -1,17 +1,19 @@
 openapi: 3.1.0
 info:
   title: ContractQuickly Template Generator API
-  version: 1.0.0
+  version: "1.0.0"
+
 servers:
   - url: "https://contractquickly.com/.netlify/functions"
+
 paths:
   /generate-template:
     post:
       operationId: generateTemplate
       summary: "Generate a DocuSeal-compatible contract with fillable fields"
-      description: |
-        This endpoint creates a DocuSeal template containing at least one signature-field
-        or text-field for e-signing or fillable fields.
+      description: >
+        This endpoint creates a DocuSeal template containing at least one
+        signature-field or text-field for e-signing or fillable fields.
       requestBody:
         required: true
         content:
@@ -22,15 +24,22 @@ paths:
                 - template
                 - party1
                 - party2
-                # ... other placeholders
+                - date
+                - scope_of_work
+                - payment_terms
+                - start_date
+                - end_date
+                - termination_clause
               properties:
                 template:
                   type: string
                   description: |
-                    **Full HTML** contract template. Must include at least one DocuSeal field tag
-                    such as <signature-field role="Signer" name="Signer Signature" required="true"></signature-field>.
-                    
-                    Example:
+                    **Full HTML** contract template. Must include at least one DocuSeal field tag,
+                    such as `<signature-field role="Signer" name="Signer Signature" required="true"></signature-field>`.
+
+                    **Example**:
+
+                    ```html
                     <!DOCTYPE html>
                     <html>
                       <head><title>Service Agreement</title></head>
@@ -38,28 +47,31 @@ paths:
                         <h1>Service Agreement</h1>
                         <p>This agreement is between {{party1}} and {{party2}}.</p>
                         
-                        <signature-field 
-                          name="Party1Signature" 
-                          role="Party1" 
+                        <signature-field
+                          name="Party1Signature"
+                          role="Party1"
                           required="true">
                         </signature-field>
-                        <signature-field 
-                          name="Party2Signature" 
-                          role="Party2" 
+                        <signature-field
+                          name="Party2Signature"
+                          role="Party2"
                           required="true">
                         </signature-field>
                         
                         <text-field name="DateField" role="Signer"></text-field>
-                        <!-- Additional fields as needed -->
+                        <!-- Additional DocuSeal fields as needed -->
                       </body>
                     </html>
+                    ```
                   example: |
                     <!DOCTYPE html>
                     <html>
-                      <head><title>Service Agreement</title></head>
+                      <head>
+                        <title>Service Agreement</title>
+                      </head>
                       <body>
                         <h1>Service Agreement</h1>
-                        <p>This agreement is between {{party1}} and {{party2}}.</p>
+                        <p>This agreement is between {{party1}} and {{party2}} on {{date}}.</p>
                         
                         <signature-field name="Party1Signature" role="Party1" required="true"></signature-field>
                         <signature-field name="Party2Signature" role="Party2" required="true"></signature-field>
@@ -73,7 +85,24 @@ paths:
                 party2:
                   type: string
                   description: "Name of the second party."
-                # ... date, payment_terms, etc.
+                date:
+                  type: string
+                  description: "Agreement date (DD/MM/YYYY)."
+                scope_of_work:
+                  type: string
+                  description: "Description of services or work to be performed."
+                payment_terms:
+                  type: string
+                  description: "Payment arrangements, e.g. '50% upfront...'."
+                start_date:
+                  type: string
+                  description: "Start date (DD/MM/YYYY)."
+                end_date:
+                  type: string
+                  description: "End date (DD/MM/YYYY)."
+                termination_clause:
+                  type: string
+                  description: "Clause detailing how either party may terminate the agreement."
       responses:
         '200':
           description: "Contract generated successfully"
@@ -84,14 +113,16 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
                   contractHtml:
                     type: string
                     description: "HTML with DocuSeal fields in place."
                   pdfBase64:
                     type: string
-                    description: "Base64-encoded PDF"
+                    description: "Base64-encoded PDF output, if requested."
                   message:
                     type: string
+                    example: "Contract generated successfully!"
         '400':
           description: "Missing required fields"
 
