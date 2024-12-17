@@ -3,7 +3,7 @@ info:
   title: ContractQuickly Template Generator API
   version: 1.0.0
 servers:
-  - url: "https://contractquickly.com/api" 
+  - url: "https://contractquickly.com/.netlify/functions/generate-template" 
 paths:
   /generate-template:
     post:
