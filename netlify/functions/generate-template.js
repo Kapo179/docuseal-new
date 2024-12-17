@@ -79,9 +79,10 @@ export const handler = async (event) => {
 
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
 
-    const pdfBuffer = await generatePDF(htmlTemplate);
-
-    const pdfBase64 = pdfBuffer.toString('base64');
+    // Temporarily remove PDF generation for testing
+    // const pdfBuffer = await generatePDF(htmlTemplate);
+    // const pdfBase64 = pdfBuffer.toString('base64');
+    const pdfBase64 = '';
 
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',

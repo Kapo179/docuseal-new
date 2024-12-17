@@ -120,9 +120,19 @@ paths:
                   pdfBase64:
                     type: string
                     description: "Base64-encoded PDF output, if requested."
+                  contractLink:
+                    type: string
+                    description: "Link to your webapp's contract page."
+                    example: "https://contractquickly.com/contract/464175"
+                  previewImageUrl:
+                    type: string
+                    format: uri
+                    description: "Direct link to the DocuSeal-generated preview image."
+                    example: "https://docuseal.com/file/abc123/0.png"                   
                   message:
                     type: string
                     example: "Contract generated successfully!"
+                    
         '400':
           description: "Missing required fields"
 
