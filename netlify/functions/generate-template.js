@@ -79,10 +79,9 @@ export const handler = async (event) => {
 
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
 
-    // Temporarily remove PDF generation for testing
-    // const pdfBuffer = await generatePDF(htmlTemplate);
-    // const pdfBase64 = pdfBuffer.toString('base64');
-    const pdfBase64 = '';
+    const pdfBuffer = await generatePDF(htmlTemplate);
+
+    const pdfBase64 = pdfBuffer.toString('base64');
 
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
@@ -129,6 +128,7 @@ export const handler = async (event) => {
     console.log('Submission created:', submissionResponse.data);
 
     const contractLink = `${process.env.WEB_APP_URL}/contract/${templateResponse.data.id}`;
+    const previewImageUrl = templateResponse.data.documents[0]?.preview_image_url;
 
     return {
       statusCode: 200,
@@ -138,7 +138,8 @@ export const handler = async (event) => {
         message: 'Template generated successfully',
         templateId: templateResponse.data.id,
         pdfBase64: pdfBase64,
-        contractLink: contractLink
+        contractLink: contractLink,
+        previewImageUrl: previewImageUrl
       })
     };
   } catch (error) {
