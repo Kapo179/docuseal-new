@@ -3,10 +3,6 @@
   publish = "dist"
   functions = "netlify/functions"
 
-[dev]
-  command = "npm run dev:all"
-  targetPort = 5173
-
 [[headers]]
   for = "/*"
     [headers.values]

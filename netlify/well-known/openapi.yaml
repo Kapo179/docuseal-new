@@ -42,3 +42,5 @@ paths:
                   contractLink:
                     type: string
                     description: Link to the contract webpage
+components:
+  schemas: {}
