@@ -8,11 +8,10 @@ paths:
   /generate-template:
     post:
       operationId: generateTemplate
-      summary: "Generate a contract using a full HTML template and placeholders"
+      summary: "Generate a DocuSeal-compatible contract with fillable fields"
       description: |
-        This endpoint takes a complete HTML contract template (with placeholders like {{party1}},
-        {{party2}}, etc.) and fills them with the corresponding user data, returning
-        the final contract as HTML (optionally PDF).
+        This endpoint creates a DocuSeal template containing at least one signature-field
+        or text-field for e-signing or fillable fields.
       requestBody:
         required: true
         content:
@@ -23,40 +22,50 @@ paths:
                 - template
                 - party1
                 - party2
-                - date
-                - scope_of_work
-                - payment_terms
-                - start_date
-                - end_date
-                - termination_clause
+                # ... other placeholders
               properties:
                 template:
                   type: string
                   description: |
-                    **Full HTML** contract template containing placeholders. 
-                    These placeholders (e.g., {{party1}}, {{payment_terms}}) will be replaced by the provided data.
+                    **Full HTML** contract template. Must include at least one DocuSeal field tag
+                    such as <signature-field role="Signer" name="Signer Signature" required="true"></signature-field>.
+                    
+                    Example:
+                    <!DOCTYPE html>
+                    <html>
+                      <head><title>Service Agreement</title></head>
+                      <body>
+                        <h1>Service Agreement</h1>
+                        <p>This agreement is between {{party1}} and {{party2}}.</p>
+                        
+                        <signature-field 
+                          name="Party1Signature" 
+                          role="Party1" 
+                          required="true">
+                        </signature-field>
+                        <signature-field 
+                          name="Party2Signature" 
+                          role="Party2" 
+                          required="true">
+                        </signature-field>
+                        
+                        <text-field name="DateField" role="Signer"></text-field>
+                        <!-- Additional fields as needed -->
+                      </body>
+                    </html>
                   example: |
                     <!DOCTYPE html>
                     <html>
-                    <head>
-                      <meta charset="UTF-8">
-                      <title>Service Agreement</title>
-                      <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
-                        h1 { color: #2563eb; }
-                      </style>
-                    </head>
-                    <body>
-                      <h1>Service Agreement</h1>
-                      <p>This contract is between {{party1}} and {{party2}}.</p>
-                      <p>Date of Agreement: {{date}}</p>
-                      <p>Scope of Work: {{scope_of_work}}</p>
-                      <p>Payment Terms: {{payment_terms}}</p>
-                      <p>Start Date: {{start_date}}</p>
-                      <p>End Date: {{end_date}}</p>
-                      <p>Termination Clause: {{termination_clause}}</p>
-                      <p>Both parties hereby agree to the terms stated above.</p>
-                    </body>
+                      <head><title>Service Agreement</title></head>
+                      <body>
+                        <h1>Service Agreement</h1>
+                        <p>This agreement is between {{party1}} and {{party2}}.</p>
+                        
+                        <signature-field name="Party1Signature" role="Party1" required="true"></signature-field>
+                        <signature-field name="Party2Signature" role="Party2" required="true"></signature-field>
+                        
+                        <text-field name="DateField" role="Signer"></text-field>
+                      </body>
                     </html>
                 party1:
                   type: string
@@ -64,27 +73,10 @@ paths:
                 party2:
                   type: string
                   description: "Name of the second party."
-                date:
-                  type: string
-                  description: "Date in DD/MM/YYYY format."
-                scope_of_work:
-                  type: string
-                  description: "Description of the work or services to be performed."
-                payment_terms:
-                  type: string
-                  description: "Details of payment schedule or amount."
-                start_date:
-                  type: string
-                  description: "Contract start date in DD/MM/YYYY format."
-                end_date:
-                  type: string
-                  description: "Contract end date in DD/MM/YYYY format."
-                termination_clause:
-                  type: string
-                  description: "Clause describing how and when the contract can be terminated."
+                # ... date, payment_terms, etc.
       responses:
         '200':
-          description: "Contract successfully generated"
+          description: "Contract generated successfully"
           content:
             application/json:
               schema:
@@ -92,25 +84,16 @@ paths:
                 properties:
                   success:
                     type: boolean
-                    example: true
                   contractHtml:
                     type: string
-                    description: "The final HTML with placeholders replaced."
+                    description: "HTML with DocuSeal fields in place."
                   pdfBase64:
                     type: string
-                    description: "Optional base64-encoded PDF version."
+                    description: "Base64-encoded PDF"
                   message:
                     type: string
-                    example: "Contract generated successfully!"
         '400':
           description: "Missing required fields"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Missing required fields"
+
 components:
   schemas: {}
