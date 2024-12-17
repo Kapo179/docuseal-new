@@ -90,7 +90,7 @@ export const handler = async (event) => {
 
     // Send the generated HTML to DocuSeal to create a template record
     const templateResponse = await axios.post(
-      'https://api.docuseal.com/templates',
+      'https://api.docuseal.com/templates/html',
       { html: htmlTemplate },
       {
         headers: {
