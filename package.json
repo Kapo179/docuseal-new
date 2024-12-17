@@ -15,7 +15,6 @@
     "@stripe/react-stripe-js": "2.4.0",
     "@stripe/stripe-js": "2.4.0",
     "axios": "1.6.2",
-    "chrome-aws-lambda": "^10.1.0",
     "cors": "2.8.5",
     "date-fns": "3.3.1",
     "dotenv": "16.4.5",
