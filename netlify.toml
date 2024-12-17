@@ -36,8 +36,8 @@
   status = 200
 
 [[redirects]]
-  from = "/api/contracts/:templateId"
-  to = "/.netlify/functions/get-contract?templateId=:templateId"
+  from = "/docuseal/templates/:docusealId"
+  to = "/.netlify/functions/get-docuseal-contract?docusealId=:docusealId"
   status = 200
 
 
