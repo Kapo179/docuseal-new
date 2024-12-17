@@ -37,7 +37,7 @@ paths:
                   description: |
                     **Full HTML** contract template, including basic styles for a professional look.
                     Must include at least one DocuSeal field tag (e.g., `<signature-field>`, `<text-field>`).
-                    
+                    Ensure the `<signature-field>` for each party are always visible on the contract.
                     **Style Tips**:
                     - Define `<style>` in the `<head>` with fonts, margins, colors.
                     - Use headings `<h2>`, `<h3>` for sections (Scope of Work, Payment Terms, etc.).
