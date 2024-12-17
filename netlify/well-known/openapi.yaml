@@ -4,16 +4,17 @@ info:
   version: "1.0.0"
 
 servers:
-  - url: "https://contractquickly.com/.netlify/functions"
+  - url: https://contractquickly.com/.netlify/functions
 
 paths:
   /generate-template:
     post:
       operationId: generateTemplate
-      summary: "Generate a DocuSeal-compatible contract with fillable fields"
+      summary: Generate a DocuSeal-compatible contract with fillable fields
       description: >
-        This endpoint creates a DocuSeal template containing at least one
-        signature-field or text-field for e-signing or fillable fields.
+        This endpoint creates a DocuSeal template containing at least one signature-field
+        or text-field for e-signing or fillable fields. Contracts should be fully
+        styled, professional HTML documents with placeholders for DocuSeal fields.
       requestBody:
         required: true
         content:
@@ -34,32 +35,63 @@ paths:
                 template:
                   type: string
                   description: |
-                    **Full HTML** contract template. Must include at least one DocuSeal field tag,
-                    such as `<signature-field role="Signer" name="Signer Signature" required="true"></signature-field>`.
+                    **Full HTML** contract template, including basic styles for a professional look.
+                    Must include at least one DocuSeal field tag (e.g., `<signature-field>`, `<text-field>`).
+                    
+                    **Style Tips**:
+                    - Define `<style>` in the `<head>` with fonts, margins, colors.
+                    - Use headings `<h2>`, `<h3>` for sections (Scope of Work, Payment Terms, etc.).
+                    - Include placeholders for dynamic fields (e.g., `{{party1}}`) or DocuSeal `<text-field>` tags.
 
                     **Example**:
-
                     ```html
                     <!DOCTYPE html>
                     <html>
-                      <head><title>Service Agreement</title></head>
+                      <head>
+                        <meta charset="UTF-8">
+                        <title>Service Agreement</title>
+                        <style>
+                          body {
+                            font-family: Arial, sans-serif;
+                            margin: 40px;
+                            line-height: 1.6;
+                          }
+                          h1 {
+                            color: #2563eb;
+                            margin-bottom: 20px;
+                          }
+                          h2 {
+                            color: #1e40af;
+                            margin-top: 30px;
+                            margin-bottom: 15px;
+                          }
+                          p {
+                            margin: 10px 0;
+                          }
+                          .signature-section {
+                            margin-top: 40px;
+                          }
+                        </style>
+                      </head>
                       <body>
                         <h1>Service Agreement</h1>
-                        <p>This agreement is between {{party1}} and {{party2}}.</p>
+                        <p>This agreement is made on {{date}} between {{party1}} and {{party2}}.</p>
+                        <h2>Scope of Work</h2>
+                        <p>{{scope_of_work}}</p>
+                        <h2>Payment Terms</h2>
+                        <p>{{payment_terms}}</p>
+                        <h2>Contract Duration</h2>
+                        <p>Start Date: {{start_date}} <br/> End Date: {{end_date}}</p>
+                        <h2>Termination Clause</h2>
+                        <p>{{termination_clause}}</p>
                         
-                        <signature-field
-                          name="Party1Signature"
-                          role="Party1"
-                          required="true">
-                        </signature-field>
-                        <signature-field
-                          name="Party2Signature"
-                          role="Party2"
-                          required="true">
-                        </signature-field>
-                        
-                        <text-field name="DateField" role="Signer"></text-field>
-                        <!-- Additional DocuSeal fields as needed -->
+                        <div class="signature-section">
+                          <signature-field name="Party1Signature" role="Party1" required="true">
+                          </signature-field>
+                          <br/>
+                          <signature-field name="Party2Signature" role="Party2" required="true">
+                          </signature-field>
+                        </div>
                       </body>
                     </html>
                     ```
@@ -68,10 +100,14 @@ paths:
                     <html>
                       <head>
                         <title>Service Agreement</title>
+                        <style>
+                          body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                          h1 { color: #2563eb; margin-bottom: 20px; }
+                        </style>
                       </head>
                       <body>
                         <h1>Service Agreement</h1>
-                        <p>This agreement is between {{party1}} and {{party2}} on {{date}}.</p>
+                        <p>This agreement is entered into on {{date}} between {{party1}} and {{party2}}.</p>
                         
                         <signature-field name="Party1Signature" role="Party1" required="true"></signature-field>
                         <signature-field name="Party2Signature" role="Party2" required="true"></signature-field>
@@ -104,8 +140,8 @@ paths:
                   type: string
                   description: "Clause detailing how either party may terminate the agreement."
       responses:
-        '200':
-          description: "Contract generated successfully"
+        "200":
+          description: Contract generated successfully
           content:
             application/json:
               schema:
@@ -116,25 +152,19 @@ paths:
                     example: true
                   contractHtml:
                     type: string
-                    description: "HTML with DocuSeal fields in place."
+                    description: "HTML with DocuSeal fields in place, professionally styled."
                   pdfBase64:
                     type: string
                     description: "Base64-encoded PDF output, if requested."
-                  contractLink:
-                    type: string
-                    description: "Link to your webapp's contract page."
-                    example: "https://contractquickly.com/contract/464175"
-                  previewImageUrl:
+                  contractViewerLink:
                     type: string
                     format: uri
-                    description: "Direct link to the DocuSeal-generated preview image."
-                    example: "https://docuseal.com/file/abc123/0.png"                   
+                    description: "URL for the user to view the contract on contractquickly.com."
                   message:
                     type: string
                     example: "Contract generated successfully!"
-                    
-        '400':
-          description: "Missing required fields"
+        "400":
+          description: Missing required fields
 
 components:
   schemas: {}
