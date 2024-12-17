@@ -18,7 +18,7 @@ interface GenerateTemplateData {
 
 export async function generateDocuSealTemplate(data: GenerateTemplateData): Promise<DocuSealResponse> {
   const response = await axios.post<DocuSealResponse>(
-    `${API_BASE_URL}/create-docuseal-template`,
+ `${API_BASE_URL}/generate-template`,
     {
       formData: data.formData,
       template: data.template,

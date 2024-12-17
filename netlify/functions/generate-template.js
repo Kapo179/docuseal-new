@@ -1,5 +1,5 @@
 import axios from 'axios';
-import puppeteer from 'puppeteer'; // Make sure puppeteer is installed (npm install puppeteer)
+import chromium from 'chrome-aws-lambda'; // Use chrome-aws-lambda for Netlify
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -35,7 +35,6 @@ export const handler = async (event) => {
   }
 
   try {
-    // Pull each placeholder from the request body
     const {
       template,
       party1,
@@ -48,7 +47,6 @@ export const handler = async (event) => {
       termination_clause
     } = JSON.parse(event.body);
 
-    // Validate required fields
     if (
       !template ||
       !party1 ||
@@ -67,7 +65,6 @@ export const handler = async (event) => {
       };
     }
 
-    // Create a placeholders object for the HTML fill-in
     const placeholders = {
       party1,
       party2,
@@ -79,16 +76,12 @@ export const handler = async (event) => {
       termination_clause
     };
 
-    // Generate the final HTML by replacing placeholders in the template
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
 
-    // Convert HTML to PDF using Puppeteer
     const pdfBuffer = await generatePDF(htmlTemplate);
 
-    // Encode PDF to Base64
     const pdfBase64 = pdfBuffer.toString('base64');
 
-    // Send the generated HTML to DocuSeal to create a template record
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
       {
@@ -111,7 +104,6 @@ export const handler = async (event) => {
       throw new Error('Template creation failed: Missing template ID');
     }
 
-    // Optional: Create a submission if required
     const submissionResponse = await axios.post(
       `https://api.docuseal.com/templates/${templateResponse.data.id}/submissions`,
       {
@@ -134,7 +126,6 @@ export const handler = async (event) => {
 
     console.log('Submission created:', submissionResponse.data);
 
-    // Generate the link to the webpage
     const contractLink = `${process.env.WEB_APP_URL}/contract/${templateResponse.data.id}`;
 
     return {
@@ -149,7 +140,7 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error('Error generating template:', error);
+    console.error('Error generating template:', error?.response?.data || error);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
@@ -158,7 +149,6 @@ export const handler = async (event) => {
   }
 };
 
-// Helper Function for HTML Template (fills placeholders like {{party1}})
 function generateHTMLTemplate(template, placeholders) {
   let htmlTemplate = template;
   for (const [key, value] of Object.entries(placeholders)) {
@@ -168,9 +158,13 @@ function generateHTMLTemplate(template, placeholders) {
   return htmlTemplate;
 }
 
-// Helper Function to Generate PDF
 async function generatePDF(htmlContent) {
-  const browser = await puppeteer.launch();
+  const browser = await chromium.puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath,
+    headless: chromium.headless,
+  });
   const page = await browser.newPage();
   await page.setContent(htmlContent);
   const pdfBuffer = await page.pdf({ format: 'A4' });
