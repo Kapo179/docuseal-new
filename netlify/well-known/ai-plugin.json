@@ -9,7 +9,7 @@
   },
   "api": {
     "type": "openapi",
-    "url": "https://contractquickly.com/netlify/functions/well-known/openapi.yaml",  
+    "url": "https://contractquickly.com/netlify/well-known/openapi.yaml",  
     "is_user_authenticated": false
   },
   "logo_url": "https://contractquickly.com/Logo.png",
