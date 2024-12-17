@@ -79,9 +79,10 @@ export const handler = async (event) => {
 
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
 
-    const pdfBuffer = await generatePDF(htmlTemplate);
-
-    const pdfBase64 = pdfBuffer.toString('base64');
+    // Temporarily remove PDF generation for testing
+    // const pdfBuffer = await generatePDF(htmlTemplate);
+    // const pdfBase64 = pdfBuffer.toString('base64');
+    const pdfBase64 = '';
 
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
@@ -160,6 +161,10 @@ function generateHTMLTemplate(template, placeholders) {
 }
 
 async function generatePDF(htmlContent) {
+  console.log("Chromium version:", chromium.revision);
+  console.log("Running in AWS Lambda?", chromium.isRunningInAwsLambda());
+  console.log("executablePath input dir:", await chromium.executablePath);
+
   const browser = await puppeteer.launch({
     args: chromium.args,
     executablePath: await chromium.executablePath,
