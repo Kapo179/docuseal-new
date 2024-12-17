@@ -3,12 +3,16 @@ info:
   title: ContractQuickly Template Generator API
   version: 1.0.0
 servers:
-  - url: "https://contractquickly.com/.netlify/functions/generate-template" 
+  - url: "https://contractquickly.com/.netlify/functions"
 paths:
   /generate-template:
     post:
       operationId: generateTemplate
-      summary: Generate a docuseal contract using placeholders
+      summary: "Generate a contract using a full HTML template and placeholders"
+      description: |
+        This endpoint takes a complete HTML contract template (with placeholders like {{party1}},
+        {{party2}}, etc.) and fills them with the corresponding user data, returning
+        the final contract as HTML (optionally PDF).
       requestBody:
         required: true
         content:
@@ -28,34 +32,59 @@ paths:
               properties:
                 template:
                   type: string
-                  description: "HTML contract template with placeholders (e.g. {{party1}}, {{party2}})"
+                  description: |
+                    **Full HTML** contract template containing placeholders. 
+                    These placeholders (e.g., {{party1}}, {{payment_terms}}) will be replaced by the provided data.
+                  example: |
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                      <meta charset="UTF-8">
+                      <title>Service Agreement</title>
+                      <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+                        h1 { color: #2563eb; }
+                      </style>
+                    </head>
+                    <body>
+                      <h1>Service Agreement</h1>
+                      <p>This contract is between {{party1}} and {{party2}}.</p>
+                      <p>Date of Agreement: {{date}}</p>
+                      <p>Scope of Work: {{scope_of_work}}</p>
+                      <p>Payment Terms: {{payment_terms}}</p>
+                      <p>Start Date: {{start_date}}</p>
+                      <p>End Date: {{end_date}}</p>
+                      <p>Termination Clause: {{termination_clause}}</p>
+                      <p>Both parties hereby agree to the terms stated above.</p>
+                    </body>
+                    </html>
                 party1:
                   type: string
-                  description: "Name of the first party"
+                  description: "Name of the first party."
                 party2:
                   type: string
-                  description: "Name of the second party"
+                  description: "Name of the second party."
                 date:
                   type: string
-                  description: "Date in DD/MM/YYYY format"
+                  description: "Date in DD/MM/YYYY format."
                 scope_of_work:
                   type: string
-                  description: "Details of the work or services"
+                  description: "Description of the work or services to be performed."
                 payment_terms:
                   type: string
-                  description: "Payment agreement, e.g. '$5,000 in two installments'"
+                  description: "Details of payment schedule or amount."
                 start_date:
                   type: string
-                  description: "Contract start date"
+                  description: "Contract start date in DD/MM/YYYY format."
                 end_date:
                   type: string
-                  description: "Contract end date"
+                  description: "Contract end date in DD/MM/YYYY format."
                 termination_clause:
                   type: string
-                  description: "Termination conditions or notice period"
+                  description: "Clause describing how and when the contract can be terminated."
       responses:
         '200':
-          description: Contract generated successfully
+          description: "Contract successfully generated"
           content:
             application/json:
               schema:
@@ -63,14 +92,25 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
                   contractHtml:
                     type: string
-                    description: "Generated HTML contract with placeholders replaced"
+                    description: "The final HTML with placeholders replaced."
                   pdfBase64:
                     type: string
-                    description: "Base64-encoded PDF"
+                    description: "Optional base64-encoded PDF version."
                   message:
                     type: string
-                    description: "Status message"
+                    example: "Contract generated successfully!"
+        '400':
+          description: "Missing required fields"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Missing required fields"
 components:
   schemas: {}

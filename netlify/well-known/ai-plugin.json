@@ -1,8 +1,9 @@
 {
+  "schema_version": "v1",
   "name_for_human": "ContractQuickly",
   "name_for_model": "contractquickly",
-  "description_for_human": "Generate a contract using an HTML docuseal template and user-supplied data.",
-  "description_for_model": "Plugin to fill a docuseal contract template with placeholders (party1, party2, dates, scope_of_work, etc.). Template is mandatory.",
+  "description_for_human": "Generate full HTML contracts by replacing placeholders with user-supplied data.",
+  "description_for_model": "Plugin that creates contracts from a full HTML template. Pass 'template', 'party1', 'party2', 'date', 'scope_of_work', 'payment_terms', 'start_date', 'end_date', and 'termination_clause' to the /generate-template endpoint.",
   "api": {
     "type": "openapi",
     "url": "https://contractquickly.com/.well-known/openapi.yaml",

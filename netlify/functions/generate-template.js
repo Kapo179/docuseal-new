@@ -1,4 +1,5 @@
 import axios from 'axios';
+import puppeteer from 'puppeteer'; // Make sure puppeteer is installed (npm install puppeteer)
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -34,10 +35,31 @@ export const handler = async (event) => {
   }
 
   try {
-    const { formData, template } = JSON.parse(event.body);
+    // Pull each placeholder from the request body
+    const {
+      template,
+      party1,
+      party2,
+      date,
+      scope_of_work,
+      payment_terms,
+      start_date,
+      end_date,
+      termination_clause
+    } = JSON.parse(event.body);
 
     // Validate required fields
-    if (!formData || !template) {
+    if (
+      !template ||
+      !party1 ||
+      !party2 ||
+      !date ||
+      !scope_of_work ||
+      !payment_terms ||
+      !start_date ||
+      !end_date ||
+      !termination_clause
+    ) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
@@ -45,8 +67,20 @@ export const handler = async (event) => {
       };
     }
 
-    // Generate HTML template using the provided template string and formData
-    const htmlTemplate = generateHTMLTemplate(template, formData);
+    // Create a placeholders object for the HTML fill-in
+    const placeholders = {
+      party1,
+      party2,
+      date,
+      scope_of_work,
+      payment_terms,
+      start_date,
+      end_date,
+      termination_clause
+    };
+
+    // Generate the final HTML by replacing placeholders in the template
+    const htmlTemplate = generateHTMLTemplate(template, placeholders);
 
     // Convert HTML to PDF using Puppeteer
     const pdfBuffer = await generatePDF(htmlTemplate);
@@ -54,7 +88,7 @@ export const handler = async (event) => {
     // Encode PDF to Base64
     const pdfBase64 = pdfBuffer.toString('base64');
 
-    // Send the generated template to DocuSeal API
+    // Send the generated HTML to DocuSeal to create a template record
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates',
       { html: htmlTemplate },
@@ -83,8 +117,8 @@ export const handler = async (event) => {
         success: true,
         message: 'Template generated successfully',
         templateId: templateResponse.data.id,
-        pdfBase64: pdfBase64, // Include the Base64 PDF in the response
-        contractLink: contractLink // Include the link to the webpage
+        pdfBase64: pdfBase64,
+        contractLink: contractLink
       })
     };
   } catch (error) {
@@ -97,12 +131,11 @@ export const handler = async (event) => {
   }
 };
 
-// Helper Function for HTML Template
-function generateHTMLTemplate(template, formData) {
+// Helper Function for HTML Template (fills placeholders like {{party1}})
+function generateHTMLTemplate(template, placeholders) {
   let htmlTemplate = template;
-  for (const key in formData) {
+  for (const [key, value] of Object.entries(placeholders)) {
     const placeholder = `{{${key}}}`;
-    const value = formData[key];
     htmlTemplate = htmlTemplate.replace(new RegExp(placeholder, 'g'), value);
   }
   return htmlTemplate;
