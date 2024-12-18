@@ -1,11 +1,5 @@
 import axios from 'axios';
-import Redis from 'ioredis';
-
-const redis = new Redis({
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT,
-  password: process.env.REDIS_PASSWORD,
-});
+import { db } from './firebase'; // Firebase initialization file
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -71,16 +65,7 @@ export const handler = async (event) => {
       };
     }
 
-    // Check if template includes required fields
-    if (!template.includes('<signature-field')) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Template must contain at least one <signature-field>.' }),
-      };
-    }
-
-    // Generate the contract HTML
+    // Step 1: Generate the contract HTML
     const placeholders = {
       parties: JSON.stringify(parties),
       date,
@@ -93,7 +78,7 @@ export const handler = async (event) => {
 
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
 
-    // Create DocuSeal template
+    // Step 2: Create DocuSeal template
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
       {
@@ -110,15 +95,48 @@ export const handler = async (event) => {
       }
     );
 
+    console.log('Template created:', templateResponse.data);
+
     if (!templateResponse.data?.id) {
       throw new Error('Template creation failed: Missing template ID');
     }
 
-    // Store the template ID and session token in Redis
-    const sessionToken = `${templateResponse.data.id}-${Date.now()}`;
-    await redis.set(sessionToken, JSON.stringify({ templateId: templateResponse.data.id }), 'EX', 3600); // 1-hour expiry
+    // Step 3: Create DocuSeal submission
+    const submitters = parties.map((party, index) => ({
+      name: party.name,
+      email: party.email,
+      role: `Party${index + 1}`,
+      preferences: { send_email: true },
+    }));
 
-    const contractLink = `${process.env.WEB_APP_URL}/contract/${templateResponse.data.id}?token=${sessionToken}`;
+    const submissionResponse = await axios.post(
+      `https://api.docuseal.com/templates/${templateResponse.data.id}/submissions`,
+      {
+        submitters: submitters,
+      },
+      {
+        headers: {
+          'X-Auth-Token': authToken,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      }
+    );
+
+    console.log('Submission created:', submissionResponse.data);
+
+    // Step 4: Generate unique session token
+    const sessionToken = `${templateResponse.data.id}-${Date.now()}`;
+
+    // Store session data in Firebase Realtime Database
+    await db.ref(`sessions/${sessionToken}`).set({
+      contractId: templateResponse.data.id,
+      used: false,
+      createdAt: Date.now(),
+    });
+
+    // Step 5: Construct response with contract link and preview image
+    const contractLink = `${process.env.WEB_APP_URL}/contract/${sessionToken}`;
     const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
 
     return {
@@ -127,9 +145,9 @@ export const handler = async (event) => {
       body: JSON.stringify({
         success: true,
         message: 'Template and submission created successfully',
-        templateId: templateResponse.data.id,
-        contractLink: contractLink,
-        previewImageUrl: previewImageUrl,
+        sessionToken,
+        contractLink,
+        previewImageUrl,
       }),
     };
   } catch (error) {
@@ -142,6 +160,7 @@ export const handler = async (event) => {
   }
 };
 
+// Utility function to replace placeholders with actual values
 function generateHTMLTemplate(template, placeholders) {
   let htmlTemplate = template;
   for (const [key, value] of Object.entries(placeholders)) {

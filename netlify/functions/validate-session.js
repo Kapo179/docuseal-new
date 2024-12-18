@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import { db } from './firebase'; // Import the Firebase initialization
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -6,8 +6,6 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
-
-const redis = new Redis(process.env.REDIS_URL); // Redis connection
 
 export const handler = async (event) => {
   console.log('Session validation request received:', JSON.stringify(event, null, 2));
@@ -41,8 +39,10 @@ export const handler = async (event) => {
 
     console.log(`Validating session token: ${token}`);
 
-    // Step 2: Retrieve session data from Redis
-    const sessionData = await redis.get(token);
+    // Step 2: Retrieve session data from Firebase
+    const sessionRef = db.ref(`sessions/${token}`);
+    const sessionSnapshot = await sessionRef.once('value');
+    const sessionData = sessionSnapshot.val();
 
     if (!sessionData) {
       return {
@@ -52,7 +52,7 @@ export const handler = async (event) => {
       };
     }
 
-    const { contractId, used } = JSON.parse(sessionData);
+    const { contractId, used } = sessionData;
 
     if (used) {
       return {
@@ -63,7 +63,7 @@ export const handler = async (event) => {
     }
 
     // Step 3: Mark the session token as used
-    await redis.set(token, JSON.stringify({ contractId, used: true }));
+    await sessionRef.update({ used: true });
 
     console.log(`Session token validated successfully for contractId: ${contractId}`);
 
