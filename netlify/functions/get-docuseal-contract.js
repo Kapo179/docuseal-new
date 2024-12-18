@@ -1,32 +1,47 @@
-// netlify/functions/get-docuseal-contract.js
 const axios = require('axios');
 
 exports.handler = async (event) => {
+  const { templateId } = event.queryStringParameters;
+
+  if (!templateId) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Template ID is required" }),
+    };
+  }
+
   try {
-    const { docusealId } = event.queryStringParameters;
-    const DOCUSEAL_AUTH_TOKEN = process.env.DOCUSEAL_AUTH_TOKEN;
-    if (!docusealId) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing docusealId' }) };
+    const authToken = process.env.DOCUSEAL_AUTH_TOKEN;
+
+    if (!authToken) {
+      throw new Error("Missing DocuSeal Auth Token");
     }
 
-    const response = await axios.get(`https://api.docuseal.com/templates/${docusealId}`, {
-      headers: {
-        'X-Auth-Token': DOCUSEAL_AUTH_TOKEN,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+    const response = await axios.get(
+      `https://api.docuseal.com/templates/${templateId}`,
+      {
+        headers: { 'X-Auth-Token': authToken },
       }
-    });
+    );
 
-    // Return the docuseal data to the React app
+    const documents = response.data.documents;
+
+    if (documents && documents.length > 0) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ pdfUrl: documents[0].url }),
+      };
+    }
+
     return {
-      statusCode: 200,
-      body: JSON.stringify(response.data)
+      statusCode: 404,
+      body: JSON.stringify({ error: "Document not found" }),
     };
   } catch (error) {
-    console.error('Error retrieving docuseal data:', error);
+    console.error("Error fetching document:", error.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Server Error' })
+      body: JSON.stringify({ error: "Internal Server Error" }),
     };
   }
 };
