@@ -1,86 +1,53 @@
-import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { fetchContractData } from '../services/docusealApi';
 
 export default function ContractViewer() {
   const { templateId } = useParams();
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      // Retrieve and decode cookie
-      const contractData = Cookies.get("contractData");
-      if (contractData) {
-        const { pdfUrl, signedUrl } = JSON.parse(decodeURIComponent(contractData));
-        setPdfUrl(pdfUrl);
-        setSignedUrl(signedUrl);
-      } else {
-        throw new Error("No contract data found in cookies.");
+    const fetchContract = async () => {
+      try {
+        console.log('Fetching contract for templateId:', templateId);
+        const data = await fetchContractData(templateId);
+        console.log('API Response:', data);
+
+        if (data.documents && data.documents[0]?.url) {
+          setPdfUrl(data.documents[0].url);
+        } else {
+          throw new Error('No PDF URL found in API response.');
+        }
+      } catch (err) {
+        console.error('Error fetching contract:', err);
+        setError(`Error: ${err.message || 'Failed to load contract.'}`);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error retrieving contract data:", err);
-      setError("Failed to load contract data.");
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    fetchContract();
   }, [templateId]);
 
   return (
-    <div style={{ textAlign: "center", margin: "20px auto" }}>
+    <div style={{ textAlign: 'center', margin: '20px' }}>
       <h1>Contract Viewer</h1>
-
       {loading ? (
         <p>Loading...</p>
       ) : error ? (
-        <p style={{ color: "red" }}>{error}</p>
+        <p style={{ color: 'red' }}>{error}</p>
       ) : pdfUrl ? (
-        <>
-          {/* Display PDF */}
-          <iframe
-            src={pdfUrl}
-            width="100%"
-            height="600px"
-            title="Contract PDF"
-            style={{ border: "1px solid #ccc", borderRadius: "8px" }}
-          />
-          <a
-            href={pdfUrl}
-            download="contract.pdf"
-            style={{
-              margin: "10px",
-              padding: "10px 20px",
-              backgroundColor: "#007BFF",
-              color: "#FFF",
-              textDecoration: "none",
-              borderRadius: "4px",
-            }}
-          >
-            Download PDF
-          </a>
-
-          {/* Sign Link */}
-          {signedUrl && (
-            <a
-              href={signedUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#28A745",
-                color: "#FFF",
-                textDecoration: "none",
-                borderRadius: "4px",
-              }}
-            >
-              Proceed to Sign
-            </a>
-          )}
-        </>
+        <iframe
+          src={pdfUrl}
+          width="100%"
+          height="600px"
+          style={{ border: '1px solid #ccc', borderRadius: '8px' }}
+          title="Contract PDF"
+        />
       ) : (
-        <p>No contract available.</p>
+        <p>No contract available to display.</p>
       )}
     </div>
   );

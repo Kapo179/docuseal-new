@@ -53,23 +53,26 @@ export async function generateAgreementTemplate(data: GenerateTemplateData): Pro
 }
 
 // New function to fetch contract data
-export async function fetchContractData(templateId: string): Promise<DocuSealResponse> {
-  const response = await axios.get<DocuSealResponse>(
-    `${API_BASE_URL}/get-docuseal-contract?docusealId=${templateId}`,
-    {
-      headers: {
-        'X-Auth-Token': process.env.REACT_APP_DOCUSEAL_AUTH_TOKEN,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
+export const fetchContractData = async (templateId: string) => {
+  const DOCUSEAL_API_URL = process.env.REACT_APP_DOCUSEAL_API_URL;
+  const DOCUSEAL_AUTH_TOKEN = process.env.REACT_APP_DOCUSEAL_AUTH_TOKEN;
 
-  console.log('Response from get-docuseal-contract:', response.data);
-
-  // Handle errors from API
-  if (response.data.error) {
-    throw new Error(response.data.message || 'Failed to fetch contract data');
+  if (!DOCUSEAL_API_URL || !DOCUSEAL_AUTH_TOKEN) {
+    throw new Error('DocuSeal API URL or Auth Token is missing.');
   }
 
-  return response.data;
-}
+  const headers = new Headers({
+    'X-Auth-Token': DOCUSEAL_AUTH_TOKEN,
+    'Content-Type': 'application/json',
+  });
+
+  const url = `${DOCUSEAL_API_URL}/templates/${templateId}`;
+
+  const response = await fetch(url, { headers });
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.statusText} (status: ${response.status})`);
+  }
+
+  const data = await response.json();
+  return data;
+};
