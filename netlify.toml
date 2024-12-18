@@ -18,6 +18,7 @@
       child-src 'self' blob:;
       object-src 'none';
       media-src 'self'"""
+    Set-Cookie = "SameSite=None; Secure"
     Cross-Origin-Resource-Policy = "same-site"
     Cross-Origin-Opener-Policy = "same-origin-allow-popups"
     Cross-Origin-Embedder-Policy = "credentialless"
@@ -31,18 +32,18 @@
   status = 200
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/docuseal/templates/:templateId"
+  to = "/.netlify/functions/get-docuseal-contract?templateId=:templateId"
   status = 200
 
 [[redirects]]
-  from = "/docuseal/templates/:docusealId"
-  to = "/.netlify/functions/get-docuseal-contract?docusealId=:docusealId"
+  from = "/*"
+  to = "/index.html"
   status = 200
-
 
 [functions]
   node_bundler = "esbuild"
 
 [build.environment]
   DOCUSEAL_API_URL = "https://api.docuseal.com"
+  DOCUSEAL_AUTH_TOKEN = "your-secure-auth-token"
