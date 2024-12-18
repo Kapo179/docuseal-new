@@ -84,6 +84,9 @@ export const handler = async (event) => {
       throw new Error('Template creation failed: Missing template ID');
     }
 
+    // Extract the templateId from the response
+    const templateId = templateResponse.data.id;
+
     // Step 3: Create DocuSeal submission
     const submitters = parties.map((party, index) => ({
       name: party.name,
@@ -93,7 +96,7 @@ export const handler = async (event) => {
     }));
 
     const submissionResponse = await axios.post(
-      `https://api.docuseal.com/templates/${templateResponse.data.id}/submissions`,
+      `https://api.docuseal.com/templates/${templateId}/submissions`,
       {
         submitters: submitters,
       },
@@ -109,11 +112,11 @@ export const handler = async (event) => {
     console.log('Submission created:', submissionResponse.data);
 
     // Step 4: Generate unique session token
-    const sessionToken = `${templateResponse.data.id}-${Date.now()}`;
+    const sessionToken = `${templateId}-${Date.now()}`;
 
     // Store session data in Firebase Realtime Database
     await db.ref(`sessions/${sessionToken}`).set({
-      contractId: templateResponse.data.id,
+      templateId: templateId, // Use templateId consistently
       used: false,
       createdAt: Date.now(),
     });
@@ -129,6 +132,7 @@ export const handler = async (event) => {
         success: true,
         message: 'Template and submission created successfully',
         sessionToken,
+        templateId, // Include templateId in the response
         contractLink,
         previewImageUrl,
       }),

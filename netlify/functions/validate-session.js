@@ -43,17 +43,17 @@ export const handler = async (event) => {
     const sessionRef = db.ref(`sessions/${token}`);
     const sessionSnapshot = await sessionRef.once('value');
     const sessionData = sessionSnapshot.val();
-
-    if (!sessionData) {
+    
+    if (!sessionData || sessionData.templateId !== token) {
       return {
         statusCode: 403,
         headers: CORS_HEADERS,
         body: JSON.stringify({ error: 'Invalid or expired session token' }),
       };
     }
-
-    const { contractId, used } = sessionData;
-
+    
+    const { templateId, used } = sessionData;
+    
     if (used) {
       return {
         statusCode: 403,
@@ -61,22 +61,19 @@ export const handler = async (event) => {
         body: JSON.stringify({ error: 'Session token has already been used' }),
       };
     }
-
-    // Step 3: Mark the session token as used
+    
     await sessionRef.update({ used: true });
-
-    console.log(`Session token validated successfully for contractId: ${contractId}`);
-
-    // Step 4: Return the contract ID for further use
+    
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
       body: JSON.stringify({
         success: true,
         message: 'Session validated successfully',
-        contractId: contractId,
+        templateId: templateId,
       }),
     };
+    
   } catch (error) {
     console.error('Error validating session:', error.message || error);
     return {
