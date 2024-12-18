@@ -5,7 +5,7 @@ import { usePaymentFlow } from '../hooks/usePaymentFlow';
 
 export default function ContractViewer() {
   const { templateId } = useParams();
-  const [docusealPdfUrl, setDocusealPdfUrl] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { createPaymentIntent, clientSecret } = usePaymentFlow();
@@ -34,11 +34,14 @@ export default function ContractViewer() {
         const data = await response.json();
         console.log('Fetched contract data:', data);
 
-        if (data.documents?.[0]?.url) {
-          setDocusealPdfUrl(data.documents[0].url);
+        // Extract preview_image_url from the API response
+        const imageUrl = data.documents?.[0]?.preview_image_url;
+
+        if (imageUrl) {
+          setPreviewImageUrl(imageUrl);
         } else {
-          console.warn('No PDF URL found in fetched contract data.');
-          throw new Error('No PDF URL found in the contract data.');
+          console.warn('No preview image URL found in fetched contract data.');
+          throw new Error('No preview image URL found in the contract data.');
         }
       } catch (err: any) {
         console.error('Error fetching contract data:', err.message || err);
@@ -67,10 +70,10 @@ export default function ContractViewer() {
         <p>Loading...</p>
       ) : error ? (
         <p style={{ color: 'red' }}>{error}</p>
-      ) : docusealPdfUrl ? (
+      ) : previewImageUrl ? (
         <>
           <div
-            className="pdf-preview"
+            className="image-preview"
             style={{
               width: '100%',
               maxWidth: '800px',
@@ -78,37 +81,20 @@ export default function ContractViewer() {
               border: '1px solid #ccc',
               borderRadius: '8px',
               overflow: 'hidden',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
             }}
           >
-            <iframe
-              src={docusealPdfUrl}
-              width="100%"
-              height="100%"
-              title="Contract PDF"
-              style={{ border: 'none' }}
+            <img
+              src={previewImageUrl}
+              alt="Contract Preview"
+              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
             />
-          </div>
-          <div className="download-button" style={{ marginBottom: '16px' }}>
-            <a
-              href={docusealPdfUrl}
-              download={`contract-${templateId}.pdf`}
-              className="btn-download"
-              style={{
-                display: 'inline-block',
-                padding: '10px 20px',
-                backgroundColor: '#007BFF',
-                color: '#fff',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                fontWeight: 'bold',
-              }}
-            >
-              Download PDF
-            </a>
           </div>
         </>
       ) : (
-        <p>No contract available to display.</p>
+        <p>No contract preview available to display.</p>
       )}
 
       <div className="payment-section" style={{ width: '100%', maxWidth: '400px', marginTop: '20px' }}>
