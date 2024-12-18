@@ -7,7 +7,7 @@ interface DocuSealResponse {
   submissionId?: string;
   error?: boolean;
   message?: string;
-  documentUrl?: string; // Add this line
+  documentUrl?: string;
 }
 
 interface GenerateTemplateData {
@@ -15,10 +15,9 @@ interface GenerateTemplateData {
   template: string;
 }
 
-
 export async function generateDocuSealTemplate(data: GenerateTemplateData): Promise<DocuSealResponse> {
   const response = await axios.post<DocuSealResponse>(
- `${API_BASE_URL}/generate-template`,
+    `${API_BASE_URL}/generate-template`,
     {
       formData: data.formData,
       template: data.template,
@@ -53,7 +52,7 @@ export async function generateAgreementTemplate(data: GenerateTemplateData): Pro
 }
 
 // New function to fetch contract data
-export const fetchContractData = async (templateId: string) => {
+export async function fetchContractData(templateId: string): Promise<DocuSealResponse> {
   const DOCUSEAL_API_URL = process.env.REACT_APP_DOCUSEAL_API_URL;
   const DOCUSEAL_AUTH_TOKEN = process.env.REACT_APP_DOCUSEAL_AUTH_TOKEN;
 
@@ -61,18 +60,22 @@ export const fetchContractData = async (templateId: string) => {
     throw new Error('DocuSeal API URL or Auth Token is missing.');
   }
 
-  const headers = new Headers({
-    'X-Auth-Token': DOCUSEAL_AUTH_TOKEN,
-    'Content-Type': 'application/json',
-  });
+  const response = await axios.get<DocuSealResponse>(
+    `${DOCUSEAL_API_URL}/templates/${templateId}`,
+    {
+      headers: {
+        'X-Auth-Token': DOCUSEAL_AUTH_TOKEN,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
 
-  const url = `${DOCUSEAL_API_URL}/templates/${templateId}`;
+  console.log('Response from get-docuseal-contract:', response.data);
 
-  const response = await fetch(url, { headers });
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText} (status: ${response.status})`);
+  // Handle errors from API
+  if (response.data.error) {
+    throw new Error(response.data.message || 'Failed to fetch contract data');
   }
 
-  const data = await response.json();
-  return data;
-};
+  return response.data;
+}
