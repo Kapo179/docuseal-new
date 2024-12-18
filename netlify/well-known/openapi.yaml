@@ -21,8 +21,7 @@ paths:
               type: object
               required:
                 - template
-                - party1
-                - party2
+                - parties
                 - date
                 - scope_of_work
                 - payment_terms
@@ -39,7 +38,7 @@ paths:
                     **Style Tips**:
                     - Define `<style>` in the `<head>` with fonts, margins, colors.
                     - Use headings `<h2>`, `<h3>` for sections (Scope of Work, Payment Terms, etc.).
-                    - Include placeholders for dynamic fields (e.g., `{{party1}}`) or DocuSeal `<text-field>` tags.
+                    - Include placeholders for dynamic fields (e.g., `{{party1.name}}`, `{{party1.email}}`) or DocuSeal `<text-field>` tags.
 
                     **Example**:
                     ```html
@@ -73,7 +72,7 @@ paths:
                       </head>
                       <body>
                         <h1>Service Agreement</h1>
-                        <p>This agreement is made on {{date}} between {{party1}} and {{party2}}.</p>
+                        <p>This agreement is made on {{date}} between {{parties[0].name}} ({{parties[0].email}}) and {{parties[1].name}} ({{parties[1].email}}).</p>
                         <h2>Scope of Work</h2>
                         <p>{{scope_of_work}}</p>
                         <h2>Payment Terms</h2>
@@ -84,41 +83,25 @@ paths:
                         <p>{{termination_clause}}</p>
                         
                         <div class="signature-section">
-                          <signature-field name="Party1Signature" role="Party1" required="true">
-                          </signature-field>
+                          <signature-field name="Party1Signature" role="Party1" required="true"></signature-field>
                           <br/>
-                          <signature-field name="Party2Signature" role="Party2" required="true">
-                          </signature-field>
+                          <signature-field name="Party2Signature" role="Party2" required="true"></signature-field>
                         </div>
                       </body>
                     </html>
                     ```
-                  example: |
-                    <!DOCTYPE html>
-                    <html>
-                      <head>
-                        <title>Service Agreement</title>
-                        <style>
-                          body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-                          h1 { color: #2563eb; margin-bottom: 20px; }
-                        </style>
-                      </head>
-                      <body>
-                        <h1>Service Agreement</h1>
-                        <p>This agreement is entered into on {{date}} between {{party1}} and {{party2}}.</p>
-                        
-                        <signature-field name="Party1Signature" role="Party1" required="true"></signature-field>
-                        <signature-field name="Party2Signature" role="Party2" required="true"></signature-field>
-                        
-                        <text-field name="DateField" role="Signer"></text-field>
-                      </body>
-                    </html>
-                party1:
-                  type: string
-                  description: Name of the first party.
-                party2:
-                  type: string
-                  description: Name of the second party.
+                parties:
+                  type: array
+                  description: List of parties involved in the contract.
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Name of the party.
+                      email:
+                        type: string
+                        description: Email of the party.
                 date:
                   type: string
                   description: Agreement date (DD/MM/YYYY).
