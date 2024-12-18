@@ -6,33 +6,41 @@ import { usePaymentFlow } from '../hooks/usePaymentFlow';
 export default function ContractViewer() {
   const { templateId } = useParams();
   const [docusealPdfUrl, setDocusealPdfUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { createPaymentIntent, clientSecret } = usePaymentFlow();
 
   useEffect(() => {
     const fetchContract = async () => {
+      if (!templateId) {
+        setError('Template ID is missing.');
+        setLoading(false);
+        return;
+      }
+
       try {
         console.log(`Fetching contract data for templateId: ${templateId}`);
-        const response = await fetch(`/.netlify/get-docuseal-contract/${templateId}`); // or `/.netlify/get-docuseal-contract/${templateId}` if no redirect
+        const response = await fetch(`/api/contracts/${templateId}`);
+
         if (!response.ok) {
           throw new Error(`Failed to fetch contract data (status: ${response.status})`);
         }
-  
+
         const data = await response.json();
         console.log('Fetched contract data:', data);
-  
+
         if (data.docusealPdfUrl) {
           setDocusealPdfUrl(data.docusealPdfUrl);
         } else {
-          console.warn('No PDF URL found in fetched contract data.');
+          throw new Error('No PDF URL found in the contract data.');
         }
-      } catch (error) {
-        console.error('Error fetching contract data:', error);
+      } catch (err: any) {
+        console.error('Error fetching contract data:', err);
+        setError(err.message || 'An error occurred while fetching the contract data.');
+      } finally {
+        setLoading(false);
       }
     };
-  
-    fetchContract();
-  }, [templateId]);
-  
 
     fetchContract();
   }, [templateId]);
@@ -48,11 +56,17 @@ export default function ContractViewer() {
 
   return (
     <div className="contract-viewer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-      
+      <h1>Contract Viewer</h1>
+
+      {/* Error Handling */}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
       {/* PDF PREVIEW CONTAINER */}
       <div className="pdf-preview" style={{ width: '100%', maxWidth: '800px', height: '600px', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '8px' }}>Contract PDF</h2>
-        {docusealPdfUrl ? (
+        {loading ? (
+          <p style={{ textAlign: 'center', marginTop: '20px' }}>Loading PDF...</p>
+        ) : docusealPdfUrl ? (
           <iframe
             src={docusealPdfUrl}
             width="100%"
@@ -61,13 +75,13 @@ export default function ContractViewer() {
             style={{ border: 'none' }}
           />
         ) : (
-          <p style={{ textAlign: 'center', marginTop: '20px' }}>Loading PDF...</p>
+          <p style={{ textAlign: 'center', marginTop: '20px' }}>No PDF available to display.</p>
         )}
       </div>
 
       {/* DOWNLOAD BUTTON */}
-      <div className="download-button" style={{ marginBottom: '16px' }}>
-        {docusealPdfUrl && (
+      {docusealPdfUrl && (
+        <div className="download-button" style={{ marginBottom: '16px' }}>
           <a
             href={docusealPdfUrl}
             download={`contract-${templateId}.pdf`}
@@ -79,13 +93,13 @@ export default function ContractViewer() {
               color: '#fff',
               textDecoration: 'none',
               borderRadius: '4px',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
             }}
           >
             Download PDF
           </a>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* PAYMENT SECTION */}
       <div className="payment-section" style={{ width: '100%', maxWidth: '400px', marginTop: '20px' }}>
@@ -106,7 +120,7 @@ export default function ContractViewer() {
               color: '#fff',
               border: 'none',
               borderRadius: '4px',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
             }}
           >
             Pay and Sign
