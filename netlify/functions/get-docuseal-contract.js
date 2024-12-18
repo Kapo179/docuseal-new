@@ -28,16 +28,16 @@ export const handler = async (event) => {
     };
   }
 
-  const { templateId } = event.pathParameters || {};
+  const { templateId } = event.queryStringParameters || {};
   console.log('Extracted templateId:', templateId);
-
+  
   if (!templateId) {
     return {
       statusCode: 400,
       headers: CORS_HEADERS,
       body: JSON.stringify({ error: 'Missing required templateId parameter' }),
     };
-  }
+  }  
 
   try {
     const response = await axios.get(`${DOCUSEAL_API_URL}/templates/${templateId}`, {

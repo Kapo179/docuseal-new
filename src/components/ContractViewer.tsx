@@ -22,7 +22,7 @@ export default function ContractViewer() {
       console.log(`Fetching contract data for templateId: ${templateId}`);
 
       try {
-        const response = await fetch(`/.netlify/functions/get-docuseal-contract/${templateId}`);
+        const response = await fetch(`/.netlify/functions/get-docuseal-contract?templateId=${templateId}`);
         console.log('Fetch response:', response);
 
         if (!response.ok) {

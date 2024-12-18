@@ -39,7 +39,7 @@
 
 # Redirect for DocuSeal Templates Fetch
 [[redirects]]
-  from = "/api/get-docuseal-contract/:templateId"
+  from = "/get-docuseal-contract"
   to = "/.netlify/functions/get-docuseal-contract"
   status = 200
   query = { templateId = ":templateId" }
