@@ -37,7 +37,10 @@ export const handler = async (event) => {
   try {
     console.log('Received event body:', event.body); // Log the received event body
 
-    const { template, parties, date, scope_of_work, payment_terms, start_date, end_date, termination_clause } = JSON.parse(event.body);
+    const parsedBody = JSON.parse(event.body);
+    console.log('Parsed event body:', parsedBody); // Log the parsed event body
+
+    const { template, parties, date, scope_of_work, payment_terms, start_date, end_date, termination_clause } = parsedBody;
 
     // Validation for required fields
     if (!template || !Array.isArray(parties) || parties.length < 2 || !date || !scope_of_work || !payment_terms || !start_date || !end_date || !termination_clause) {
@@ -132,7 +135,6 @@ export const handler = async (event) => {
         success: true,
         message: 'Template and submission created successfully',
         sessionToken,
-        templateId, // Include templateId in the response
         contractLink,
         previewImageUrl,
       }),
