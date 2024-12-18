@@ -35,22 +35,23 @@ export const handler = async (event) => {
   }
 
   try {
-    // Ensure the event body is valid JSON
+    console.log('Raw event body:', event.body);
+
     let parsedBody;
     try {
       parsedBody = JSON.parse(event.body);
+      console.log('Parsed body:', parsedBody);
     } catch (parseError) {
-      console.error('Error parsing JSON:', parseError.message);
+      console.error('Error parsing JSON:', parseError.message, 'Body:', event.body);
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Invalid JSON input' }),
+        body: JSON.stringify({ error: 'Invalid JSON input', rawBody: event.body }),
       };
     }
 
     const { template, parties, date, scope_of_work, payment_terms, start_date, end_date, termination_clause } = parsedBody;
 
-    // Validation for required fields
     if (!template || !Array.isArray(parties) || parties.length < 2 || !date || !scope_of_work || !payment_terms || !start_date || !end_date || !termination_clause) {
       return {
         statusCode: 400,
@@ -59,7 +60,6 @@ export const handler = async (event) => {
       };
     }
 
-    // Step 1: Generate the contract HTML
     const placeholders = {
       parties: JSON.stringify(parties),
       date,
@@ -72,7 +72,6 @@ export const handler = async (event) => {
 
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
 
-    // Step 2: Create DocuSeal template
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
       {
@@ -89,46 +88,21 @@ export const handler = async (event) => {
       }
     );
 
+    console.log('DocuSeal template response:', templateResponse.data);
+
     if (!templateResponse.data?.id) {
       throw new Error('Template creation failed: Missing template ID');
     }
 
-    // Extract the templateId from the response
     const templateId = templateResponse.data.id;
 
-    // Step 3: Create DocuSeal submission
-    const submitters = parties.map((party, index) => ({
-      name: party.name,
-      email: party.email,
-      role: `Party${index + 1}`,
-      preferences: { send_email: true },
-    }));
-
-    const submissionResponse = await axios.post(
-      `https://api.docuseal.com/templates/${templateId}/submissions`,
-      {
-        submitters: submitters,
-      },
-      {
-        headers: {
-          'X-Auth-Token': authToken,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      }
-    );
-
-    // Step 4: Generate unique session token
     const sessionToken = `${templateId}-${Date.now()}`;
-
-    // Store session data in Firebase Realtime Database
     await db.ref(`sessions/${sessionToken}`).set({
-      templateId: templateId, // Use templateId consistently
+      templateId,
       used: false,
       createdAt: Date.now(),
     });
 
-    // Step 5: Construct response with contract link and preview image
     const contractLink = `${process.env.WEB_APP_URL}/contract/${sessionToken}`;
     const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
 
@@ -148,12 +122,11 @@ export const handler = async (event) => {
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Internal server error' }),
+      body: JSON.stringify({ error: 'Internal server error', details: error.message }),
     };
   }
 };
 
-// Utility function to replace placeholders with actual values
 function generateHTMLTemplate(template, placeholders) {
   let htmlTemplate = template;
   for (const [key, value] of Object.entries(placeholders)) {
