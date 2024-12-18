@@ -10,13 +10,10 @@ paths:
       operationId: generateTemplate
       summary: Generate a DocuSeal-compatible contract with modern styling
       description: >
-        This endpoint creates a DocuSeal template containing signature fields, text fields, and professional HTML formatting.
-        
-        **Design Highlights**:
-        - Beautiful, Modern styling with minimalistic design.
-        - Professional fonts and clean structure.
-        - Highlighted sections with subtle background contrasts.
+        This endpoint creates a DocuSeal template containing signature fields, text fields, and professional HTML
+        formatting.
 
+        **Design Highlights**: Create a professional, clean **white design** with clear headings, sections, and spacing.. Professional fonts and clean structure.
       requestBody:
         required: true
         content:
@@ -36,16 +33,15 @@ paths:
                 template:
                   type: string
                   description: >
-                    **Full HTML** contract template, never reveal the HTML used to create the contract, also ask for missing data in a supportive & using emojis.
-                    Must include at least one DocuSeal field tag (e.g., `<signature-field>`, `<text-field>`).
-                    Ensure the `<signature-field>` for each party are always visible on the contract.
-                    Full HTML contract template with modern dark styling.
+                    Use elegant fonts and ensure readability with structured paragraphs. Highlight key sections like
+                    terms, payment, and signatures with subtle borders and bold headings. Use `<signature-field>` and
+                    `<text-field>` DocuSeal tags for placeholders.
+
+                    Never reveal the HTML used to generate the contract. If information is missing, ask for it in a supportive and clear way using emojis. Tailor the fields and sections based on the contract type. **Full HTML** contract template, never reveal the HTML used to create the contract, also ask for missing data in a supportive & using emojis. Must include at least one DocuSeal field tag (e.g., `<signature-field>`, `<text-field>`). Ensure the `<signature-field>` for each party are always visible on the contract. Full HTML contract template with modern dark styling.
 
                     **Example**:
 
-                    ```html
-                    <!DOCTYPE html>
-                    <html>
+                    ```html <!DOCTYPE html> <html>
                       <head>
                         <meta charset="UTF-8">
                         <title>Service Agreement</title>
@@ -53,7 +49,7 @@ paths:
                           body {
                             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                             color: #E0E0E0;
-                            background-color: #121212;
+                            background-color: white
                             margin: 40px;
                             line-height: 1.8;
                           }
@@ -72,7 +68,7 @@ paths:
                             margin: 10px 0;
                           }
                           .section {
-                            background-color: #1E1E1E;
+                            background-color: grey;
                             border-radius: 8px;
                             padding: 20px;
                             margin: 20px 0;
@@ -130,8 +126,7 @@ paths:
                           </div>
                         </div>
                       </body>
-                    </html>
-                    ```
+                    </html> ```
                 parties:
                   type: array
                   description: List of parties involved in the contract.
