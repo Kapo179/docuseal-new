@@ -13,7 +13,7 @@ paths:
         This endpoint creates a DocuSeal template containing signature fields, text fields, and professional HTML formatting.
         
         **Design Highlights**:
-        - Dark, modern styling with minimalistic design.
+        - Beautiful, Modern styling with minimalistic design.
         - Professional fonts and clean structure.
         - Highlighted sections with subtle background contrasts.
 
@@ -58,19 +58,17 @@ paths:
                             line-height: 1.8;
                           }
                           h1, h2 {
-                            color: #4FC3F7;
+                            color: #121212;
                           }
                           h1 {
-                            font-size: 28px;
-                            border-bottom: 2px solid #4FC3F7;
-                            padding-bottom: 10px;
+                            font-size: 19px;
                           }
                           h2 {
-                            font-size: 22px;
+                            font-size: 16px;
                             margin-top: 30px;
                           }
                           p {
-                            color: #BDBDBD;
+                            color: black;
                             margin: 10px 0;
                           }
                           .section {
@@ -124,11 +122,11 @@ paths:
                         <div class="signature-section">
                           <div class="signature">
                             <span>Party 1 Signature</span>
-                            <signature-field name="Party1Signature" role="Party1" required="true" class="signature-field"></signature-field>
+                            <signature-field name="Party1" role="Party1" required="true" class="signature-field"></signature-field>
                           </div>
                           <div class="signature">
                             <span>Party 2 Signature</span>
-                            <signature-field name="Party2Signature" role="Party2" required="true" class="signature-field"></signature-field>
+                            <signature-field name="Party2" role="Party2" required="true" class="signature-field"></signature-field>
                           </div>
                         </div>
                       </body>
