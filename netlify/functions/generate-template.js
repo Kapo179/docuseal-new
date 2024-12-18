@@ -84,7 +84,7 @@ export const handler = async (event) => {
       'https://api.docuseal.com/templates/html',
       {
         html: htmlTemplate,
-        name: 'Contract',
+        name: 'Service Agreement Template',
         size: 'Letter',
       },
       {
