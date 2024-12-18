@@ -1,5 +1,5 @@
-import axios from 'axios';
-import { db } from './firebase'; // Firebase initialization file
+const axios = require('axios');
+const { db } = require('./firebase'); // Firebase initialization file
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -8,7 +8,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -37,20 +37,16 @@ export const handler = async (event) => {
   try {
     console.log('Raw event body:', event.body);
 
-    let parsedBody;
-    try {
-      parsedBody = JSON.parse(event.body);
-      console.log('Parsed body:', parsedBody);
-    } catch (parseError) {
-      console.error('Error parsing JSON:', parseError.message, 'Body:', event.body);
+    if (typeof event.body !== 'string' || (!event.body.startsWith('{') && !event.body.startsWith('['))) {
+      console.error('Invalid event body:', event.body);
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Invalid JSON input', rawBody: event.body }),
+        body: JSON.stringify({ error: 'Invalid JSON format in request body', rawBody: event.body }),
       };
     }
 
-    const { template, parties, date, scope_of_work, payment_terms, start_date, end_date, termination_clause } = parsedBody;
+    const { template, parties, date, scope_of_work, payment_terms, start_date, end_date, termination_clause } = JSON.parse(event.body);
 
     if (!template || !Array.isArray(parties) || parties.length < 2 || !date || !scope_of_work || !payment_terms || !start_date || !end_date || !termination_clause) {
       return {
@@ -118,7 +114,7 @@ export const handler = async (event) => {
       }),
     };
   } catch (error) {
-    console.error('Error generating template or submission:', error?.response?.data || error);
+    console.error('Error generating template or submission:', error.response?.data || error.message);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
