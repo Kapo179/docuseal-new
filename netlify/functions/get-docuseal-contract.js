@@ -37,6 +37,13 @@ exports.handler = async (event) => {
     }
 
     // Parse response JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Received non-JSON response:', text);
+      throw new Error('Received non-JSON response from DocuSeal API');
+    }
+
     const data = await response.json();
 
     // Return fetched data
