@@ -128,7 +128,7 @@ export const handler = async (event) => {
 
     console.log('Submission created:', submissionResponse.data);
 
-    const contractLink = `${process.env.WEB_APP_URL}/contract/${templateResponse.data.id}`;
+    const contractLink = `${process.env.WEB_APP_URL}contract/${templateResponse.data.id}`;
     const previewImageUrl = templateResponse.data.documents[0]?.preview_image_url;
 
 
