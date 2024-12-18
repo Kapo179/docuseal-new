@@ -72,31 +72,35 @@ export default function ContractViewer() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-96">
-              <Loader className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-              <p className="text-gray-600">Loading your contract... ⌛</p>
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center h-96 px-4">
-              <div className="bg-red-100 rounded-full p-3 mb-4">
-                <AlertTriangle className="w-8 h-8 text-red-500" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Oops! Something went wrong 😕</h3>
-              <p className="text-gray-600 text-center max-w-md">{error}</p>
-            </div>
-          ) : previewImageUrl ? (
-            <div className="space-y-6">
-              <div className="relative">
-                <div className="aspect-[1/1.4] max-h-[600px] overflow-hidden bg-gray-50">
-                  <img
-                    src={previewImageUrl}
-                    alt="Contract Preview"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/90 pointer-events-none" />
-              </div>
+        {loading ? (
+  <div className="flex flex-col items-center justify-center h-96">
+    <Loader className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+    <p className="text-gray-600">Loading your contract... ⌛</p>
+  </div>
+) : error ? (
+  <div className="flex flex-col items-center justify-center h-96 px-4">
+    <div className="bg-red-100 rounded-full p-3 mb-4">
+      <AlertTriangle className="w-8 h-8 text-red-500" />
+    </div>
+    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      Oops! Something went wrong 😕
+    </h3>
+    <p className="text-gray-600 text-center max-w-md">{error}</p>
+  </div>
+) : previewImageUrl ? (
+  <div className="flex justify-center items-center w-full h-[80vh] bg-gray-50 rounded-lg shadow-lg overflow-hidden">
+    <img
+      src={previewImageUrl}
+      alt="Contract Preview"
+      className="w-full h-full object-cover"
+    />
+  </div>
+) : (
+  <div className="flex flex-col items-center justify-center h-96 px-4">
+    <p className="text-gray-600">No contract preview available 😔</p>
+  </div>
+)}
+
 
               <div className="p-6 space-y-6">
                 <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
