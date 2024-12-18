@@ -11,8 +11,7 @@ paths:
       summary: Generate a DocuSeal-compatible contract with modern styling
       description: >
         This endpoint creates a DocuSeal template containing signature fields, text fields, and professional HTML formatting.
-        Ensure you get and clarify the exact signature fields, text fields, and ensure you provide details of the parties on the contract.
-
+        
         **Design Highlights**:
         - Dark, modern styling with minimalistic design.
         - Professional fonts and clean structure.
