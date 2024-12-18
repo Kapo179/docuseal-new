@@ -1,0 +1,19 @@
+import { FileText } from 'lucide-react';
+
+export function ContractHeader() {
+  return (
+    <div className="text-center mb-8">
+      <div className="inline-flex items-center justify-center mb-4">
+        <div className="bg-blue-500 p-3 rounded-xl">
+          <FileText className="w-6 h-6 text-white" />
+        </div>
+      </div>
+      <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+        Review Your Contract 📄
+      </h1>
+      <p className="mt-2 text-gray-600">
+        Please review your contract carefully before proceeding with the signing process
+      </p>
+    </div>
+  );
+}
