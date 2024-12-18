@@ -156,7 +156,7 @@ paths:
                   pdfBase64:
                     type: string
                     description: "Base64-encoded PDF output, if requested."
-                  contractViewerLink:
+                  contractLink:
                     type: string
                     format: uri
                     description: "URL for the user to view the contract on contractquickly.com."

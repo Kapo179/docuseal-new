@@ -58,7 +58,7 @@
 # Environment Variables for Build Time
 [build.environment]
   DOCUSEAL_API_URL = "https://api.docuseal.com"
-  DOCUSEAL_AUTH_TOKEN = "your-secure-auth-token"
+
 
 # Caching settings for optimization
 [[headers]]
