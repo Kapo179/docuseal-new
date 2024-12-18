@@ -1,20 +1,18 @@
 openapi: 3.1.0
 info:
   title: ContractQuickly Template Generator API
-  version: "1.0.0"
-
+  version: 1.0.0
 servers:
   - url: https://contractquickly.com/.netlify/functions
-
 paths:
   /generate-template:
     post:
       operationId: generateTemplate
       summary: Generate a DocuSeal-compatible contract with fillable fields
       description: >
-        This endpoint creates a DocuSeal template containing at least one signature-field
-        or text-field for e-signing or fillable fields. Contracts should be fully
-        styled, professional HTML documents with placeholders for DocuSeal fields.
+        This endpoint creates a DocuSeal template containing at least one signature-field or text-field for e-signing or
+        fillable fields. Contracts should be fully beautifully styled, with a notion-like design, professional HTML documents with placeholders for DocuSeal
+        fields.
       requestBody:
         required: true
         content:
@@ -117,28 +115,28 @@ paths:
                     </html>
                 party1:
                   type: string
-                  description: "Name of the first party."
+                  description: Name of the first party.
                 party2:
                   type: string
-                  description: "Name of the second party."
+                  description: Name of the second party.
                 date:
                   type: string
-                  description: "Agreement date (DD/MM/YYYY)."
+                  description: Agreement date (DD/MM/YYYY).
                 scope_of_work:
                   type: string
-                  description: "Description of services or work to be performed."
+                  description: Description of services or work to be performed.
                 payment_terms:
                   type: string
-                  description: "Payment arrangements, e.g. '50% upfront...'."
+                  description: Payment arrangements, e.g. '50% upfront...'.
                 start_date:
                   type: string
-                  description: "Start date (DD/MM/YYYY)."
+                  description: Start date (DD/MM/YYYY).
                 end_date:
                   type: string
-                  description: "End date (DD/MM/YYYY)."
+                  description: End date (DD/MM/YYYY).
                 termination_clause:
                   type: string
-                  description: "Clause detailing how either party may terminate the agreement."
+                  description: Clause detailing how either party may terminate the agreement.
       responses:
         "200":
           description: Contract generated successfully
@@ -152,19 +150,18 @@ paths:
                     example: true
                   contractHtml:
                     type: string
-                    description: "HTML with DocuSeal fields in place, professionally styled."
+                    description: HTML with DocuSeal fields in place, professionally styled.
                   pdfBase64:
                     type: string
-                    description: "Base64-encoded PDF output, if requested."
+                    description: Base64-encoded PDF output, if requested.
                   contractLink:
                     type: string
                     format: uri
-                    description: "URL for the user to view the contract on contractquickly.com."
+                    description: URL for the user to view the contract on contractquickly.com.
                   message:
                     type: string
-                    example: "Contract generated successfully!"
+                    example: Contract generated successfully!
         "400":
           description: Missing required fields
-
 components:
   schemas: {}
