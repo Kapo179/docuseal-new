@@ -1,6 +1,8 @@
 const axios = require('axios');
 
 exports.handler = async (event) => {
+  console.log('Received request:', event);
+
   const { templateId } = event.queryStringParameters;
 
   if (!templateId) {
@@ -13,10 +15,6 @@ exports.handler = async (event) => {
   try {
     const authToken = process.env.DOCUSEAL_AUTH_TOKEN;
 
-    if (!authToken) {
-      throw new Error("Missing DocuSeal Auth Token");
-    }
-
     const response = await axios.get(
       `https://api.docuseal.com/templates/${templateId}`,
       {
@@ -24,18 +22,24 @@ exports.handler = async (event) => {
       }
     );
 
-    const documents = response.data.documents;
+    console.log('DocuSeal response:', response.data);
 
-    if (documents && documents.length > 0) {
+    const document = response.data.documents[0];
+    const submission = response.data.submissions?.[0]; // Fetch signing URL
+
+    if (document && submission) {
       return {
         statusCode: 200,
-        body: JSON.stringify({ pdfUrl: documents[0].url }),
+        body: JSON.stringify({
+          pdfUrl: document.url,
+          signedUrl: submission.embed_src, // Embed signing URL
+        }),
       };
     }
 
     return {
       statusCode: 404,
-      body: JSON.stringify({ error: "Document not found" }),
+      body: JSON.stringify({ error: "Document or signing link not found" }),
     };
   } catch (error) {
     console.error("Error fetching document:", error.message);

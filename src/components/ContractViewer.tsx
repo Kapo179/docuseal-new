@@ -7,17 +7,30 @@ import { fetchContractData } from '../services/docusealApi';
 export default function ContractViewer() {
   const { templateId } = useParams();
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
   const { createPaymentIntent, clientSecret } = usePaymentFlow();
 
   useEffect(() => {
     const fetchContract = async () => {
       try {
         const data = await fetchContractData(templateId);
-        if (data.documents && data.documents.length > 0) {
-          setPdfUrl(data.documents[0].url); // PDF link provided by DocuSeal
+        if (data.pdfUrl) {
+          setPdfUrl(data.pdfUrl);
+        } else {
+          throw new Error("No PDF URL found in response.");
         }
-      } catch (error) {
-        console.error('Error fetching contract:', error);
+
+        // Store the signing link for the paywall
+        if (data.signedUrl) {
+          setSignedUrl(data.signedUrl);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -26,78 +39,99 @@ export default function ContractViewer() {
 
   const handlePaymentSuccess = () => {
     console.log('Payment successful!');
-    // Add success handling logic here
+    setPaymentCompleted(true);
   };
 
-  const handlePaymentError = (error: Error) => {
-    console.error('Payment error:', error);
+  const handlePaymentError = (err: Error) => {
+    console.error('Payment error:', err);
   };
 
   return (
-    <div className="contract-viewer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-      <h1>Contract Viewer</h1>
-      <div className="pdf-preview" style={{ width: '100%', maxWidth: '800px', height: '600px', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
-        {pdfUrl ? (
+    <div style={{ textAlign: 'center', margin: '20px auto' }}>
+      <h1>Contract Preview</h1>
+
+      {/* PDF Preview */}
+      {loading ? (
+        <p>Loading contract...</p>
+      ) : error ? (
+        <p style={{ color: 'red' }}>Error: {error}</p>
+      ) : pdfUrl ? (
+        <>
           <iframe
             src={pdfUrl}
             width="100%"
-            height="100%"
-            title="Contract PDF"
-            style={{ border: 'none' }}
+            height="600px"
+            title="Contract PDF Preview"
+            style={{ border: '1px solid #ccc', borderRadius: '8px', marginBottom: '20px' }}
           />
-        ) : (
-          <p style={{ textAlign: 'center', marginTop: '20px' }}>Loading contract...</p>
-        )}
-      </div>
 
-      {/* DOWNLOAD BUTTON */}
-      <div className="download-button" style={{ marginBottom: '16px' }}>
-        {pdfUrl && (
+          {/* Download PDF */}
           <a
             href={pdfUrl}
             download={`contract-${templateId}.pdf`}
-            className="btn-download"
             style={{
-              display: 'inline-block',
               padding: '10px 20px',
               backgroundColor: '#007BFF',
-              color: '#fff',
+              color: '#FFF',
               textDecoration: 'none',
               borderRadius: '4px',
-              fontWeight: 'bold'
+              marginRight: '10px',
+              display: 'inline-block',
             }}
           >
             Download PDF
           </a>
-        )}
-      </div>
 
-      {/* PAYMENT SECTION */}
-      <div className="payment-section" style={{ width: '100%', maxWidth: '400px', marginTop: '20px' }}>
-        {clientSecret ? (
-          <StripePaymentElement
-            onSuccess={handlePaymentSuccess}
-            onError={handlePaymentError}
-            onCancel={() => console.log('Payment cancelled')}
-          />
-        ) : (
-          <button
-            onClick={createPaymentIntent}
-            className="btn-primary"
-            style={{
-              width: '100%',
-              padding: '10px 20px',
-              backgroundColor: '#28A745',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              fontWeight: 'bold'
-            }}
-          >
-            Pay and Sign
-          </button>
-        )}
-      </div>
+          {/* Paywall Section */}
+          {!paymentCompleted ? (
+            <div style={{ marginTop: '20px' }}>
+              <h3>Pay to Proceed with Signing</h3>
+              {clientSecret ? (
+                <StripePaymentElement
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                />
+              ) : (
+                <button
+                  onClick={createPaymentIntent}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#28A745',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Pay and Unlock Signing
+                </button>
+              )}
+            </div>
+          ) : (
+            signedUrl && (
+              <div style={{ marginTop: '20px' }}>
+                <h3>Sign Your Contract</h3>
+                <a
+                  href={signedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#28A745',
+                    color: '#FFF',
+                    textDecoration: 'none',
+                    borderRadius: '4px',
+                  }}
+                >
+                  Go to Sign
+                </a>
+              </div>
+            )
+          )}
+        </>
+      ) : (
+        <p>No contract available to display.</p>
+      )}
     </div>
   );
 }
