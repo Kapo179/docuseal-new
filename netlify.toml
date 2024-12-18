@@ -39,10 +39,10 @@
 
 # Redirect for DocuSeal Templates Fetch
 [[redirects]]
-  from = "/api/contracts/:templateId"
-  to = "/.netlify/get-docuseal-contract/:templateId"
+  from = "/.netlify/functions/get-docuseal-contract/:templateId"
+  to = "/.netlify/functions/get-docuseal-contract"
   status = 200
-  force = true
+  query = { templateId = ":templateId" }
 
 # Redirect all other routes to index.html for SPA routing
 [[redirects]]

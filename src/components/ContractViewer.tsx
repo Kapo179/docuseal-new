@@ -13,17 +13,22 @@ export default function ContractViewer() {
   useEffect(() => {
     const fetchContract = async () => {
       if (!templateId) {
+        console.error('No template ID provided in route params.');
         setError('No template ID provided.');
         setLoading(false);
         return;
       }
 
+      console.log(`Fetching contract data for templateId: ${templateId}`);
+
       try {
-        console.log(`Fetching contract data for templateId: ${templateId}`);
         const response = await fetch(`/.netlify/functions/get-docuseal-contract/${templateId}`);
+        console.log('Fetch response:', response);
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch contract data (status: ${response.status})`);
+          const errorMessage = `Failed to fetch contract data (status: ${response.status})`;
+          console.error(errorMessage);
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -32,11 +37,12 @@ export default function ContractViewer() {
         if (data.documents?.[0]?.url) {
           setDocusealPdfUrl(data.documents[0].url);
         } else {
-          throw new Error('No PDF URL found in fetched contract data.');
+          console.warn('No PDF URL found in fetched contract data.');
+          throw new Error('No PDF URL found in the contract data.');
         }
-      } catch (err) {
+      } catch (err: any) {
+        console.error('Error fetching contract data:', err.message || err);
         setError(err.message || 'Failed to load contract.');
-        console.error('Error fetching contract data:', err);
       } finally {
         setLoading(false);
       }
@@ -63,7 +69,17 @@ export default function ContractViewer() {
         <p style={{ color: 'red' }}>{error}</p>
       ) : docusealPdfUrl ? (
         <>
-          <div className="pdf-preview" style={{ width: '100%', maxWidth: '800px', height: '600px', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
+          <div
+            className="pdf-preview"
+            style={{
+              width: '100%',
+              maxWidth: '800px',
+              height: '600px',
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              overflow: 'hidden',
+            }}
+          >
             <iframe
               src={docusealPdfUrl}
               width="100%"
