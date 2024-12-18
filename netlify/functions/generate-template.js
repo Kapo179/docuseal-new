@@ -35,29 +35,10 @@ export const handler = async (event) => {
   }
 
   try {
-    const {
-      template,
-      parties,
-      date,
-      scope_of_work,
-      payment_terms,
-      start_date,
-      end_date,
-      termination_clause,
-    } = JSON.parse(event.body);
+    const { template, parties, date, scope_of_work, payment_terms, start_date, end_date, termination_clause } = JSON.parse(event.body);
 
     // Validation for required fields
-    if (
-      !template ||
-      !Array.isArray(parties) ||
-      parties.length < 2 ||
-      !date ||
-      !scope_of_work ||
-      !payment_terms ||
-      !start_date ||
-      !end_date ||
-      !termination_clause
-    ) {
+    if (!template || !Array.isArray(parties) || parties.length < 2 || !date || !scope_of_work || !payment_terms || !start_date || !end_date || !termination_clause) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
