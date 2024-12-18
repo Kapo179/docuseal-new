@@ -1,6 +1,6 @@
 import axios from 'axios';
-import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
+import Redis from 'ioredis';
+import { v4 as uuidv4 } from 'uuid'; // For generating unique tokens
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -8,6 +8,8 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
+
+const redis = new Redis(process.env.REDIS_URL); // Connect to Redis
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -36,6 +38,7 @@ export const handler = async (event) => {
   }
 
   try {
+    // Step 1: Parse and validate the request body
     const {
       template,
       parties,
@@ -47,7 +50,6 @@ export const handler = async (event) => {
       termination_clause,
     } = JSON.parse(event.body);
 
-    // Validation for required fields
     if (
       !template ||
       !Array.isArray(parties) ||
@@ -66,7 +68,7 @@ export const handler = async (event) => {
       };
     }
 
-    // Step 1: Generate the contract HTML
+    // Step 2: Generate the HTML contract
     const placeholders = {
       parties: JSON.stringify(parties),
       date,
@@ -79,7 +81,7 @@ export const handler = async (event) => {
 
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
 
-    // Step 2: Create DocuSeal template
+    // Step 3: Create the DocuSeal template
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
       {
@@ -96,13 +98,11 @@ export const handler = async (event) => {
       }
     );
 
-    console.log('Template created:', templateResponse.data);
-
     if (!templateResponse.data?.id) {
       throw new Error('Template creation failed: Missing template ID');
     }
 
-    // Step 3: Create DocuSeal submission
+    // Step 4: Create submission for the contract
     const submitters = parties.map((party, index) => ({
       name: party.name,
       email: party.email,
@@ -112,9 +112,7 @@ export const handler = async (event) => {
 
     const submissionResponse = await axios.post(
       `https://api.docuseal.com/templates/${templateResponse.data.id}/submissions`,
-      {
-        submitters: submitters,
-      },
+      { submitters },
       {
         headers: {
           'X-Auth-Token': authToken,
@@ -124,25 +122,28 @@ export const handler = async (event) => {
       }
     );
 
-    console.log('Submission created:', submissionResponse.data);
+    // Step 5: Generate a one-time session token
+    const sessionToken = uuidv4(); // Generate a unique session token
+    const contractId = templateResponse.data.id;
 
-    // Step 4: Construct response with contract link and preview image
-    const contractLink = `${process.env.WEB_APP_URL}/contract/${templateResponse.data.id}`;
-    const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
+    // Store the session token in Redis with an expiry time (e.g., 10 minutes)
+    await redis.set(sessionToken, JSON.stringify({ contractId, used: false }), 'EX', 600); // 10 mins expiry
 
+    const secureContractLink = `${process.env.WEB_APP_URL}/contract?token=${sessionToken}`;
+
+    // Step 6: Return the secure contract link
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
       body: JSON.stringify({
         success: true,
         message: 'Template and submission created successfully',
-        templateId: templateResponse.data.id,
-        contractLink: contractLink,
-        previewImageUrl: previewImageUrl,
+        secureLink: secureContractLink,
+        previewImageUrl: templateResponse.data.documents?.[0]?.preview_image_url,
       }),
     };
   } catch (error) {
-    console.error('Error generating template or submission:', error?.response?.data || error);
+    console.error('Error generating template or submission:', error?.response?.data || error.message);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,

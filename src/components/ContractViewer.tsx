@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { StripePaymentElement } from './StripePaymentElement';
 import { usePaymentFlow } from '../hooks/usePaymentFlow';
-import { FileText, Loader, AlertTriangle, Lock, ArrowRight, PenTool, Check, Smartphone, Mail } from 'lucide-react';
+import { FileText, Loader, AlertTriangle, Lock, ArrowRight, PenTool, Check, Smartphone, Mail, Download } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentSuccess } from './PaymentSuccess';
@@ -15,11 +15,13 @@ export default function ContractViewer() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sessionValid, setSessionValid] = useState(false); // To track session validity
   const { createPaymentIntent, clientSecret, isProcessing, isComplete, error: paymentError, setError: setPaymentError, setComplete } = usePaymentFlow();
   const [showPayment, setShowPayment] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
-    const fetchContract = async () => {
+    const validateSessionAndFetchContract = async () => {
       if (!templateId) {
         console.error('No template ID provided in route params.');
         setError('No template ID provided.');
@@ -27,7 +29,27 @@ export default function ContractViewer() {
         return;
       }
 
+      const token = new URLSearchParams(window.location.search).get('token'); // Get session token from URL
+
+      if (!token) {
+        setError('Session token is missing.');
+        setLoading(false);
+        return;
+      }
+
       try {
+        // Step 1: Validate the session token
+        const validateResponse = await fetch(`/.netlify/functions/validate-session?token=${token}`);
+        const validateData = await validateResponse.json();
+
+        if (!validateResponse.ok || !validateData.success) {
+          throw new Error(validateData.error || 'Invalid session token.');
+        }
+
+        console.log('Session validated:', validateData);
+        setSessionValid(true);
+
+        // Step 2: Fetch contract data if session is valid
         const response = await fetch(`/.netlify/functions/get-docuseal-contract?templateId=${templateId}`);
         
         if (!response.ok) {
@@ -50,14 +72,14 @@ export default function ContractViewer() {
           throw new Error('No PDF URL found in the contract data.');
         }
       } catch (err: any) {
-        console.error('Error fetching contract data:', err.message || err);
+        console.error('Error:', err.message || err);
         setError(err.message || 'Failed to load contract.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchContract();
+    validateSessionAndFetchContract();
   }, [templateId]);
 
   const handlePaymentSuccess = () => {
@@ -77,6 +99,26 @@ export default function ContractViewer() {
       setShowPayment(true);
     } catch (error) {
       console.error('Payment initialization failed:', error);
+    }
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `contract-${templateId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading the PDF:', error);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -101,7 +143,7 @@ export default function ContractViewer() {
           {loading ? (
             <div className="flex flex-col items-center justify-center h-96">
               <Loader className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-              <p className="text-gray-600">Loading your contract... ⌛</p>
+              <p className="text-gray-600">Validating your session... ⌛</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center h-96 px-4">
@@ -113,7 +155,7 @@ export default function ContractViewer() {
               </h3>
               <p className="text-gray-600 text-center max-w-md">{error}</p>
             </div>
-          ) : previewImageUrl ? (
+          ) : sessionValid && previewImageUrl ? (
             <div className="space-y-6">
               <div className="flex justify-center items-center w-full max-h-[60vh] bg-gray-50 rounded-lg shadow-lg overflow-hidden p-4">
                 <img
@@ -122,7 +164,6 @@ export default function ContractViewer() {
                   className="w-full max-h-full object-contain rounded-lg"
                 />
               </div>
-
               <div className="p-6 space-y-6">
                 <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                   <div className="flex items-start gap-3">
@@ -226,14 +267,29 @@ export default function ContractViewer() {
                 )}
 
                 {pdfUrl && (
-                  <div className="text-center mt-4">
-                    <a
-                      href={pdfUrl}
-                      download={`contract-${templateId}.pdf`}
-                      className="inline-block px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-4">or download and sign manually</p>
+                    <button
+                      type="button"
+                      onClick={handleDownload}
+                      disabled={isDownloading}
+                      className="btn-secondary inline-flex items-center gap-2"
                     >
-                      Download PDF
-                    </a>
+                      {isDownloading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="animate-spin h-4 w-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Preparing Download...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2">
+                          <Download className="w-4 h-4" />
+                          Download Agreement
+                        </span>
+                      )}
+                    </button>
                   </div>
                 )}
               </div>
