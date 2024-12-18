@@ -80,20 +80,20 @@ export default function ContractViewer() {
           ) : error ? (
             <div className="flex flex-col items-center justify-center h-96 px-4">
               <div className="bg-red-100 rounded-full p-3 mb-4">
-                  <AlertTriangle className="w-8 h-8 text-red-500" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Oops! Something went wrong 😕</h3>
-                <p className="text-gray-600 text-center max-w-md">{error}</p>
+                <AlertTriangle className="w-8 h-8 text-red-500" />
               </div>
-            ) : previewImageUrl ? (
-  <div className="space-y-6">
-    <div className="flex justify-center items-center">
-      <img
-        src={previewImageUrl}
-        alt="Contract Preview"
-        className="w-full max-w-4xl h-auto object-cover rounded-lg shadow-md"
-        style={{ maxHeight: '80vh' }}
-      />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Oops! Something went wrong 😕</h3>
+              <p className="text-gray-600 text-center max-w-md">{error}</p>
+            </div>
+          ) : previewImageUrl ? (
+            <div className="space-y-6">
+              <div className="relative">
+                <div className="aspect-[1/1.4] max-h-[600px] overflow-hidden bg-gray-50">
+                  <img
+                    src={previewImageUrl}
+                    alt="Contract Preview"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/90 pointer-events-none" />
               </div>
