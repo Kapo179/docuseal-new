@@ -35,8 +35,6 @@ export const handler = async (event) => {
   }
 
   try {
-    console.log('Received event body:', event.body); // Log the received event body
-
     // Ensure the event body is valid JSON
     let parsedBody;
     try {
@@ -49,8 +47,6 @@ export const handler = async (event) => {
         body: JSON.stringify({ error: 'Invalid JSON input' }),
       };
     }
-
-    console.log('Parsed event body:', parsedBody); // Log the parsed event body
 
     const { template, parties, date, scope_of_work, payment_terms, start_date, end_date, termination_clause } = parsedBody;
 
@@ -93,8 +89,6 @@ export const handler = async (event) => {
       }
     );
 
-    console.log('Template created:', templateResponse.data);
-
     if (!templateResponse.data?.id) {
       throw new Error('Template creation failed: Missing template ID');
     }
@@ -123,8 +117,6 @@ export const handler = async (event) => {
         },
       }
     );
-
-    console.log('Submission created:', submissionResponse.data);
 
     // Step 4: Generate unique session token
     const sessionToken = `${templateId}-${Date.now()}`;
