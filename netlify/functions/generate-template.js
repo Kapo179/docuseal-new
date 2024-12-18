@@ -37,7 +37,19 @@ export const handler = async (event) => {
   try {
     console.log('Received event body:', event.body); // Log the received event body
 
-    const parsedBody = JSON.parse(event.body);
+    // Ensure the event body is valid JSON
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body);
+    } catch (parseError) {
+      console.error('Error parsing JSON:', parseError.message);
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ error: 'Invalid JSON input' }),
+      };
+    }
+
     console.log('Parsed event body:', parsedBody); // Log the parsed event body
 
     const { template, parties, date, scope_of_work, payment_terms, start_date, end_date, termination_clause } = parsedBody;
