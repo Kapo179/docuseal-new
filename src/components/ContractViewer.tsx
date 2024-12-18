@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { StripePaymentElement } from './StripePaymentElement';
 import { usePaymentFlow } from '../hooks/usePaymentFlow';
+import { fetchContractData } from '../services/docusealApi';
 
 export default function ContractViewer() {
   const { templateId } = useParams();
@@ -11,18 +12,7 @@ export default function ContractViewer() {
   useEffect(() => {
     const fetchContract = async () => {
       try {
-        const headers = new Headers();
-        headers.append('X-Auth-Token', process.env.REACT_APP_DOCUSEAL_AUTH_TOKEN || '');
-        headers.append('Content-Type', 'application/json');
-
-        const response = await fetch(
-          `https://api.docuseal.com/templates/${templateId}`,
-          {
-            headers: headers,
-          }
-        );
-
-        const data = await response.json();
+        const data = await fetchContractData(templateId);
         if (data.documents && data.documents.length > 0) {
           setPdfUrl(data.documents[0].url); // PDF link provided by DocuSeal
         }

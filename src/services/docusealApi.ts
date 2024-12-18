@@ -51,3 +51,25 @@ export async function generateDocuSealTemplate(data: GenerateTemplateData): Prom
 export async function generateAgreementTemplate(data: GenerateTemplateData): Promise<DocuSealResponse> {
   return generateDocuSealTemplate(data);
 }
+
+// New function to fetch contract data
+export async function fetchContractData(templateId: string): Promise<DocuSealResponse> {
+  const response = await axios.get<DocuSealResponse>(
+    `${API_BASE_URL}/get-docuseal-contract?docusealId=${templateId}`,
+    {
+      headers: {
+        'X-Auth-Token': process.env.REACT_APP_DOCUSEAL_AUTH_TOKEN,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  console.log('Response from get-docuseal-contract:', response.data);
+
+  // Handle errors from API
+  if (response.data.error) {
+    throw new Error(response.data.message || 'Failed to fetch contract data');
+  }
+
+  return response.data;
+}
