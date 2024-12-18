@@ -1,35 +1,15 @@
 import axios from 'axios';
-import admin from 'firebase-admin';
-
-// Initialize Firebase Admin SDK
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)),
-    databaseURL: process.env.FIREBASE_DATABASE_URL,
-  });
-}
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 export const handler = async (event) => {
-  console.log('Event received:', JSON.stringify(event, null, 2));
-
-  const DOCUSEAL_API_URL = process.env.DOCUSEAL_API_URL;
-  const DOCUSEAL_AUTH_TOKEN = process.env.DOCUSEAL_AUTH_TOKEN;
-
-  if (!DOCUSEAL_API_URL || !DOCUSEAL_AUTH_TOKEN) {
-    return {
-      statusCode: 500,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Server configuration error: missing DocuSeal API details' }),
-    };
-  }
-
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -37,65 +17,146 @@ export const handler = async (event) => {
     };
   }
 
-  const { templateId, sessionToken } = event.queryStringParameters || {};
-  console.log('Extracted templateId:', templateId);
-  console.log('Extracted sessionToken:', sessionToken);
-
-  if (!templateId || !sessionToken) {
+  if (event.httpMethod !== 'POST') {
     return {
-      statusCode: 400,
+      statusCode: 405,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Missing required templateId or sessionToken parameter' }),
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
+  const authToken = process.env.DOCUSEAL_AUTH_TOKEN;
+  if (!authToken) {
+    console.error('Missing DocuSeal authentication token');
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Server configuration error' }),
     };
   }
 
   try {
-    // Validate session token in Firebase
-    const db = admin.database();
-    const sessionRef = db.ref(`sessions/${sessionToken}`);
-    const sessionSnapshot = await sessionRef.once('value');
+    const {
+      template,
+      parties,
+      date,
+      scope_of_work,
+      payment_terms,
+      start_date,
+      end_date,
+      termination_clause,
+    } = JSON.parse(event.body);
 
-    if (!sessionSnapshot.exists()) {
+    // Validation for required fields
+    if (
+      !template ||
+      !Array.isArray(parties) ||
+      parties.length < 2 ||
+      !date ||
+      !scope_of_work ||
+      !payment_terms ||
+      !start_date ||
+      !end_date ||
+      !termination_clause
+    ) {
       return {
-        statusCode: 403,
+        statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Invalid or expired session token' }),
+        body: JSON.stringify({ error: 'Missing required fields or invalid parties data' }),
       };
     }
 
-    const sessionData = sessionSnapshot.val();
+    // Step 1: Generate the contract HTML
+    const placeholders = {
+      parties: JSON.stringify(parties),
+      date,
+      scope_of_work,
+      payment_terms,
+      start_date,
+      end_date,
+      termination_clause,
+    };
 
-    if (sessionData.used || sessionData.templateId !== templateId) {
-      return {
-        statusCode: 403,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Session token is invalid or has already been used' }),
-      };
-    }
+    const htmlTemplate = generateHTMLTemplate(template, placeholders);
 
-    // Mark the session token as used
-    await sessionRef.update({ used: true });
-
-    // Fetch the contract data from DocuSeal
-    const response = await axios.get(`${DOCUSEAL_API_URL}/templates/${templateId}`, {
-      headers: {
-        'X-Auth-Token': DOCUSEAL_AUTH_TOKEN,
-        'Content-Type': 'application/json',
+    // Step 2: Create DocuSeal template
+    const templateResponse = await axios.post(
+      'https://api.docuseal.com/templates/html',
+      {
+        html: htmlTemplate,
+        name: 'Service Agreement Template',
+        size: 'Letter',
       },
-    });
+      {
+        headers: {
+          'X-Auth-Token': authToken,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      }
+    );
+
+    console.log('Template created:', templateResponse.data);
+
+    if (!templateResponse.data?.id) {
+      throw new Error('Template creation failed: Missing template ID');
+    }
+
+    // Step 3: Create DocuSeal submission
+    const submitters = parties.map((party, index) => ({
+      name: party.name,
+      email: party.email,
+      role: `Party${index + 1}`,
+      preferences: { send_email: true },
+    }));
+
+    const submissionResponse = await axios.post(
+      `https://api.docuseal.com/templates/${templateResponse.data.id}/submissions`,
+      {
+        submitters: submitters,
+      },
+      {
+        headers: {
+          'X-Auth-Token': authToken,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      }
+    );
+
+    console.log('Submission created:', submissionResponse.data);
+
+    // Step 4: Construct response with contract link and preview image
+    const contractLink = `${process.env.WEB_APP_URL}/contract/${templateResponse.data.id}`;
+    const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
 
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
-      body: JSON.stringify(response.data),
+      body: JSON.stringify({
+        success: true,
+        message: 'Template and submission created successfully',
+        templateId: templateResponse.data.id,
+        contractLink: contractLink,
+        previewImageUrl: previewImageUrl,
+      }),
     };
   } catch (error) {
-    console.error('Error fetching DocuSeal template or validating session:', error.response?.data || error.message);
-
+    console.error('Error generating template or submission:', error?.response?.data || error);
     return {
-      statusCode: error.response?.status || 500,
+      statusCode: 500,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Failed to fetch contract data or validate session' }),
+      body: JSON.stringify({ error: 'Internal server error' }),
     };
   }
 };
+
+// Utility function to replace placeholders with actual values
+function generateHTMLTemplate(template, placeholders) {
+  let htmlTemplate = template;
+  for (const [key, value] of Object.entries(placeholders)) {
+    const placeholder = `{{${key}}}`;
+    htmlTemplate = htmlTemplate.replace(new RegExp(placeholder, 'g'), value);
+  }
+  return htmlTemplate;
+}

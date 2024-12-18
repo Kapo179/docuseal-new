@@ -17,35 +17,26 @@ export default function ContractViewer() {
   const [error, setError] = useState<string | null>(null);
   const { createPaymentIntent, clientSecret, isProcessing, isComplete, error: paymentError, setError: setPaymentError, setComplete } = usePaymentFlow();
   const [showPayment, setShowPayment] = useState(false);
-  const [sessionToken, setSessionToken] = useState<string | null>(() => localStorage.getItem('sessionToken'));
 
   useEffect(() => {
-    const validateSessionAndFetchContract = async () => {
-      if (!templateId || !sessionToken) {
-        console.error('Missing template ID or session token.');
-        setError('You do not have access to this contract.');
+    const fetchContract = async () => {
+      if (!templateId) {
+        console.error('No template ID provided in route params.');
+        setError('No template ID provided.');
         setLoading(false);
         return;
       }
 
       try {
-        console.log('Validating session token...');
-        const validationResponse = await fetch(`/.netlify/functions/validate-session?token=${sessionToken}`);
-        if (!validationResponse.ok) {
-          throw new Error('Session validation failed.');
-        }
-        const validationData = await validationResponse.json();
-        console.log('Session validation successful:', validationData);
-
-        console.log('Fetching contract data...');
-        const contractResponse = await fetch(`/.netlify/functions/get-docuseal-contract?templateId=${templateId}`);
-        if (!contractResponse.ok) {
-          throw new Error(`Failed to fetch contract data (status: ${contractResponse.status})`);
+        const response = await fetch(`/.netlify/functions/get-docuseal-contract?templateId=${templateId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch contract data (status: ${response.status})`);
         }
 
-        const contractData = await contractResponse.json();
-        const imageUrl = contractData.documents?.[0]?.preview_image_url;
-        const pdfUrl = contractData.documents?.[0]?.url;
+        const data = await response.json();
+        const imageUrl = data.documents?.[0]?.preview_image_url;
+        const pdfUrl = data.documents?.[0]?.url;
 
         if (imageUrl) {
           setPreviewImageUrl(imageUrl);
@@ -59,15 +50,15 @@ export default function ContractViewer() {
           throw new Error('No PDF URL found in the contract data.');
         }
       } catch (err: any) {
-        console.error('Error during session validation or contract fetch:', err.message || err);
-        setError('You do not have access to this contract.');
+        console.error('Error fetching contract data:', err.message || err);
+        setError(err.message || 'Failed to load contract.');
       } finally {
         setLoading(false);
       }
     };
 
-    validateSessionAndFetchContract();
-  }, [templateId, sessionToken]);
+    fetchContract();
+  }, [templateId]);
 
   const handlePaymentSuccess = () => {
     console.log('Payment successful! 🎉');
@@ -159,13 +150,77 @@ export default function ContractViewer() {
                   </Elements>
                 ) : (
                   <>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="bg-green-100 p-2 rounded-lg">
+                        <PenTool className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">Sign Online</h3>
+                        <p className="text-sm text-gray-600">Fast, Secure, and Certified!✨</p>
+                      </div>
+                      <div className="ml-auto">
+                        <span className="text-2xl font-bold text-green-600">$2.99</span>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                      {[
+                        { icon: <PenTool className="w-4 h-4" />, text: 'Sign Hassle-free' },
+                        { icon: <Smartphone className="w-4 h-4" />, text: 'Send via text' },
+                        { icon: <Mail className="w-4 h-4" />, text: 'Send via email' }
+                      ].map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2 text-gray-700">
+                          <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
+                          <span className="text-sm flex items-center gap-1.5">
+                            {feature.icon}
+                            {feature.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {paymentError && (
+                      <div className="rounded-lg bg-red-50 p-3 border border-red-200 mb-6">
+                        <div className="flex gap-2">
+                          <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                          <span className="text-sm text-red-600">{paymentError}</span>
+                        </div>
+                      </div>
+                    )}
+
                     <button
                       type="button"
                       onClick={handleSignOnline}
                       disabled={isProcessing}
-                      className="w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-white rounded-xl px-6 py-3"
+                      className="w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-white rounded-xl px-6 py-3
+                        font-semibold shadow-lg shadow-emerald-500/20 
+                        hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02]
+                        active:scale-[0.98] transform transition-all duration-200
+                        disabled:opacity-75 disabled:cursor-not-allowed
+                        animate-pulse hover:animate-none"
                     >
-                      {isProcessing ? 'Processing...' : 'Sign Online ⚡ ($2.99)'}
+                      {isProcessing ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Processing...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2">
+                          <span>Sign Online ⚡</span>
+                          <span className="opacity-90">($2.99)</span>
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => console.log('Bypass payment')}
+                      className="mt-4 w-full px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors rounded-lg border border-gray-200 hover:border-gray-300 bg-white"
+                    >
+                      [TEMP] Skip Payment (Remove before launch)
                     </button>
                   </>
                 )}
