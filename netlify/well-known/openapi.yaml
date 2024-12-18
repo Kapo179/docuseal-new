@@ -11,7 +11,7 @@ paths:
       summary: Generate a DocuSeal-compatible contract with fillable fields
       description: >
         This endpoint creates a DocuSeal template containing at least one signature-field or text-field for e-signing or
-        fillable fields. Contracts should be fully beautifully styled, with a notion-like design, professional HTML documents with placeholders for DocuSeal
+        fillable fields. Contracts should be fully beautifully styled, with a official-government document like design, professional HTML documents with placeholders for DocuSeal
         fields.
       requestBody:
         required: true

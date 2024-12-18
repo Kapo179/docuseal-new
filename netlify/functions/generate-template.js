@@ -38,8 +38,7 @@ export const handler = async (event) => {
   try {
     const {
       template,
-      party1,
-      party2,
+      partyies,
       date,
       scope_of_work,
       payment_terms,
@@ -50,8 +49,7 @@ export const handler = async (event) => {
 
     if (
       !template ||
-      !party1 ||
-      !party2 ||
+      !parties ||
       !date ||
       !scope_of_work ||
       !payment_terms ||
@@ -67,8 +65,7 @@ export const handler = async (event) => {
     }
 
     const placeholders = {
-      party1,
-      party2,
+      parties,
       date,
       scope_of_work,
       payment_terms,
