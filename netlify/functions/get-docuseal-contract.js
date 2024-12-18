@@ -1,66 +1,60 @@
-const fetch = require('node-fetch');
+import axios from 'axios';
 
-exports.handler = async (event) => {
-  // Extract templateId from query params
-  const { templateId } = event.queryStringParameters;
+const CORS_HEADERS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+};
 
-  // Access environment variables securely
-  const apiUrl = process.env.DOCUSEAL_API_URL;
-  const authToken = process.env.DOCUSEAL_AUTH_TOKEN;
+export const handler = async (event) => {
+  const DOCUSEAL_API_URL = process.env.DOCUSEAL_API_URL;
+  const DOCUSEAL_AUTH_TOKEN = process.env.DOCUSEAL_AUTH_TOKEN;
 
-  // Verify that environment variables are set
-  if (!apiUrl || !authToken) {
-    console.error("Missing environment variables: DOCUSEAL_API_URL or DOCUSEAL_AUTH_TOKEN");
+  if (!DOCUSEAL_API_URL || !DOCUSEAL_AUTH_TOKEN) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error: Missing configuration." }),
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Server configuration error: missing DocuSeal API details' }),
     };
   }
 
-  // Log the request initiation (optional for debugging, but omit sensitive info)
-  console.log(`Fetching template with ID: ${templateId}`);
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: CORS_HEADERS,
+    };
+  }
+
+  const { templateId } = event.queryStringParameters || {};
+  if (!templateId) {
+    return {
+      statusCode: 400,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Missing required templateId parameter' }),
+    };
+  }
 
   try {
-    // Call the DocuSeal API
-    const response = await fetch(`${apiUrl}/templates/${templateId}`, {
-      method: 'GET',
+    const response = await axios.get(`${DOCUSEAL_API_URL}/templates/${templateId}`, {
       headers: {
-        'X-Auth-Token': authToken,
+        'X-Auth-Token': DOCUSEAL_AUTH_TOKEN,
         'Content-Type': 'application/json',
       },
     });
 
-    // Check for API errors
-    if (!response.ok) {
-      console.error(`Error fetching template: ${response.statusText} (Status: ${response.status})`);
-      throw new Error(`Failed to fetch template. Status: ${response.status}`);
-    }
-
-    // Parse response JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('Received non-JSON response:', text);
-      throw new Error('Received non-JSON response from DocuSeal API');
-    }
-
-    const data = await response.json();
-
-    // Return fetched data
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*', // CORS support
-      },
-      body: JSON.stringify(data),
+      headers: CORS_HEADERS,
+      body: JSON.stringify(response.data),
     };
   } catch (error) {
-    // Log and return error details
-    console.error("Error in get-docuseal-contract function:", error.message);
+    console.error('Error fetching DocuSeal template:', error.response?.data || error.message);
+
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message || "Failed to fetch template." }),
+      statusCode: error.response?.status || 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Failed to fetch contract data' }),
     };
   }
 };
