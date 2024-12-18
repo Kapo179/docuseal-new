@@ -88,22 +88,22 @@ paths:
                         <h1>Service Agreement</h1>
                         <p>This agreement is made on {{date}} between {{parties[1].name}} ({{parties[1].email}}) and {{parties[2].name}} ({{parties[2].email}}).</p>
 
-                        <div class="section">
+                        <div>
                           <h2>Scope of Work</h2>
                           <p>{{scope_of_work}}</p>
                         </div>
 
-                        <div class="section">
+                        <div>
                           <h2>Payment Terms</h2>
                           <p>{{payment_terms}}</p>
                         </div>
 
-                        <div class="section">
+                        <div>
                           <h2>Contract Duration</h2>
                           <p>Start Date: {{start_date}} <br/> End Date: {{end_date}}</p>
                         </div>
 
-                        <div class="section">
+                        <div>
                           <h2>Termination Clause</h2>
                           <p>{{termination_clause}}</p>
                         </div>
