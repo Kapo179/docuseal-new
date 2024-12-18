@@ -88,13 +88,14 @@ export default function ContractViewer() {
               <p className="text-gray-600 text-center max-w-md">{error}</p>
             </div>
           ) : previewImageUrl ? (
-            <div className="flex justify-center items-center w-full h-[80vh] bg-gray-50 rounded-lg shadow-lg overflow-hidden">
-              <img
-                src={previewImageUrl}
-                alt="Contract Preview"
-                className="w-full h-full object-cover"
-              />
-            </div>
+<div className="flex justify-center items-center w-full max-h-[60vh] bg-gray-50 rounded-lg shadow-lg overflow-hidden">
+  <img
+    src={previewImageUrl}
+    alt="Contract Preview"
+    className="w-full max-h-full object-contain"
+  />
+</div>
+
           ) : (
             <div className="flex flex-col items-center justify-center h-96 px-4">
               <p className="text-gray-600">No contract preview available 😔</p>
