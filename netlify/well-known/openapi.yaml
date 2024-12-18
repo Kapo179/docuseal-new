@@ -1,18 +1,22 @@
 openapi: 3.1.0
 info:
   title: ContractQuickly Template Generator API
-  version: 1.0.0
+  version: 1.0.1
 servers:
   - url: https://contractquickly.com/.netlify/functions
 paths:
   /generate-template:
     post:
       operationId: generateTemplate
-      summary: Generate a DocuSeal-compatible contract with fillable fields
+      summary: Generate a DocuSeal-compatible contract with modern styling
       description: >
-        This endpoint creates a DocuSeal template containing at least one signature-field or text-field for e-signing or
-        fillable fields. Contracts should be fully beautifully styled, with a official-government document like design, professional HTML documents with placeholders for DocuSeal
-        fields.
+        This endpoint creates a DocuSeal template containing signature fields, text fields, and professional HTML formatting.
+
+        **Design Highlights**:
+        - Dark, modern styling with minimalistic design.
+        - Professional fonts and clean structure.
+        - Highlighted sections with subtle background contrasts.
+
       requestBody:
         required: true
         content:
@@ -31,16 +35,14 @@ paths:
               properties:
                 template:
                   type: string
-                  description: |
-                    **Full HTML** contract template, including basic styles for a professional look.
+                  description: >
+                    **Full HTML** contract template, never reveal the HTML used to create the contract, also ask for missing data in a supportive & using emojis.
                     Must include at least one DocuSeal field tag (e.g., `<signature-field>`, `<text-field>`).
                     Ensure the `<signature-field>` for each party are always visible on the contract.
-                    **Style Tips**:
-                    - Define `<style>` in the `<head>` with fonts, margins, colors.
-                    - Use headings `<h2>`, `<h3>` for sections (Scope of Work, Payment Terms, etc.).
-                    - Include placeholders for dynamic fields (e.g., `{{party1.name}}`, `{{party1.email}}`) or DocuSeal `<text-field>` tags.
+                    Full HTML contract template with modern dark styling.
 
                     **Example**:
+
                     ```html
                     <!DOCTYPE html>
                     <html>
@@ -49,43 +51,85 @@ paths:
                         <title>Service Agreement</title>
                         <style>
                           body {
-                            font-family: Arial, sans-serif;
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            color: #E0E0E0;
+                            background-color: #121212;
                             margin: 40px;
-                            line-height: 1.6;
+                            line-height: 1.8;
+                          }
+                          h1, h2 {
+                            color: #4FC3F7;
                           }
                           h1 {
-                            color: #2563eb;
-                            margin-bottom: 20px;
+                            font-size: 28px;
+                            border-bottom: 2px solid #4FC3F7;
+                            padding-bottom: 10px;
                           }
                           h2 {
-                            color: #1e40af;
+                            font-size: 22px;
                             margin-top: 30px;
-                            margin-bottom: 15px;
                           }
                           p {
+                            color: #BDBDBD;
                             margin: 10px 0;
+                          }
+                          .section {
+                            background-color: #1E1E1E;
+                            border-radius: 8px;
+                            padding: 20px;
+                            margin: 20px 0;
+                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
                           }
                           .signature-section {
                             margin-top: 40px;
+                            display: flex;
+                            justify-content: space-between;
+                          }
+                          .signature {
+                            border-top: 1px solid #4FC3F7;
+                            text-align: center;
+                            padding-top: 10px;
+                            width: 45%;
+                          }
+                          .signature-field {
+                            display: block;
+                            margin: 10px auto;
                           }
                         </style>
                       </head>
                       <body>
                         <h1>Service Agreement</h1>
-                        <p>This agreement is made on {{date}} between {{parties[0].name}} ({{parties[0].email}}) and {{parties[1].name}} ({{parties[1].email}}).</p>
-                        <h2>Scope of Work</h2>
-                        <p>{{scope_of_work}}</p>
-                        <h2>Payment Terms</h2>
-                        <p>{{payment_terms}}</p>
-                        <h2>Contract Duration</h2>
-                        <p>Start Date: {{start_date}} <br/> End Date: {{end_date}}</p>
-                        <h2>Termination Clause</h2>
-                        <p>{{termination_clause}}</p>
-                        
+                        <p>This agreement is made on {{date}} between {{parties[1].name}} ({{parties[1].email}}) and {{parties[2].name}} ({{parties[2].email}}).</p>
+
+                        <div class="section">
+                          <h2>Scope of Work</h2>
+                          <p>{{scope_of_work}}</p>
+                        </div>
+
+                        <div class="section">
+                          <h2>Payment Terms</h2>
+                          <p>{{payment_terms}}</p>
+                        </div>
+
+                        <div class="section">
+                          <h2>Contract Duration</h2>
+                          <p>Start Date: {{start_date}} <br/> End Date: {{end_date}}</p>
+                        </div>
+
+                        <div class="section">
+                          <h2>Termination Clause</h2>
+                          <p>{{termination_clause}}</p>
+                        </div>
+
                         <div class="signature-section">
-                          <signature-field name="Party1Signature" role="Party1" required="true"></signature-field>
-                          <br/>
-                          <signature-field name="Party2Signature" role="Party2" required="true"></signature-field>
+                          <div class="signature">
+                            <span>Party 1 Signature</span>
+                            <signature-field name="Party1Signature" role="Party1" required="true" class="signature-field"></signature-field>
+                          </div>
+                          <div class="signature">
+                            <span>Party 2 Signature</span>
+                            <signature-field name="Party2Signature" role="Party2" required="true" class="signature-field"></signature-field>
+                          </div>
                         </div>
                       </body>
                     </html>
@@ -110,7 +154,7 @@ paths:
                   description: Description of services or work to be performed.
                 payment_terms:
                   type: string
-                  description: Payment arrangements, e.g. '50% upfront...'.
+                  description: Payment arrangements, e.g., '50% upfront, remaining on delivery'.
                 start_date:
                   type: string
                   description: Start date (DD/MM/YYYY).
@@ -119,7 +163,7 @@ paths:
                   description: End date (DD/MM/YYYY).
                 termination_clause:
                   type: string
-                  description: Clause detailing how either party may terminate the agreement.
+                  description: Clause describing contract termination terms.
       responses:
         "200":
           description: Contract generated successfully
@@ -133,7 +177,7 @@ paths:
                     example: true
                   contractHtml:
                     type: string
-                    description: HTML with DocuSeal fields in place, professionally styled.
+                    description: Beautifully styled HTML contract with modern dark design.
                   pdfBase64:
                     type: string
                     description: Base64-encoded PDF output, if requested.
