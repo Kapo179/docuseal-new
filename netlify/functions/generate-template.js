@@ -1,5 +1,6 @@
 const axios = require('axios');
-const { db } = require('./firebase'); // Firebase initialization file
+const db = global.db || require('./firebase').db;
+global.db = db;
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -8,7 +9,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-exports.handler = async (event) => {
+const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -37,16 +38,20 @@ exports.handler = async (event) => {
   try {
     console.log('Raw event body:', event.body);
 
-    if (typeof event.body !== 'string' || (!event.body.startsWith('{') && !event.body.startsWith('['))) {
-      console.error('Invalid event body:', event.body);
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body);
+      console.log('Parsed body:', parsedBody);
+    } catch (parseError) {
+      console.error('Error parsing JSON:', parseError.message, 'Body:', event.body);
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Invalid JSON format in request body', rawBody: event.body }),
+        body: JSON.stringify({ error: 'Invalid JSON input', rawBody: event.body }),
       };
     }
 
-    const { template, parties, date, scope_of_work, payment_terms, start_date, end_date, termination_clause } = JSON.parse(event.body);
+    const { template, parties, date, scope_of_work, payment_terms, start_date, end_date, termination_clause } = parsedBody;
 
     if (!template || !Array.isArray(parties) || parties.length < 2 || !date || !scope_of_work || !payment_terms || !start_date || !end_date || !termination_clause) {
       return {
@@ -114,7 +119,7 @@ exports.handler = async (event) => {
       }),
     };
   } catch (error) {
-    console.error('Error generating template or submission:', error.response?.data || error.message);
+    console.error('Error generating template or submission:', error?.response?.data || error);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
@@ -131,3 +136,5 @@ function generateHTMLTemplate(template, placeholders) {
   }
   return htmlTemplate;
 }
+
+module.exports = { handler };
