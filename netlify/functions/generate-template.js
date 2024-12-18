@@ -38,7 +38,6 @@ export const handler = async (event) => {
   try {
     const {
       template,
-      partyies,
       parties,
       date,
       scope_of_work,
