@@ -8,6 +8,8 @@ const CORS_HEADERS = {
 };
 
 export const handler = async (event) => {
+  console.log('Event received:', JSON.stringify(event, null, 2));
+
   const DOCUSEAL_API_URL = process.env.DOCUSEAL_API_URL;
   const DOCUSEAL_AUTH_TOKEN = process.env.DOCUSEAL_AUTH_TOKEN;
 
@@ -26,7 +28,9 @@ export const handler = async (event) => {
     };
   }
 
-  const { templateId } = event.queryStringParameters || {};
+  const { templateId } = event.pathParameters || {};
+  console.log('Extracted templateId:', templateId);
+
   if (!templateId) {
     return {
       statusCode: 400,
