@@ -53,29 +53,17 @@ export async function generateAgreementTemplate(data: GenerateTemplateData): Pro
 
 // New function to fetch contract data
 export async function fetchContractData(templateId: string): Promise<DocuSealResponse> {
-  const DOCUSEAL_API_URL = process.env.REACT_APP_DOCUSEAL_API_URL;
-  const DOCUSEAL_AUTH_TOKEN = process.env.REACT_APP_DOCUSEAL_AUTH_TOKEN;
+  try {
+    const response = await axios.get<DocuSealResponse>(`/.netlify/get-docuseal-contract/${templateId}`);
+    console.log('Response from Netlify function (get-docuseal-contract):', response.data);
 
-  if (!DOCUSEAL_API_URL || !DOCUSEAL_AUTH_TOKEN) {
-    throw new Error('DocuSeal API URL or Auth Token is missing.');
-  }
-
-  const response = await axios.get<DocuSealResponse>(
-    `${DOCUSEAL_API_URL}/templates/${templateId}`,
-    {
-      headers: {
-        'X-Auth-Token': DOCUSEAL_AUTH_TOKEN,
-        'Content-Type': 'application/json',
-      },
+    if (response.data.error) {
+      throw new Error(response.data.message || 'Failed to fetch contract data');
     }
-  );
 
-  console.log('Response from get-docuseal-contract:', response.data);
-
-  // Handle errors from API
-  if (response.data.error) {
-    throw new Error(response.data.message || 'Failed to fetch contract data');
+    return response.data;
+  } catch (error) {
+    console.error('Error in fetchContractData:', error.message || error);
+    throw new Error('Failed to fetch contract data from backend');
   }
-
-  return response.data;
 }

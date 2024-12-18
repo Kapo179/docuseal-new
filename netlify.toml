@@ -39,8 +39,8 @@
 
 # Redirect for DocuSeal Templates Fetch
 [[redirects]]
-  from = "/docuseal/templates/:templateId"
-  to = "/.netlify/functions/get-docuseal-contract?templateId=:templateId"
+  from = "/api/contracts/:templateId"
+  to = "/.netlify/get-docuseal-contract/:templateId"
   status = 200
   force = true
 
@@ -57,7 +57,7 @@
 
 # Environment Variables for Build Time
 [build.environment]
-  DOCUSEAL_API_URL = "https://api.docuseal.com"
+DOCUSEAL_API_URL = "https://api.docuseal.com"
 
 
 # Caching settings for optimization

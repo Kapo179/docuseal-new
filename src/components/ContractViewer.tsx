@@ -12,16 +12,14 @@ export default function ContractViewer() {
     const fetchContract = async () => {
       try {
         console.log(`Fetching contract data for templateId: ${templateId}`);
-        const response = await fetch(`/api/contracts/${templateId}`);
-
+        const response = await fetch(`/.netlify/get-docuseal-contract/${templateId}`); // or `/.netlify/get-docuseal-contract/${templateId}` if no redirect
         if (!response.ok) {
           throw new Error(`Failed to fetch contract data (status: ${response.status})`);
         }
-
+  
         const data = await response.json();
         console.log('Fetched contract data:', data);
-
-        // Assuming your API returns a `docusealPdfUrl` field with the PDF URL
+  
         if (data.docusealPdfUrl) {
           setDocusealPdfUrl(data.docusealPdfUrl);
         } else {
@@ -31,6 +29,10 @@ export default function ContractViewer() {
         console.error('Error fetching contract data:', error);
       }
     };
+  
+    fetchContract();
+  }, [templateId]);
+  
 
     fetchContract();
   }, [templateId]);
