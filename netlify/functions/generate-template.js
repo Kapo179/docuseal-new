@@ -33,21 +33,53 @@ export const handler = async (event) => {
   }
 
   try {
-    const { template } = JSON.parse(event.body);
+    const {
+      template,
+      parties,
+      date,
+      contract_details,
+      terms,
+      start_date,
+      end_date,
+      termination_clause
+    } = JSON.parse(event.body);
 
-    if (!template) {
+    // Validate required fields
+    if (!template || !parties || !date || !contract_details || !terms || !start_date || !end_date || !termination_clause) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Template is required' }),
+        body: JSON.stringify({ error: 'Missing required fields' }),
       };
     }
 
-    // Send the pre-assembled template to DocuSeal
+    // Validate parties array
+    if (!Array.isArray(parties) || parties.length !== 2) {
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ error: 'Exactly two parties are required' }),
+      };
+    }
+
+    // Interpolate all placeholders
+    let processedTemplate = template
+      .replace(/{date}/g, date)
+      .replace(/{parties\[0\]\.name}/g, parties[0].name)
+      .replace(/{parties\[0\]\.email}/g, parties[0].email)
+      .replace(/{parties\[1\]\.name}/g, parties[1].name)
+      .replace(/{parties\[1\]\.email}/g, parties[1].email)
+      .replace(/{contract_details}/g, contract_details)
+      .replace(/{terms}/g, terms)
+      .replace(/{start_date}/g, start_date)
+      .replace(/{end_date}/g, end_date)
+      .replace(/{termination_clause}/g, termination_clause);
+
+    // Send the processed template to DocuSeal
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
       {
-        html: template,
+        html: processedTemplate,
         name: 'Contract',
         size: 'Letter',
       },
@@ -64,7 +96,6 @@ export const handler = async (event) => {
       throw new Error('Template creation failed: Missing template ID');
     }
 
-
     const contractLink = templateResponse.data.documents?.[0]?.url;
     const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
 
@@ -80,10 +111,14 @@ export const handler = async (event) => {
       }),
     };
   } catch (error) {
+    console.error('Error processing template:', error);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Internal server error', details: error.message }),
+      body: JSON.stringify({ 
+        error: 'Internal server error', 
+        details: error.message 
+      }),
     };
   }
 };
