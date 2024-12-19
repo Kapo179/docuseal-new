@@ -54,26 +54,34 @@ export const handler = async (event) => {
     }
 
     // Validate parties array
-    if (!Array.isArray(parties) || parties.length !== 2) {
+    if (!Array.isArray(parties) || parties.length < 2) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Exactly two parties are required' }),
+        body: JSON.stringify({ error: 'At least two parties are required' }),
       };
     }
 
-    // Interpolate all placeholders
-    let processedTemplate = template
+    // Process template with dynamic party replacement
+    let processedTemplate = template;
+
+    // Replace non-party placeholders
+    processedTemplate = processedTemplate
       .replace(/{date}/g, date)
-      .replace(/{parties\[0\]\.name}/g, parties[0].name)
-      .replace(/{parties\[0\]\.email}/g, parties[0].email)
-      .replace(/{parties\[1\]\.name}/g, parties[1].name)
-      .replace(/{parties\[1\]\.email}/g, parties[1].email)
       .replace(/{contract_details}/g, contract_details)
       .replace(/{terms}/g, terms)
       .replace(/{start_date}/g, start_date)
       .replace(/{end_date}/g, end_date)
       .replace(/{termination_clause}/g, termination_clause);
+
+    // Replace party placeholders
+    parties.forEach((party, index) => {
+      const namePattern = new RegExp(`{parties\\[${index}\\]\\.name}`, 'g');
+      const emailPattern = new RegExp(`{parties\\[${index}\\]\\.email}`, 'g');
+      processedTemplate = processedTemplate
+        .replace(namePattern, party.name)
+        .replace(emailPattern, party.email);
+    });
 
     // Send the processed template to DocuSeal
     const templateResponse = await axios.post(
