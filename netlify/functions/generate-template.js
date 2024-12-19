@@ -53,7 +53,7 @@ export const handler = async (event) => {
       !Array.isArray(parties) ||
       parties.length < 2 ||
       !date ||
-      !contract_details||
+      !contract_details ||
       !terms ||
       !start_date ||
       !end_date ||
@@ -66,7 +66,7 @@ export const handler = async (event) => {
       };
     }
 
-    // Step 1: Generate the contract HTML
+    // Step 1: Flatten parties array into placeholders
     const placeholders = {
       date,
       contract_details,
@@ -74,15 +74,17 @@ export const handler = async (event) => {
       start_date,
       end_date,
       termination_clause,
-      'parties[0].name': parties[0]?.name || 'Unknown Name',
-      'parties[0].email': parties[0]?.email || 'Unknown Email',
-      'parties[1].name': parties[1]?.name || 'Unknown Name',
-      'parties[1].email': parties[1]?.email || 'Unknown Email',
     };
 
+    parties.forEach((party, index) => {
+      placeholders[`parties[${index}].name`] = party.name || 'Unknown Name';
+      placeholders[`parties[${index}].email`] = party.email || 'Unknown Email';
+    });
+
+    // Step 2: Generate the contract HTML
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
 
-    // Step 2: Create DocuSeal template
+    // Step 3: Create DocuSeal template
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
       {
@@ -105,7 +107,7 @@ export const handler = async (event) => {
       throw new Error('Template creation failed: Missing template ID');
     }
 
-    // Step 3: Create DocuSeal submission
+    // Step 4: Create DocuSeal submission
     const submitters = parties.map((party, index) => ({
       name: party.name,
       email: party.email,
@@ -129,7 +131,7 @@ export const handler = async (event) => {
 
     console.log('Submission created:', submissionResponse.data);
 
-    // Step 4: Construct response with contract link and preview image
+    // Step 5: Construct response with contract link and preview image
     const contractLink = templateResponse.data.documents?.[0]?.url;
     const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
 
