@@ -31,7 +31,7 @@ const LegalPage: React.FC = () => {
             <li>Contract data, including information you input (such as names, email addresses, and contract terms), is securely transmitted to the DocuSeal API for processing.</li>
             <li>ContractQuickly does not intercept, retain, or access any data sent to DocuSeal.</li>
         </ul>
-        <p>For information about DocuSeal’s data handling practices, please refer to their Privacy Policy at <a href="https://docuseal.com">docuseal.com</a>.</p>
+        <p>For information about DocuSeal’s data handling practices, please refer to their Privacy Policy at <a href="https://www.docuseal.com/privacy">docuseal.com</a>.</p>
     </div>
 
     <div>
@@ -39,7 +39,7 @@ const LegalPage: React.FC = () => {
         <p>ContractQuickly does not store or manage any personal data and therefore cannot process Subject Access Requests (SARs). If you would like to make a SAR or exercise your data rights, please contact DocuSeal’s support team:</p>
         <ul>
             <li>Email: <a href="mailto:support@docuseal.com">support@docuseal.com</a></li>
-            <li>Website: <a href="https://docuseal.com">docuseal.com</a></li>
+            <li>Website: <a href="https://www.docuseal.com/privacy">docuseal.com</a></li>
         </ul>
     </div>
 
