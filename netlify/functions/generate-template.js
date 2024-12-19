@@ -45,7 +45,6 @@ export const handler = async (event) => {
       termination_clause,
     } = JSON.parse(event.body);
 
-    // Validate input
     if (
       !template ||
       !Array.isArray(parties) ||
@@ -64,7 +63,6 @@ export const handler = async (event) => {
       };
     }
 
-    // Create placeholders
     const placeholders = {
       date,
       contract_details,
@@ -79,13 +77,12 @@ export const handler = async (event) => {
       placeholders[`parties[${index}].email`] = party.email || 'Unknown Email';
     });
 
-    console.log('Generated placeholders:', placeholders);
+    console.log('Template before replacement:', template);
+    console.log('Placeholders:', placeholders);
 
-    // Generate HTML template
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
     console.log('Generated HTML:', htmlTemplate);
 
-    // Create DocuSeal template
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
       {
@@ -102,13 +99,10 @@ export const handler = async (event) => {
       }
     );
 
-    console.log('Template created:', templateResponse.data);
-
     if (!templateResponse.data?.id) {
       throw new Error('Template creation failed: Missing template ID');
     }
 
-    // Create DocuSeal submission
     const submitters = parties.map((party, index) => ({
       name: party.name,
       email: party.email,
@@ -130,9 +124,6 @@ export const handler = async (event) => {
       }
     );
 
-    console.log('Submission created:', submissionResponse.data);
-
-    // Construct response
     const contractLink = templateResponse.data.documents?.[0]?.url;
     const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
 
@@ -157,12 +148,11 @@ export const handler = async (event) => {
   }
 };
 
-// Utility function to replace placeholders with actual values
 function generateHTMLTemplate(template, placeholders) {
   let htmlTemplate = template;
-  for (const [key, value] of Object.entries(placeholders)) {
-    const placeholder = new RegExp(`{{${key}}}`, 'g');
+  Object.entries(placeholders).forEach(([key, value]) => {
+    const placeholder = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
     htmlTemplate = htmlTemplate.replace(placeholder, value);
-  }
+  });
   return htmlTemplate;
 }
