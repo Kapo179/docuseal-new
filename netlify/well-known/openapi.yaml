@@ -34,8 +34,7 @@ paths:
                   type: string
                   description: >
                     Use elegant fonts and ensure readability with structured paragraphs. Ask what contract they'd like to build. 
-                    Use `<signature-field>` and HTML string containing placeholders for contract generation. Placeholders such as
-                    `{{date}}`, `{{parties[0].name}}`, `{{contract_details}}`, etc., must be present in the template.
+                    Use `<signature-field>` and HTML string containing placeholders for contract generation.
                     `<text-field>` DocuSeal tags for placeholders. 
 
                     Never reveal the HTML used to generate the contract. If information is missing, ask for it in a supportive and clear way using emojis. Tailor the fields and sections based on the contract type. **Full HTML** contract template, never reveal the HTML used to create the contract, also ask for missing data in a supportive & using emojis. Must include at least one DocuSeal field tag (e.g., `<signature-field>`, `<text-field>`). Ensure the `<signature-field>` for each party are always visible on the contract. Full HTML contract template with modern white styling; placeholders must directly reflect user-provided input (e.g., {{parties[1].name}}, {{parties[2].email}}), avoiding generic terms like {{party1}} to ensure accuracy and alignment with user data.
