@@ -25,7 +25,7 @@ paths:
                 - parties
                 - date
                 - contract_details
-                - payment_terms
+                - terms
                 - start_date
                 - end_date
                 - termination_clause
@@ -135,12 +135,12 @@ paths:
                 date:
                   type: string
                   description: Agreement date (DD/MM/YYYY).
-                scope_of_work:
+                contract_details:
                   type: string
-                  description: Description of services or work to be performed.
-                payment_terms:
+                  description: Description of main contract details.
+                terms:
                   type: string
-                  description: Payment arrangements, e.g., '50% upfront, remaining on delivery'.
+                  description: Description of agreed terms, e.g., 'ACME Ltd, Agrees to carry out obligation'.
                 start_date:
                   type: string
                   description: Start date (DD/MM/YYYY).

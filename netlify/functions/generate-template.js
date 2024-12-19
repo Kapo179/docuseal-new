@@ -41,7 +41,7 @@ export const handler = async (event) => {
       parties,
       date,
       contract_details,
-      payment_terms,
+      terms,
       start_date,
       end_date,
       termination_clause,
@@ -54,7 +54,7 @@ export const handler = async (event) => {
       parties.length < 2 ||
       !date ||
       !contract_details||
-      !payment_terms ||
+      !terms ||
       !start_date ||
       !end_date ||
       !termination_clause
@@ -71,7 +71,7 @@ export const handler = async (event) => {
       parties: JSON.stringify(parties),
       date,
       contract_details,
-      payment_terms,
+      terms,
       start_date,
       end_date,
       termination_clause,
