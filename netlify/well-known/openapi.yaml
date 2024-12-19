@@ -8,7 +8,7 @@ paths:
   /generate-template:
     post:
       operationId: generateTemplate
-      summary: Generate a comprehensive contract without placeholders
+      summary: Generate a professional contract templates
       description: >
         This endpoint creates a DocuSeal template. **Design Highlights:** The generated contract will feature a professional and clean design with
         structured paragraphs, headings, and spacing. Contracts must include at least one `<signature-field>` tag to
@@ -32,7 +32,7 @@ paths:
                 template:
                   type: string
                   description: >
-                    A complete HTML contract template that includes placeholders for dynamic values. Ask what type of contract, they would like to build,
+                    A complete HTML contract template that produce professional contract template. Provide high-quality support with emojis. Ask what type of contract, they would like to build,
                     and provide a fully efficiency, and comprehensive contract. It must include at least
                     one `<signature-field>` or `<text-field>` tag to ensure compatibility with DocuSeal's signing
                     system.
