@@ -1,6 +1,5 @@
 import axios from 'axios';
-import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
+
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',

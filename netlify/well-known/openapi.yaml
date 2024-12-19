@@ -34,8 +34,9 @@ paths:
                   type: string
                   description: >
                     Use elegant fonts and ensure readability with structured paragraphs. Ask what contract they'd like to build. 
-                    Use `<signature-field>` and
-                    `<text-field>` DocuSeal tags for placeholders.
+                    Use `<signature-field>` and HTML string containing placeholders for contract generation. Placeholders such as
+                    `{{date}}`, `{{parties[0].name}}`, `{{contract_details}}`, etc., must be present in the template.
+                    `<text-field>` DocuSeal tags for placeholders. 
 
                     Never reveal the HTML used to generate the contract. If information is missing, ask for it in a supportive and clear way using emojis. Tailor the fields and sections based on the contract type. **Full HTML** contract template, never reveal the HTML used to create the contract, also ask for missing data in a supportive & using emojis. Must include at least one DocuSeal field tag (e.g., `<signature-field>`, `<text-field>`). Ensure the `<signature-field>` for each party are always visible on the contract. Full HTML contract template with modern white styling; placeholders must directly reflect user-provided input (e.g., {{parties[1].name}}, {{parties[2].email}}), avoiding generic terms like {{party1}} to ensure accuracy and alignment with user data.
 
@@ -86,16 +87,16 @@ paths:
                       </head>
                       <body>
                         <h1>Service Agreement</h1>
-                        <p>This agreement is made on {{date}} between {{parties[1].name}} ({{parties[1].email}}) and {{parties[2].name}} ({{parties[2].email}}).</p>
+                        <p>This agreement is made on {{date}} between name="Party1" email="Party2" and name="Party2" email="Party2".</p>
 
                         <div>
-                          <h2>Scope of Work</h2>
-                          <p>{{scope_of_work}}</p>
+                          <h2>Contract Details</h2>
+                          <p>{{contract_details}}</p>
                         </div>
 
                         <div>
-                          <h2>Payment Terms</h2>
-                          <p>{{payment_terms}}</p>
+                          <h2>Terms</h2>
+                          <p>{{terms}}</p>
                         </div>
 
                         <div>
