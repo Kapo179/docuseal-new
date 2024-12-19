@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
@@ -73,12 +72,11 @@ export const handler = async (event) => {
       start_date,
       end_date,
       termination_clause,
+      party1_name: parties[0]?.name || 'Unknown Name',
+      party1_email: parties[0]?.email || 'Unknown Email',
+      party2_name: parties[1]?.name || 'Unknown Name',
+      party2_email: parties[1]?.email || 'Unknown Email',
     };
-
-    parties.forEach((party, index) => {
-      placeholders[`parties[${index}].name`] = party.name || 'Unknown Name';
-      placeholders[`parties[${index}].email`] = party.email || 'Unknown Email';
-    });
 
     // Step 2: Generate the contract HTML
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
