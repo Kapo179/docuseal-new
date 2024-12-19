@@ -33,60 +33,21 @@ export const handler = async (event) => {
   }
 
   try {
-    const {
-      template,
-      parties,
-      date,
-      contract_details,
-      terms,
-      start_date,
-      end_date,
-      termination_clause,
-    } = JSON.parse(event.body);
+    const { template } = JSON.parse(event.body);
 
-    // Validate input
-    if (
-      !template ||
-      !Array.isArray(parties) ||
-      parties.length < 2 ||
-      !date ||
-      !contract_details ||
-      !terms ||
-      !start_date ||
-      !end_date ||
-      !termination_clause
-    ) {
+    if (!template) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Missing required fields or invalid parties data' }),
+        body: JSON.stringify({ error: 'Template is required' }),
       };
     }
 
-    // Prepare placeholders for non-party-specific fields
-    const placeholders = {
-      date,
-      contract_details,
-      terms,
-      start_date,
-      end_date,
-      termination_clause,
-    };
-
-    // Map parties to placeholders dynamically
-    parties.forEach((party, index) => {
-      placeholders[`parties[${index}].name`] = party.name || `Party ${index + 1}`;
-      placeholders[`parties[${index}].email`] = party.email || `party${index + 1}@example.com`;
-    });
-
-    // Replace placeholders in the template
-    const htmlTemplate = replacePlaceholders(template, placeholders);
-
-    // Create DocuSeal template
+    // Send the pre-assembled template to DocuSeal
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
       {
-        html: htmlTemplate,
+        html: template,
         name: 'Contract',
         size: 'Letter',
       },
@@ -103,40 +64,14 @@ export const handler = async (event) => {
       throw new Error('Template creation failed: Missing template ID');
     }
 
-    // Create DocuSeal submission
-    const submitters = parties.map((party, index) => ({
-      name: party.name,
-      email: party.email,
-      role: `Party${index + 1}`,
-      preferences: { send_email: true },
-    }));
-
-    await axios.post(
-      `https://api.docuseal.com/templates/${templateResponse.data.id}/submissions`,
-      {
-        submitters,
-      },
-      {
-        headers: {
-          'X-Auth-Token': authToken,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      }
-    );
-
-    const contractLink = templateResponse.data.documents?.[0]?.url;
-    const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
-
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
       body: JSON.stringify({
         success: true,
-        message: 'Template and submission created successfully',
+        message: 'Template created successfully',
         templateId: templateResponse.data.id,
-        contractLink,
-        previewImageUrl,
+        contractLink: templateResponse.data.documents?.[0]?.url,
       }),
     };
   } catch (error) {
@@ -147,13 +82,3 @@ export const handler = async (event) => {
     };
   }
 };
-
-// Replace placeholders in the template with actual values
-function replacePlaceholders(template, placeholders) {
-  // Use Object.entries to loop through the placeholders
-  Object.entries(placeholders).forEach(([key, value]) => {
-    const regex = new RegExp(`{{${key}}}`, 'g'); // Match each placeholder
-    template = template.replace(regex, value);
-  });
-  return template;
-}
