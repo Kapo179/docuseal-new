@@ -17,7 +17,7 @@ const LegalPage: React.FC = () => {
         <h2>1. Data Collection</h2>
         <p>ContractQuickly is committed to maintaining your privacy. We do not collect, store, or sell any personal data or information. Specifically:</p>
         <ul>
-        <li><strong>No Data Request:</strong> We do not advise or request users to input personal data, when generating contracts templates with our plugin.</li>
+        <li><strong>No Legal Advcice</strong> We do not advise on any legal matter or provide legal advice, Nor request users to input personal data, when generating contracts templates with our plugin.</li>
             <li><strong>No User Data Collection:</strong> We do not collect or store user-provided information, including but not limited to names, email addresses, or contract details.</li>
             <li><strong>No Tracking:</strong> We do not use cookies, tracking technologies, or analytics tools to monitor your usage of our platform.</li>
             <li><strong>No Data Retention:</strong> ContractQuickly does not retain any personal or contractual data that passes through our platform.</li>
