@@ -40,7 +40,7 @@ export const handler = async (event) => {
       template,
       parties,
       date,
-      scope_of_work,
+      contract_details,
       payment_terms,
       start_date,
       end_date,
@@ -53,7 +53,7 @@ export const handler = async (event) => {
       !Array.isArray(parties) ||
       parties.length < 2 ||
       !date ||
-      !scope_of_work ||
+      !contract_details||
       !payment_terms ||
       !start_date ||
       !end_date ||
@@ -70,7 +70,7 @@ export const handler = async (event) => {
     const placeholders = {
       parties: JSON.stringify(parties),
       date,
-      scope_of_work,
+      contract_details,
       payment_terms,
       start_date,
       end_date,

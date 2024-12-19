@@ -24,7 +24,7 @@ paths:
                 - template
                 - parties
                 - date
-                - scope_of_work
+                - contract_details
                 - payment_terms
                 - start_date
                 - end_date
