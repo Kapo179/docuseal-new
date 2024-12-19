@@ -25,7 +25,6 @@ export const handler = async (event) => {
 
   const authToken = process.env.DOCUSEAL_AUTH_TOKEN;
   if (!authToken) {
-    console.error('Missing DocuSeal authentication token');
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
@@ -45,6 +44,7 @@ export const handler = async (event) => {
       termination_clause,
     } = JSON.parse(event.body);
 
+    // Validate input
     if (
       !template ||
       !Array.isArray(parties) ||
@@ -63,6 +63,7 @@ export const handler = async (event) => {
       };
     }
 
+    // Create placeholders to match the template
     const placeholders = {
       date,
       contract_details,
@@ -72,17 +73,16 @@ export const handler = async (event) => {
       termination_clause,
     };
 
+    // Map parties array to placeholders dynamically
     parties.forEach((party, index) => {
       placeholders[`parties[${index}].name`] = party.name || 'Unknown Name';
       placeholders[`parties[${index}].email`] = party.email || 'Unknown Email';
     });
 
-    console.log('Template before replacement:', template);
-    console.log('Placeholders:', placeholders);
-
+    // Generate HTML template
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
-    console.log('Generated HTML:', htmlTemplate);
 
+    // Create DocuSeal template
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
       {
@@ -103,6 +103,7 @@ export const handler = async (event) => {
       throw new Error('Template creation failed: Missing template ID');
     }
 
+    // Create DocuSeal submission
     const submitters = parties.map((party, index) => ({
       name: party.name,
       email: party.email,
@@ -110,7 +111,7 @@ export const handler = async (event) => {
       preferences: { send_email: true },
     }));
 
-    const submissionResponse = await axios.post(
+    await axios.post(
       `https://api.docuseal.com/templates/${templateResponse.data.id}/submissions`,
       {
         submitters,
@@ -124,9 +125,6 @@ export const handler = async (event) => {
       }
     );
 
-    const contractLink = templateResponse.data.documents?.[0]?.url;
-    const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
-
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
@@ -134,12 +132,9 @@ export const handler = async (event) => {
         success: true,
         message: 'Template and submission created successfully',
         templateId: templateResponse.data.id,
-        contractLink,
-        previewImageUrl,
       }),
     };
   } catch (error) {
-    console.error('Error generating template or submission:', error?.response?.data || error);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
@@ -148,11 +143,11 @@ export const handler = async (event) => {
   }
 };
 
+// Replace placeholders with actual values
 function generateHTMLTemplate(template, placeholders) {
-  let htmlTemplate = template;
   Object.entries(placeholders).forEach(([key, value]) => {
-    const placeholder = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
-    htmlTemplate = htmlTemplate.replace(placeholder, value);
+    const placeholder = `{{${key}}}`;
+    template = template.replace(new RegExp(placeholder, 'g'), value);
   });
-  return htmlTemplate;
+  return template;
 }
