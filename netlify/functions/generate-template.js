@@ -68,13 +68,16 @@ export const handler = async (event) => {
 
     // Step 1: Generate the contract HTML
     const placeholders = {
-      parties: JSON.stringify(parties),
       date,
       contract_details,
       terms,
       start_date,
       end_date,
       termination_clause,
+      'parties[0].name': parties[0]?.name || 'Unknown Name',
+      'parties[0].email': parties[0]?.email || 'Unknown Email',
+      'parties[1].name': parties[1]?.name || 'Unknown Name',
+      'parties[1].email': parties[1]?.email || 'Unknown Email',
     };
 
     const htmlTemplate = generateHTMLTemplate(template, placeholders);
@@ -127,7 +130,7 @@ export const handler = async (event) => {
     console.log('Submission created:', submissionResponse.data);
 
     // Step 4: Construct response with contract link and preview image
-    const contractLink = `${process.env.WEB_APP_URL}/contract/${templateResponse.data.id}`;
+    const contractLink = templateResponse.data.documents?.[0]?.url;
     const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
 
     return {
@@ -155,8 +158,8 @@ export const handler = async (event) => {
 function generateHTMLTemplate(template, placeholders) {
   let htmlTemplate = template;
   for (const [key, value] of Object.entries(placeholders)) {
-    const placeholder = `{{${key}}}`;
-    htmlTemplate = htmlTemplate.replace(new RegExp(placeholder, 'g'), value);
+    const placeholder = new RegExp(`{{${key}}}`, 'g');
+    htmlTemplate = htmlTemplate.replace(placeholder, value);
   }
   return htmlTemplate;
 }
