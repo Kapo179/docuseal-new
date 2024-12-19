@@ -63,7 +63,7 @@ export const handler = async (event) => {
       };
     }
 
-    // Create placeholders to match the template
+    // Prepare placeholders for non-party-specific fields
     const placeholders = {
       date,
       contract_details,
@@ -73,14 +73,14 @@ export const handler = async (event) => {
       termination_clause,
     };
 
-    // Map parties array to placeholders dynamically
+    // Map parties to placeholders dynamically
     parties.forEach((party, index) => {
-      placeholders[`parties[${index}].name`] = party.name || 'Unknown Name';
-      placeholders[`parties[${index}].email`] = party.email || 'Unknown Email';
+      placeholders[`parties[${index}].name`] = party.name || `Party ${index + 1}`;
+      placeholders[`parties[${index}].email`] = party.email || `party${index + 1}@example.com`;
     });
 
-    // Generate HTML template
-    const htmlTemplate = generateHTMLTemplate(template, placeholders);
+    // Replace placeholders in the template
+    const htmlTemplate = replacePlaceholders(template, placeholders);
 
     // Create DocuSeal template
     const templateResponse = await axios.post(
@@ -125,36 +125,35 @@ export const handler = async (event) => {
       }
     );
 
+    const contractLink = templateResponse.data.documents?.[0]?.url;
+    const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
 
-const contractLink = templateResponse.data.documents?.[0]?.url;
-const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        success: true,
+        message: 'Template and submission created successfully',
+        templateId: templateResponse.data.id,
+        contractLink,
+        previewImageUrl,
+      }),
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Internal server error', details: error.message }),
+    };
+  }
+};
 
-return {
-  statusCode: 200,
-  headers: CORS_HEADERS,
-  body: JSON.stringify({
-    success: true,
-    message: 'Template and submission created successfully',
-    templateId: templateResponse.data.id,
-    contractLink,
-    previewImageUrl,
-  }),
-};
-} catch (error) {
-console.error('Error generating template or submission:', error?.response?.data || error);
-return {
-  statusCode: 500,
-  headers: CORS_HEADERS,
-  body: JSON.stringify({ error: 'Internal server error', details: error.message }),
-};
-}
-
-};
-// Replace placeholders with actual values
-function generateHTMLTemplate(template, placeholders) {
+// Replace placeholders in the template with actual values
+function replacePlaceholders(template, placeholders) {
+  // Use Object.entries to loop through the placeholders
   Object.entries(placeholders).forEach(([key, value]) => {
-    const placeholder = `{{${key}}}`;
-    template = template.replace(new RegExp(placeholder, 'g'), value);
+    const regex = new RegExp(`{{${key}}}`, 'g'); // Match each placeholder
+    template = template.replace(regex, value);
   });
   return template;
 }

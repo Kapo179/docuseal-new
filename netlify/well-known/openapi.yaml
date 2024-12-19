@@ -120,8 +120,8 @@ paths:
                   type: array
                   description: >
                     An array of parties involved in the contract. Each party should include a name and an email address.
-                    These values will dynamically populate placeholders such as `{{parties[0].name}}` and
-                    `{{parties[1].email}}`.
+                    These values will dynamically populate placeholders such as `{{parties.name}}` and
+                    `{{parties.email}}`.
                   items:
                     type: object
                     properties:
