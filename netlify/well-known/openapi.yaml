@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ContractQuickly Template Generator API
-  version: 1.0.1
+  version: 1.0.2
 servers:
   - url: https://contractquickly.com/.netlify/functions
 paths:
@@ -13,7 +13,7 @@ paths:
         This endpoint creates a DocuSeal template containing signature fields, text fields, and professional HTML
         formatting.
 
-        **Design Highlights**: Create a professional, clean **white design** with clear headings, sections, and spacing.. Professional fonts and clean structure.
+        **Design Highlights:** Create a professional, clean **white design** with clear headings, sections, and spacing. Professional fonts and clean structure.
       requestBody:
         required: true
         content:
@@ -33,13 +33,12 @@ paths:
                 template:
                   type: string
                   description: >
-                    Use elegant fonts and ensure readability with structured paragraphs. Ask what contract they'd like to build. 
-                    Use `<signature-field>` and HTML string containing placeholders for contract generation.
-                    `<text-field>` DocuSeal tags for placeholders. 
+                    A full HTML contract template, including placeholders such as `{{parties[0].name}}` and
+                    `{{parties[1].email}}`,  which will be replaced dynamically based on the provided input. The
+                    template must include at least one  `<signature-field>` or `<text-field>` tag for DocuSeal
+                    compatibility. Ensure readability with structured  paragraphs and modern styling.
 
-                    Never reveal the HTML used to generate the contract. If information is missing, ask for it in a supportive and clear way using emojis. Tailor the fields and sections based on the contract type. **Full HTML** contract template, never reveal the HTML used to create the contract, also ask for missing data in a supportive & using emojis. Must include at least one DocuSeal field tag (e.g., `<signature-field>`, `<text-field>`). Ensure the `<signature-field>` for each party are always visible on the contract. Full HTML contract template with modern white styling; placeholders must directly reflect user-provided input (e.g., {{parties[1].name}}, {{parties[2].email}}), avoiding generic terms like {{party1}} to ensure accuracy and alignment with user data.
-
-                    **Example**:
+                    **Example:**
 
                     ```html <!DOCTYPE html> <html>
                       <head>
@@ -48,19 +47,19 @@ paths:
                         <style>
                           body {
                             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                            color: #E0E0E0;
-                            background-color: white
+                            color: #121212;
+                            background-color: white;
                             margin: 40px;
                             line-height: 1.8;
                           }
                           h1, h2 {
-                            color: #121212;
+                            color: #1a1a1a;
                           }
                           h1 {
-                            font-size: 19px;
+                            font-size: 22px;
                           }
                           h2 {
-                            font-size: 16px;
+                            font-size: 18px;
                             margin-top: 30px;
                           }
                           p {
@@ -86,70 +85,70 @@ paths:
                       </head>
                       <body>
                         <h1>Service Agreement</h1>
-                        <p>This agreement is made on {{date}} between name="Party1" email="Party2" and name="Party2" email="Party2".</p>
-
+                        <p>
+                          This agreement is made on {{date}} between {{parties[0].name}} and {{parties[1].name}}.
+                        </p>
                         <div>
                           <h2>Contract Details</h2>
                           <p>{{contract_details}}</p>
                         </div>
-
                         <div>
                           <h2>Terms</h2>
                           <p>{{terms}}</p>
                         </div>
-
                         <div>
                           <h2>Contract Duration</h2>
-                          <p>Start Date: {{start_date}} <br/> End Date: {{end_date}}</p>
+                          <p>Start Date: {{start_date}}<br>End Date: {{end_date}}</p>
                         </div>
-
                         <div>
                           <h2>Termination Clause</h2>
                           <p>{{termination_clause}}</p>
                         </div>
-
                         <div class="signature-section">
                           <div class="signature">
-                            <span>Party 1 Signature</span>
-                            <signature-field name="Party1" role="Party1" required="true" class="signature-field"></signature-field>
+                            <span>{{parties[0].name}}'s Signature</span>
+                            <signature-field name="Party1" role="Party1" required="true"></signature-field>
                           </div>
                           <div class="signature">
-                            <span>Party 2 Signature</span>
-                            <signature-field name="Party2" role="Party2" required="true" class="signature-field"></signature-field>
+                            <span>{{parties[1].name}}'s Signature</span>
+                            <signature-field name="Party2" role="Party2" required="true"></signature-field>
                           </div>
                         </div>
                       </body>
                     </html> ```
                 parties:
                   type: array
-                  description: List of parties involved in the contract.
+                  description: >
+                    An array of parties involved in the contract. Each party should include a name and an email address.
+                    These values will dynamically populate placeholders such as `{{parties[0].name}}` and
+                    `{{parties[1].email}}`.
                   items:
                     type: object
                     properties:
                       name:
                         type: string
-                        description: Name of the party.
+                        description: The full name of the party.
                       email:
                         type: string
-                        description: Email of the party.
+                        description: The email address of the party.
                 date:
                   type: string
-                  description: Agreement date (DD/MM/YYYY).
+                  description: The agreement date in the format DD/MM/YYYY.
                 contract_details:
                   type: string
-                  description: Description of main contract details.
+                  description: A detailed description of the contract's purpose and scope.
                 terms:
                   type: string
-                  description: Description of agreed terms, e.g., 'ACME Ltd, Agrees to carry out obligation'.
+                  description: The terms and conditions of the agreement.
                 start_date:
                   type: string
-                  description: Start date (DD/MM/YYYY).
+                  description: The start date of the contract in the format DD/MM/YYYY.
                 end_date:
                   type: string
-                  description: End date (DD/MM/YYYY).
+                  description: The end date of the contract in the format DD/MM/YYYY.
                 termination_clause:
                   type: string
-                  description: Clause describing contract termination terms.
+                  description: The conditions under which the contract can be terminated.
       responses:
         "200":
           description: Contract generated successfully
@@ -163,14 +162,14 @@ paths:
                     example: true
                   contractHtml:
                     type: string
-                    description: Beautifully styled HTML contract with modern dark design.
+                    description: The generated HTML contract with placeholders replaced.
                   pdfBase64:
                     type: string
-                    description: Base64-encoded PDF output, if requested.
+                    description: A Base64-encoded PDF version of the contract, if requested.
                   contractLink:
                     type: string
                     format: uri
-                    description: URL for the user to view the contract on contractquickly.com.
+                    description: A URL to view or download the generated contract.
                   message:
                     type: string
                     example: Contract generated successfully!
