@@ -1,18 +1,18 @@
 openapi: 3.1.0
 info:
   title: ContractQuickly Template Generator API
-  version: 1.0.3
+  version: 1.0.5
 servers:
   - url: https://contractquickly.com/.netlify/functions
 paths:
   /generate-template:
     post:
       operationId: generateTemplate
-      summary: Generate a DocuSeal-compatible contract
+      summary: Generate a comprehensive contract without placeholders
       description: >
-        This endpoint creates a DocuSeal template containing signature fields, text fields, and professional HTML formatting.
-
-        **Design Highlights:** The generated contract will feature a professional and clean design with structured paragraphs, headings, and spacing. The backend replaces placeholders such as `{{date}}`, `{{contract_details}}`, and others with the provided data. Contracts must include at least one `<signature-field>` tag to ensure DocuSeal compatibility.
+        This endpoint creates a DocuSeal template. **Design Highlights:** The generated contract will feature a professional and clean design with
+        structured paragraphs, headings, and spacing. Contracts must include at least one `<signature-field>` tag to
+        ensure DocuSeal compatibility.
       requestBody:
         required: true
         content:
@@ -39,8 +39,8 @@ paths:
                     system.
                 parties:
                   type: array
-                  description: >
-                    An array of parties involved in the contract. Each party object must include the `name` and `email` fields, which will dynamically populate the contract's placeholders.
+                  description: |
+                    A list of parties involved in the contract. Each party includes fields like name and email.
                   items:
                     type: object
                     required:
@@ -57,37 +57,38 @@ paths:
                 date:
                   type: string
                   format: date
-                  example: "19/12/2024"
-                  description: >
-                    The date when the agreement is created, in the format DD/MM/YYYY.
+                  example: 2024-12-19
+                  description: |
+                    The date when the agreement is created, in ISO 8601 format (YYYY-MM-DD).
                 contract_details:
                   type: string
-                  description: >
-                    A detailed description of the contract's purpose and scope. This field populates the `{{contract_details}}` placeholder in the template.
+                  description: |
+                    A detailed description of the purpose and scope of the contract.
                 terms:
                   type: string
-                  description: >
-                    A description of the terms and conditions agreed upon by the parties. Populates the `{{terms}}` placeholder.
+                  description: |
+                    A description of the terms and conditions agreed upon by the parties.
                 start_date:
                   type: string
                   format: date
-                  example: "01/01/2025"
-                  description: >
-                    The starting date of the contract in DD/MM/YYYY format. Populates the `{{start_date}}` placeholder.
+                  example: 2025-01-01
+                  description: |
+                    The starting date of the contract in ISO 8601 format (YYYY-MM-DD).
                 end_date:
                   type: string
                   format: date
-                  example: "31/12/2025"
-                  description: >
-                    The ending date of the contract in DD/MM/YYYY format. Populates the `{{end_date}}` placeholder.
+                  example: 2025-12-31
+                  description: |
+                    The ending date of the contract in ISO 8601 format (YYYY-MM-DD).
                 termination_clause:
                   type: string
-                  description: >
-                    The conditions under which the contract can be terminated. Populates the `{{termination_clause}}` placeholder.
+                  description: |
+                    The conditions under which the contract can be terminated.
       responses:
         "200":
           description: >
-            The contract has been successfully generated. The response includes the fully populated HTML contract, an optional Base64-encoded PDF, and a link to view the contract online.
+            The contract has been successfully generated. The response includes the fully generated HTML contract, an
+            optional Base64-encoded PDF, and a link to view the contract online.
           content:
             application/json:
               schema:
@@ -99,16 +100,16 @@ paths:
                     example: true
                   contractHtml:
                     type: string
-                    description: >
-                      The complete HTML contract with all placeholders replaced by their respective values.
+                    description: |
+                      The complete HTML contract, fully generated without placeholders.
                   pdfBase64:
                     type: string
-                    description: >
-                      A Base64-encoded representation of the contract PDF. This is included only if PDF generation is enabled.
+                    description: |
+                      A Base64-encoded representation of the contract PDF, included only if PDF generation is enabled.
                   contractLink:
                     type: string
                     format: uri
-                    description: >
+                    description: |
                       A URL to view or download the generated contract.
                   message:
                     type: string
@@ -116,7 +117,8 @@ paths:
                     example: Contract generated successfully!
         "400":
           description: >
-            The request is invalid due to missing or improperly formatted required fields. This response includes an error message explaining the issue.
+            The request is invalid due to missing or improperly formatted required fields. This response includes an
+            error message explaining the issue.
           content:
             application/json:
               schema:
@@ -128,7 +130,8 @@ paths:
                     example: Missing required fields template, parties.
         "500":
           description: >
-            The server encountered an internal error while generating the contract. This could be due to an issue with the DocuSeal API or invalid data.
+            The server encountered an internal error while generating the contract. This could be due to an issue with
+            the DocuSeal API or invalid data.
           content:
             application/json:
               schema:
@@ -136,12 +139,11 @@ paths:
                 properties:
                   error:
                     type: string
-                    description: >
+                    description: |
                       A message describing the server error.
                     example: Internal server error.
                   details:
                     type: string
                     description: Additional information about the error, if available.
-
 components:
   schemas: {}

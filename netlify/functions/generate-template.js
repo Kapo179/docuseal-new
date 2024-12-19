@@ -64,14 +64,19 @@ export const handler = async (event) => {
       throw new Error('Template creation failed: Missing template ID');
     }
 
+
+    const contractLink = templateResponse.data.documents?.[0]?.url;
+    const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
+
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
       body: JSON.stringify({
         success: true,
-        message: 'Template created successfully',
+        message: 'Template and submission created successfully',
         templateId: templateResponse.data.id,
-        contractLink: templateResponse.data.documents?.[0]?.url,
+        contractLink,
+        previewImageUrl,
       }),
     };
   } catch (error) {
