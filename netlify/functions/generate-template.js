@@ -125,24 +125,31 @@ export const handler = async (event) => {
       }
     );
 
-    return {
-      statusCode: 200,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        success: true,
-        message: 'Template and submission created successfully',
-        templateId: templateResponse.data.id,
-      }),
-    };
-  } catch (error) {
-    return {
-      statusCode: 500,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Internal server error', details: error.message }),
-    };
-  }
-};
 
+const contractLink = templateResponse.data.documents?.[0]?.url;
+const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
+
+return {
+  statusCode: 200,
+  headers: CORS_HEADERS,
+  body: JSON.stringify({
+    success: true,
+    message: 'Template and submission created successfully',
+    templateId: templateResponse.data.id,
+    contractLink,
+    previewImageUrl,
+  }),
+};
+} catch (error) {
+console.error('Error generating template or submission:', error?.response?.data || error);
+return {
+  statusCode: 500,
+  headers: CORS_HEADERS,
+  body: JSON.stringify({ error: 'Internal server error', details: error.message }),
+};
+}
+
+};
 // Replace placeholders with actual values
 function generateHTMLTemplate(template, placeholders) {
   Object.entries(placeholders).forEach(([key, value]) => {
