@@ -35,7 +35,6 @@ export const handler = async (event) => {
   try {
     const {
       template,
-      parties,
       date,
       contract_details,
       terms,
@@ -45,7 +44,7 @@ export const handler = async (event) => {
     } = JSON.parse(event.body);
 
     // Validate required fields
-    if (!template || !parties || !date || !contract_details || !terms || !start_date || !end_date || !termination_clause) {
+    if (!template || !date || !contract_details || !terms || !start_date || !end_date || !termination_clause) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
@@ -53,19 +52,10 @@ export const handler = async (event) => {
       };
     }
 
-    // Validate parties array
-    if (!Array.isArray(parties) || parties.length < 2) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'At least two parties are required' }),
-      };
-    }
-
-    // Process template with dynamic party replacement
+    // Process template with dynamic replacements
     let processedTemplate = template;
 
-    // Replace non-party placeholders
+    // Replace standard placeholders
     processedTemplate = processedTemplate
       .replace(/{date}/g, date)
       .replace(/{contract_details}/g, contract_details)
@@ -74,14 +64,7 @@ export const handler = async (event) => {
       .replace(/{end_date}/g, end_date)
       .replace(/{termination_clause}/g, termination_clause);
 
-    // Replace party placeholders
-    parties.forEach((party, index) => {
-      const namePattern = new RegExp(`{parties\\[${index}\\]\\.name}`, 'g');
-      const emailPattern = new RegExp(`{parties\\[${index}\\]\\.email}`, 'g');
-      processedTemplate = processedTemplate
-        .replace(namePattern, party.name)
-        .replace(emailPattern, party.email);
-    });
+    // Remove party placeholder processing since ChatGPT will handle it
 
     // Send the processed template to DocuSeal
     const templateResponse = await axios.post(

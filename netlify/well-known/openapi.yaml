@@ -32,85 +32,25 @@ paths:
                 template:
                   type: string
                   description: >
-                    A complete HTML contract template that produce professional contract template. Provide high-quality support with emojis. Ask what type of contract, they would like to build,
-                    and provide a fully efficiency, and comprehensive contract. It must include at least
-                    one `<signature-field>` or `<text-field>` tag to ensure compatibility with DocuSeal's signing
-                    system.
-                        **Example**:
-                    ```html <!DOCTYPE html> <html>
-                      <head>
-                        <meta charset="UTF-8">
-                        <title>Service Agreement</title>
-                        <style>
-                          body {
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                            color: #E0E0E0;
-                            background-color: white
-                            margin: 40px;
-                            line-height: 1.8;
-                          }
-                          h1, h2 {
-                            color: #121212;
-                          }
-                          h1 {
-                            font-size: 19px;
-                          }
-                          h2 {
-                            font-size: 16px;
-                            margin-top: 30px;
-                          }
-                          p {
-                            color: black;
-                            margin: 10px 0;
-                          }
-                          .signature-section {
-                            margin-top: 40px;
-                            display: flex;
-                            justify-content: space-between;
-                          }
-                          .signature {
-                            border-top: 1px solid #4FC3F7;
-                            text-align: center;
-                            padding-top: 10px;
-                            width: 45%;
-                          }
-                          .signature-field {
-                            display: block;
-                            margin: 10px auto;
-                          }
-                        </style>
-                      </head>
-                      <body>
-                        <h1>Service Agreement</h1>
-                        <p>This agreement is made on {date} between Party1 email="Party1email" and name="Party2" email="Party2email".</p>
-                        <div>
-                          <h2>Contract Details</h2>
-                          <p>{contract_details}</p>
-                        </div>
-                        <div>
-                          <h2>Terms</h2>
-                          <p>{{terms}}</p>
-                        </div>
-                        <div>
-                          <h2>Contract Duration</h2>
-                          <p>Start Date: {start_date} <br/> End Date: {end_date}</p>
-                        </div>
-                        <div>
-                          <h2>Termination Clause</h2>
-                          <p>{termination_clause}</p>
-                        </div>
-                        <div class="signature-section">
-                          <div class="signature">
-                            <span>Party 1 Signature</span>
-                            <signature-field name="Party1" role="Party1" required="true" class="signature-field"></signature-field>
-                          </div>
-                          <div class="signature">
-                            <span>Party 2 Signature</span>
-                            <signature-field name="Party2" role="Party2" required="true" class="signature-field"></signature-field>
-                          </div>
-                        </div>
-                      </body>
-                    </html> ```
+                    A complete HTML contract template with all party details and placeholders already filled in. Only
+                    the following placeholders should remain in the template:
+                    - {date}
+                    - {contract_details}
+                    - {terms}
+                    - {start_date}
+                    - {end_date}
+                    - {termination_clause}
+                    
+                    Party details should be directly inserted into the HTML template before sending.
+                    
+                    **Example**:
+                    ```html
+                    <!-- Instead of this -->
+                    <p>This agreement is made between {party_1_name} ({party_1_email}) and {party_2_name} ({party_2_email})</p>
+                    
+                    <!-- ChatGPT should send this -->
+                    <p>This agreement is made between John Doe (john.doe@example.com) and Jane Smith (jane.smith@example.com)</p>
+                    ```
 
                 parties:
                   type: array
