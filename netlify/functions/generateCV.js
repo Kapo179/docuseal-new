@@ -24,6 +24,7 @@ exports.handler = async (event) => {
     };
   }
 
+  let browser;
   try {
     const { 
       name, 
@@ -125,9 +126,13 @@ exports.handler = async (event) => {
     `;
 
     await chromium.font('/tmp/fonts');
-    const browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
       args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
-      defaultViewport: chromium.defaultViewport,
+      defaultViewport: {
+        width: 1240,
+        height: 1754, // A4 size at 96 DPI
+        deviceScaleFactor: 2 // For better quality PNG
+      },
       executablePath: process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath('/tmp/chromium'),
       headless: true
     });
@@ -135,6 +140,7 @@ exports.handler = async (event) => {
     const page = await browser.newPage();
     await page.setContent(htmlTemplate);
 
+    // Generate PDF
     const pdfBuffer = await page.pdf({ 
       format: 'A4',
       margin: {
@@ -144,6 +150,14 @@ exports.handler = async (event) => {
         left: '20mm'
       },
       printBackground: true
+    });
+
+    // Generate PNG preview of the first page
+    const pngBuffer = await page.screenshot({
+      type: 'png',
+      fullPage: true,
+      omitBackground: false,
+      encoding: 'binary'
     });
 
     await browser.close();
@@ -158,11 +172,15 @@ exports.handler = async (event) => {
         success: true,
         message: 'CV generated successfully',
         cvHtml: htmlTemplate,
-        pdfBase64: pdfBuffer.toString('base64')
+        pdfBase64: pdfBuffer.toString('base64'),
+        previewImageBase64: pngBuffer.toString('base64')
       })
     };
   } catch (error) {
     console.error('Error generating CV:', error);
+    if (browser) {
+      await browser.close();
+    }
     return { 
       statusCode: 500, 
       headers: CORS_HEADERS,

@@ -5,12 +5,13 @@ info:
 servers:
   - url: https://contractquickly.com/.netlify/functions
 paths:
-  /generate-cv:
+  /generateCV:
     post:
       operationId: generateCV
       summary: Generate a professional CV template
       description: >
         This endpoint generates a personalized CV in HTML or PDF format based on user-provided data.
+        It returns both the full PDF document and a PNG preview of the first page.
       requestBody:
         required: true
         content:
@@ -92,7 +93,7 @@ paths:
                         example: Developed and maintained web applications.
                 skills:
                   type: array
-                  description: List of skills.
+                  description: List of professional skills.
                   items:
                     type: string
                   example: ["JavaScript", "Python", "React"]
@@ -104,7 +105,9 @@ paths:
                   example: ["Photography", "Reading", "Hiking"]
       responses:
         "200":
-          description: Successfully generated the CV.
+          description: >
+            Successfully generated the CV. Returns the CV in multiple formats:
+            HTML template, PDF document, and a PNG preview of the first page.
           content:
             application/json:
               schema:
@@ -114,16 +117,23 @@ paths:
                     type: boolean
                     description: Indicates whether the CV was successfully generated.
                     example: true
-                  cvHtml:
-                    type: string
-                    description: Generated CV in HTML format.
-                  pdfBase64:
-                    type: string
-                    description: Base64-encoded PDF of the CV (if applicable).
                   message:
                     type: string
                     description: A success message indicating the CV was created.
-                    example: CV generated successfully.
+                    example: CV generated successfully
+                  cvHtml:
+                    type: string
+                    description: The complete HTML template of the CV.
+                  pdfBase64:
+                    type: string
+                    description: Base64-encoded PDF version of the CV.
+                    format: byte
+                  previewImageBase64:
+                    type: string
+                    description: >
+                      Base64-encoded PNG preview of the CV's first page.
+                      Generated at 2x scale for better quality.
+                    format: byte
         "400":
           description: Invalid input data.
           content:
@@ -145,7 +155,7 @@ paths:
                   error:
                     type: string
                     description: A message describing the server error.
-                    example: An unexpected error occurred.
+                    example: Failed to generate CV
                   details:
                     type: string
                     description: Additional information about the error, if available.
