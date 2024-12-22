@@ -1,4 +1,5 @@
-const chromium = require('chrome-aws-lambda');
+const chromium = require('@sparticuz/chromium');
+const puppeteer = require('puppeteer-core');
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -8,7 +9,6 @@ const CORS_HEADERS = {
 };
 
 exports.handler = async (event) => {
-  // Handle OPTIONS request
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -32,7 +32,7 @@ exports.handler = async (event) => {
       workExperience, 
       skills, 
       hobbies 
-    } = JSON.parse(event.body).params; // Note: accessing from params
+    } = JSON.parse(event.body).params;
 
     const htmlTemplate = `
       <!DOCTYPE html>
@@ -124,7 +124,8 @@ exports.handler = async (event) => {
       </html>
     `;
 
-    const browser = await chromium.puppeteer.launch({
+    await chromium.font('/tmp/fonts');
+    const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath,
