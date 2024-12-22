@@ -1,0 +1,153 @@
+openapi: 3.1.0
+info:
+  title: CV Template Generator API
+  version: 1.0.0
+servers:
+  - url: https://contractquickly.com/.netlify/functions
+paths:
+  /generate-cv:
+    post:
+      operationId: generateCV
+      summary: Generate a professional CV template
+      description: >
+        This endpoint generates a personalized CV in HTML or PDF format based on user-provided data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - contactDetails
+                - education
+                - workExperience
+                - skills
+              properties:
+                name:
+                  type: string
+                  description: Full name of the CV owner.
+                  example: John Doe
+                contactDetails:
+                  type: object
+                  description: Contact details for the CV owner.
+                  required:
+                    - email
+                    - phone
+                    - linkedin
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                      description: Email address of the CV owner.
+                      example: john.doe@example.com
+                    phone:
+                      type: string
+                      description: Phone number of the CV owner.
+                      example: +123456789
+                    linkedin:
+                      type: string
+                      format: uri
+                      description: LinkedIn profile URL of the CV owner.
+                      example: https://www.linkedin.com/in/johndoe
+                education:
+                  type: array
+                  description: List of educational qualifications.
+                  items:
+                    type: object
+                    properties:
+                      institution:
+                        type: string
+                        description: Name of the institution.
+                        example: University of Example
+                      degree:
+                        type: string
+                        description: Degree earned.
+                        example: BSc in Computer Science
+                      year:
+                        type: string
+                        description: Year of graduation.
+                        example: "2023"
+                workExperience:
+                  type: array
+                  description: List of work experiences.
+                  items:
+                    type: object
+                    properties:
+                      company:
+                        type: string
+                        description: Name of the company.
+                        example: Example Corp
+                      position:
+                        type: string
+                        description: Job title or position.
+                        example: Software Engineer
+                      duration:
+                        type: string
+                        description: Duration of employment.
+                        example: 2020-2023
+                      responsibilities:
+                        type: string
+                        description: Key responsibilities and achievements.
+                        example: Developed and maintained web applications.
+                skills:
+                  type: array
+                  description: List of skills.
+                  items:
+                    type: string
+                  example: ["JavaScript", "Python", "React"]
+                hobbies:
+                  type: array
+                  description: List of hobbies and interests (optional).
+                  items:
+                    type: string
+                  example: ["Photography", "Reading", "Hiking"]
+      responses:
+        "200":
+          description: Successfully generated the CV.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the CV was successfully generated.
+                    example: true
+                  cvHtml:
+                    type: string
+                    description: Generated CV in HTML format.
+                  pdfBase64:
+                    type: string
+                    description: Base64-encoded PDF of the CV (if applicable).
+                  message:
+                    type: string
+                    description: A success message indicating the CV was created.
+                    example: CV generated successfully.
+        "400":
+          description: Invalid input data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A brief explanation of the error.
+                    example: Missing required fields name, contactDetails.
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: A message describing the server error.
+                    example: An unexpected error occurred.
+                  details:
+                    type: string
+                    description: Additional information about the error, if available.
+components:
+  schemas: {} 
