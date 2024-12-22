@@ -126,10 +126,10 @@ exports.handler = async (event) => {
 
     await chromium.font('/tmp/fonts');
     const browser = await puppeteer.launch({
-      args: chromium.args,
+      args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath,
-      headless: chromium.headless,
+      executablePath: process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath('/tmp/chromium'),
+      headless: true
     });
 
     const page = await browser.newPage();
@@ -142,7 +142,8 @@ exports.handler = async (event) => {
         right: '20mm',
         bottom: '20mm',
         left: '20mm'
-      }
+      },
+      printBackground: true
     });
 
     await browser.close();
