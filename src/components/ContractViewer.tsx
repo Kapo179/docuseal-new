@@ -288,6 +288,31 @@ export default function ContractViewer() {
     </div>
   );
 
+  const renderLoadingState = () => (
+    <div className="flex flex-col items-center justify-center h-96">
+      <Loader className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+      <p className="text-gray-600">Loading your contract... ⌛</p>
+    </div>
+  );
+
+  const renderErrorState = (errorMessage: string) => (
+    <div className="flex flex-col items-center justify-center h-96 px-4">
+      <div className="bg-red-100 rounded-full p-3 mb-4">
+        <AlertTriangle className="w-8 h-8 text-red-500" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        Oops! Something went wrong 😕
+      </h3>
+      <p className="text-gray-600 text-center max-w-md">{errorMessage}</p>
+    </div>
+  );
+
+  const renderNoPreviewState = () => (
+    <div className="flex flex-col items-center justify-center h-96 px-4">
+      <p className="text-gray-600">No contract preview available 😔</p>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
@@ -307,9 +332,9 @@ export default function ContractViewer() {
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {loading ? (
-            <LoadingState />
+            renderLoadingState()
           ) : error ? (
-            <ErrorState error={error} />
+            renderErrorState(error)
           ) : previewImageUrl ? (
             <div className="space-y-6">
               <div className="flex justify-center items-center w-full max-h-[60vh] bg-gray-50 rounded-lg shadow-lg overflow-hidden p-4">
@@ -440,7 +465,7 @@ export default function ContractViewer() {
               </div>
             </div>
           ) : (
-            <NoPreviewState />
+            renderNoPreviewState()
           )}
         </div>
       </div>
