@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { StripePaymentElement } from './StripePaymentElement';
 import { usePaymentFlow } from '../hooks/usePaymentFlow';
-import { FileText, Loader, AlertTriangle, Lock, ArrowRight, PenTool, Check, Smartphone, Mail } from 'lucide-react';
+import { FileText, Loader, AlertTriangle, Lock, ArrowRight, PenTool, Check, Smartphone, Mail, Wand2 } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentSuccess } from './PaymentSuccess';
@@ -26,6 +26,10 @@ export default function ContractViewer() {
   const [sendingEmails, setSendingEmails] = useState(false);
   const [showEmailNotification, setShowEmailNotification] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [contractParties, setContractParties] = useState<{
+    disclosingParty?: { name: string; email: string };
+    receivingParty?: { name: string; email: string };
+  }>({});
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -67,7 +71,53 @@ export default function ContractViewer() {
     };
 
     fetchContract();
+    extractPartiesFromContract();
   }, [templateId]);
+
+  const extractPartiesFromContract = async () => {
+    try {
+      const response = await fetch(`/.netlify/functions/get-docuseal-contract?templateId=${templateId}`);
+      if (!response.ok) throw new Error('Failed to fetch contract data');
+      
+      const data = await response.json();
+      const contractText = data.content || '';
+
+      const disclosingMatch = contractText.match(/Disclosing Party:\s*([^(]+)\s*\(([^)]+)\)/);
+      const receivingMatch = contractText.match(/Receiving Party:\s*([^(]+)\s*\(([^)]+)\)/);
+
+      if (disclosingMatch) {
+        setContractParties(prev => ({
+          ...prev,
+          disclosingParty: {
+            name: disclosingMatch[1].trim(),
+            email: disclosingMatch[2].trim()
+          }
+        }));
+      }
+
+      if (receivingMatch) {
+        setContractParties(prev => ({
+          ...prev,
+          receivingParty: {
+            name: receivingMatch[1].trim(),
+            email: receivingMatch[2].trim()
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error extracting parties:', error);
+    }
+  };
+
+  const handleAutoFill = () => {
+    const { disclosingParty, receivingParty } = contractParties;
+    if (disclosingParty || receivingParty) {
+      setEmailRecipients([
+        disclosingParty ? { name: disclosingParty.name, email: disclosingParty.email } : { name: '', email: '' },
+        receivingParty ? { name: receivingParty.name, email: receivingParty.email } : { name: '', email: '' }
+      ]);
+    }
+  };
 
   const handlePaymentSuccess = async () => {
     if (paymentProcessing) return;
@@ -172,11 +222,24 @@ export default function ContractViewer() {
   const emailFormModal = showEmailForm && (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold mb-4">Send Contract via Email</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Send Contract via Email</h3>
+          <button
+            onClick={handleAutoFill}
+            className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+            title="Auto-fill from contract"
+          >
+            <Wand2 className="w-4 h-4 mr-1.5" />
+            Auto-fill
+          </button>
+        </div>
         
         <div className="mb-6">
           {emailRecipients.map((recipient, index) => (
             <div key={index} className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {index === 0 ? 'Disclosing Party' : 'Receiving Party'}
+              </label>
               <input
                 type="text"
                 placeholder="Name"
