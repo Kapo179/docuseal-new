@@ -20,7 +20,9 @@ export default function ContractViewer() {
   const { createPaymentIntent, clientSecret, isProcessing, isComplete, error: paymentError, setError: setPaymentError, setComplete } = usePaymentFlow();
   const [showPayment, setShowPayment] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
-  const [emailRecipients, setEmailRecipients] = useState<Array<{name: string, email: string}>>([]);
+  const [emailRecipients, setEmailRecipients] = useState<Array<{name: string, email: string}>>([
+    { name: '', email: '' }
+  ]);
   const [sendingEmails, setSendingEmails] = useState(false);
   const [showEmailNotification, setShowEmailNotification] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
@@ -75,12 +77,11 @@ export default function ContractViewer() {
       console.log('Payment successful! 🎉');
       
       // Validate email recipients
-      if (!emailRecipients.some(r => r.name && r.email)) {
+      const validRecipients = emailRecipients.filter(r => r.name && r.email);
+      if (validRecipients.length === 0) {
         throw new Error('Please provide at least one recipient with name and email');
       }
 
-      const validRecipients = emailRecipients.filter(r => r.name && r.email);
-      
       console.log('Sending emails to:', validRecipients);
       setSendingEmails(true);
       
@@ -98,20 +99,22 @@ export default function ContractViewer() {
       if (response.data.success) {
         setShowEmailForm(false);
         setShowEmailNotification(true);
+        setComplete(true);
         
+        // Stay on the same page, just show notification
         setTimeout(() => {
           setShowEmailNotification(false);
-          setComplete(true);
-          navigate(`/success?submissionId=${response.data.submissionId}`);
         }, 5000);
       } else {
         throw new Error(response.data.error || 'Submission creation failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing payment or sending emails:', error);
       setPaymentError(
         error.message || 'Payment successful but failed to send emails. Please try again or contact support.'
       );
+      // Reset payment processing state on error
+      setComplete(false);
     } finally {
       setSendingEmails(false);
       setPaymentProcessing(false);
@@ -136,7 +139,7 @@ export default function ContractViewer() {
   const handleEmailFormSubmit = async () => {
     if (paymentProcessing) return;
     
-    // Validate recipients
+    // Validate recipients before showing payment
     const validRecipients = emailRecipients.filter(r => r.name && r.email);
     if (validRecipients.length === 0) {
       setPaymentError('Please add at least one recipient with name and email');
@@ -184,6 +187,7 @@ export default function ContractViewer() {
                   setEmailRecipients(newRecipients);
                 }}
                 className="w-full mb-2 p-2 border rounded"
+                required
               />
               <input
                 type="email"
@@ -195,6 +199,7 @@ export default function ContractViewer() {
                   setEmailRecipients(newRecipients);
                 }}
                 className="w-full p-2 border rounded"
+                required
               />
             </div>
           ))}
@@ -212,7 +217,10 @@ export default function ContractViewer() {
             <StripePaymentElement
               onSuccess={handlePaymentSuccess}
               onError={handlePaymentError}
-              onCancel={() => setShowPayment(false)}
+              onCancel={() => {
+                setShowPayment(false);
+                setPaymentProcessing(false);
+              }}
             />
           </Elements>
         ) : (
@@ -227,6 +235,7 @@ export default function ContractViewer() {
                 onClick={() => {
                   setShowEmailForm(false);
                   setEmailRecipients([{ name: '', email: '' }]);
+                  setPaymentError(null);
                 }}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
