@@ -27,8 +27,7 @@ export default function ContractViewer() {
   const [showEmailNotification, setShowEmailNotification] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [contractParties, setContractParties] = useState<{
-    disclosingParty?: { name: string; email: string };
-    receivingParty?: { name: string; email: string };
+    parties?: Array<{ name: string; email: string }>;
   }>({});
 
   useEffect(() => {
@@ -82,44 +81,24 @@ export default function ContractViewer() {
       const data = await response.json();
       const contractText = data.content || '';
 
-      const disclosingMatch = contractText.match(/Disclosing Party: John Doe \(john\.doe@example\.com\)/i);
-      const receivingMatch = contractText.match(/Receiving Party: Jane Smith \(jane\.smith@example\.com\)/i);
+      // Generic pattern to match any name and email in parentheses
+      const partyPattern = /([^(]+)\s*\(([^)]+@[^)]+)\)/g;
+      const matches = [...contractText.matchAll(partyPattern)];
 
       console.log('Contract Text:', contractText);
-      console.log('Disclosing Match:', disclosingMatch);
-      console.log('Receiving Match:', receivingMatch);
+      console.log('Found Matches:', matches);
 
-      if (disclosingMatch) {
-        const [fullMatch] = disclosingMatch;
-        const name = fullMatch.split('(')[0].replace('Disclosing Party:', '').trim();
-        const email = fullMatch.match(/\((.*?)\)/)?.[1] || '';
+      // Extract all parties found
+      const parties = matches.map(match => ({
+        name: match[1].trim(),
+        email: match[2].trim()
+      }));
 
-        setContractParties(prev => ({
-          ...prev,
-          disclosingParty: {
-            name,
-            email
-          }
-        }));
-      }
+      console.log('Extracted Parties:', parties);
 
-      if (receivingMatch) {
-        const [fullMatch] = receivingMatch;
-        const name = fullMatch.split('(')[0].replace('Receiving Party:', '').trim();
-        const email = fullMatch.match(/\((.*?)\)/)?.[1] || '';
-
-        setContractParties(prev => ({
-          ...prev,
-          receivingParty: {
-            name,
-            email
-          }
-        }));
-      }
-
-      console.log('Extracted Parties:', {
-        disclosingParty: contractParties.disclosingParty,
-        receivingParty: contractParties.receivingParty
+      // Store in state
+      setContractParties({
+        parties
       });
 
     } catch (error) {
@@ -128,30 +107,23 @@ export default function ContractViewer() {
   };
 
   const handleAutoFill = () => {
-    const { disclosingParty, receivingParty } = contractParties;
+    const { parties } = contractParties;
     
-    const newRecipients = [
-      { name: '', email: '' },
-      { name: '', email: '' }
-    ];
+    if (parties?.length) {
+      // Fill in as many recipients as we found, up to 2
+      const newRecipients = parties.slice(0, 2).map(party => ({
+        name: party.name,
+        email: party.email
+      }));
 
-    if (disclosingParty) {
-      newRecipients[0] = {
-        name: disclosingParty.name,
-        email: disclosingParty.email
-      };
+      // Ensure we always have at least one recipient field
+      while (newRecipients.length < 1) {
+        newRecipients.push({ name: '', email: '' });
+      }
+
+      setEmailRecipients(newRecipients);
+      console.log('Auto-filled recipients:', newRecipients);
     }
-
-    if (receivingParty) {
-      newRecipients[1] = {
-        name: receivingParty.name,
-        email: receivingParty.email
-      };
-    }
-
-    setEmailRecipients(newRecipients);
-    
-    console.log('Auto-filled recipients:', newRecipients);
   };
 
   const handlePaymentSuccess = async () => {
@@ -170,6 +142,16 @@ export default function ContractViewer() {
       console.log('Sending emails to:', validRecipients);
       setSendingEmails(true);
       
+      // Log the request being sent
+      console.log('📤 Sending request to create-docuseal-submission:', {
+        templateId,
+        submitters: validRecipients.map((recipient, index) => ({
+          name: recipient.name.trim(),
+          email: recipient.email.trim(),
+          role: `Party${index + 1}`
+        }))
+      });
+
       const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
         templateId,
         submitters: validRecipients.map((recipient, index) => ({
@@ -179,14 +161,13 @@ export default function ContractViewer() {
         }))
       });
 
-      console.log('DocuSeal submission response:', response.data);
+      console.log('📥 DocuSeal submission response:', response.data);
 
       if (response.data.success) {
         setShowEmailForm(false);
         setShowEmailNotification(true);
         setComplete(true);
         
-        // Stay on the same page, just show notification
         setTimeout(() => {
           setShowEmailNotification(false);
         }, 5000);
@@ -194,11 +175,10 @@ export default function ContractViewer() {
         throw new Error(response.data.error || 'Submission creation failed');
       }
     } catch (error: any) {
-      console.error('Error processing payment or sending emails:', error);
+      console.error('❌ Error processing payment or sending emails:', error);
       setPaymentError(
         error.message || 'Payment successful but failed to send emails. Please try again or contact support.'
       );
-      // Reset payment processing state on error
       setComplete(false);
     } finally {
       setSendingEmails(false);
@@ -273,7 +253,7 @@ export default function ContractViewer() {
           {emailRecipients.map((recipient, index) => (
             <div key={index} className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {index === 0 ? 'Disclosing Party' : 'Receiving Party'}
+                Recipient {index + 1}
               </label>
               <input
                 type="text"

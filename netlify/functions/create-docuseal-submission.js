@@ -8,6 +8,12 @@ const CORS_HEADERS = {
 };
 
 export const handler = async (event) => {
+  // Add initial invocation log
+  console.log('🚀 create-docuseal-submission function invoked:', {
+    httpMethod: event.httpMethod,
+    timestamp: new Date().toISOString()
+  });
+
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -16,6 +22,7 @@ export const handler = async (event) => {
   }
 
   if (event.httpMethod !== 'POST') {
+    console.log('❌ Invalid HTTP method:', event.httpMethod);
     return {
       statusCode: 405,
       headers: CORS_HEADERS,
@@ -26,48 +33,29 @@ export const handler = async (event) => {
   try {
     const { templateId, submitters } = JSON.parse(event.body);
     
-    // Log incoming request
-    console.log('📨 Incoming submission request:', {
+    // Log request data
+    console.log('📥 Received submission request:', {
       templateId,
       submitters,
       timestamp: new Date().toISOString()
     });
 
-    // Validate required fields
     if (!templateId || !submitters?.length) {
-      console.error('❌ Validation failed:', { templateId, submittersCount: submitters?.length });
+      console.error('❌ Missing required fields:', { templateId, submittersCount: submitters?.length });
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ 
-          error: 'Invalid request',
-          details: 'Template ID and at least one submitter are required'
-        })
+        body: JSON.stringify({ error: 'Missing required fields' })
       };
     }
 
-    // Validate each submitter
-    const invalidSubmitters = submitters.filter(s => !s.name || !s.email);
-    if (invalidSubmitters.length > 0) {
-      console.error('❌ Invalid submitters:', invalidSubmitters);
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: 'Invalid submitters',
-          details: 'Each submitter must have a name and email'
-        })
-      };
-    }
+    // Log DocuSeal API request
+    console.log('📤 Sending request to DocuSeal API:', {
+      url: 'https://api.docuseal.com/submissions',
+      templateId,
+      submitters
+    });
 
-    console.log('🔍 Valid submitters to process:', submitters.map(s => ({
-      name: s.name,
-      email: s.email,
-      role: s.role
-    })));
-    
-    // Create submission in DocuSeal
-    console.log('🚀 Sending request to DocuSeal submissions API...');
     const response = await axios.post(
       'https://api.docuseal.com/submissions',
       {
@@ -75,7 +63,7 @@ export const handler = async (event) => {
         submitters: submitters.map(s => ({
           name: s.name,
           email: s.email,
-          fields: [], // Add any specific fields if needed
+          fields: [],
           role: s.role
         }))
       },
@@ -87,15 +75,12 @@ export const handler = async (event) => {
       }
     );
 
-    console.log('✅ DocuSeal Submission Response:', JSON.stringify({
+    // Log successful response
+    console.log('✅ DocuSeal API Response:', {
       status: response.status,
-      statusText: response.statusText,
       submissionId: response.data.id,
-      submissionStatus: response.data.status,
-      submissionUrl: response.data.url,
-      timestamp: new Date().toISOString(),
-      fullResponse: response.data
-    }, null, 2));
+      timestamp: new Date().toISOString()
+    });
 
     return {
       statusCode: 200,
@@ -112,7 +97,8 @@ export const handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error('❌ Error creating submission:', {
+    // Enhanced error logging
+    console.error('❌ Error in create-docuseal-submission:', {
       message: error.message,
       stack: error.stack,
       response: error.response?.data,
@@ -120,7 +106,7 @@ export const handler = async (event) => {
     });
 
     return {
-      statusCode: 500,
+      statusCode: error.response?.status || 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
         error: 'Failed to create submission',
