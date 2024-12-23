@@ -5,6 +5,7 @@ import { generateAgreementTemplate } from '../services/docusealApi';
 import { useContractFlow } from '../hooks/useContractFlow';
 import { PartyDetailsForm } from './SigningFlow/PartyDetailsForm';
 import type { ContractParty } from '../types';
+import axios from 'axios';
 
 export function SigningFlow() {
   const navigate = useNavigate();
@@ -33,26 +34,45 @@ export function SigningFlow() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     try {
       if (!contractFlow.formData) {
         return;
       }
 
-      // Generate agreement template with DocuSeal
-      const { templateId, documentUrl } = await generateAgreementTemplate({
+      // First, generate the template
+      const templateResponse = await generateAgreementTemplate({
         formData: contractFlow.formData,
-        template: '<html>Your template here with placeholders like {{name}}</html>'
+        parties: [partyOne, partyTwo]  // Include both parties
       });
 
-      // Store template ID for status checking
-      sessionStorage.setItem('docuseal_template_id', templateId);
+      // Then create a submission with email invites
+      const submissionResponse = await axios.post('/.netlify/functions/create-docuseal-submission', {
+        templateId: templateResponse.templateId,
+        submitters: [
+          {
+            name: partyOne.name,
+            email: partyOne.email,
+            role: 'Party1'
+          },
+          {
+            name: partyTwo.name,
+            email: partyTwo.email,
+            role: 'Party2'
+          }
+        ]
+      });
 
-      // Reset contract flow
-      contractFlow.reset();
-
-      // Redirect to DocuSeal signing page
-      window.location.href = documentUrl || '/';
+      if (submissionResponse.data.success) {
+        setShowEmailNotification(true);
+        // Reset after 5 seconds
+        setTimeout(() => {
+          setShowEmailNotification(false);
+          contractFlow.reset();
+          navigate('/success');
+        }, 5000);
+      }
     } catch (err) {
       console.error('DocuSeal flow error:', err);
       setIsLoading(false);

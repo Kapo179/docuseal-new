@@ -43,6 +43,16 @@ export const handler = async (event) => {
       termination_clause
     } = JSON.parse(event.body);
 
+    // Log the incoming request
+    console.log('📝 Incoming request data:', {
+      date,
+      contract_details,
+      terms,
+      start_date,
+      end_date,
+      termination_clause
+    });
+
     // Validate required fields
     if (!template || !date || !contract_details || !terms || !start_date || !end_date || !termination_clause) {
       return {
@@ -67,6 +77,7 @@ export const handler = async (event) => {
     // Remove party placeholder processing since ChatGPT will handle it
 
     // Send the processed template to DocuSeal
+    console.log('🚀 Sending request to DocuSeal API...');
     const templateResponse = await axios.post(
       'https://api.docuseal.com/templates/html',
       {
@@ -83,12 +94,29 @@ export const handler = async (event) => {
       }
     );
 
+    // Log the complete DocuSeal response
+    console.log('✅ DocuSeal API Response:', JSON.stringify({
+      status: templateResponse.status,
+      statusText: templateResponse.statusText,
+      data: templateResponse.data,
+      headers: templateResponse.headers
+    }, null, 2));
+
     if (!templateResponse.data?.id) {
+      console.error('❌ Template creation failed: No template ID in response');
       throw new Error('Template creation failed: Missing template ID');
     }
 
-    const contractLink = templateResponse.data.documents?.[0]?.url;
+    // Format the contract link with your domain
+    const contractLink = `https://contractquickly.com/contract/${templateResponse.data.id}`;
     const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
+
+    // Log the final response being sent back
+    console.log('📤 Sending response:', {
+      templateId: templateResponse.data.id,
+      contractLink,
+      previewImageUrl
+    });
 
     return {
       statusCode: 200,
@@ -102,13 +130,20 @@ export const handler = async (event) => {
       }),
     };
   } catch (error) {
-    console.error('Error processing template:', error);
+    // Enhanced error logging
+    console.error('❌ Error processing template:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data // Log DocuSeal error response if available
+    });
+
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({ 
         error: 'Internal server error', 
-        details: error.message 
+        details: error.message,
+        docusealError: error.response?.data // Include DocuSeal error details in response
       }),
     };
   }

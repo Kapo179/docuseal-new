@@ -6,6 +6,7 @@ import { FileText, Loader, AlertTriangle, Lock, ArrowRight, PenTool, Check, Smar
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentSuccess } from './PaymentSuccess';
+import axios from 'axios';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -17,6 +18,9 @@ export default function ContractViewer() {
   const [error, setError] = useState<string | null>(null);
   const { createPaymentIntent, clientSecret, isProcessing, isComplete, error: paymentError, setError: setPaymentError, setComplete } = usePaymentFlow();
   const [showPayment, setShowPayment] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [emailRecipients, setEmailRecipients] = useState<Array<{name: string, email: string}>>([]);
+  const [sendingEmails, setSendingEmails] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -79,6 +83,92 @@ export default function ContractViewer() {
       console.error('Payment initialization failed:', error);
     }
   };
+
+  const handleSendEmails = async () => {
+    if (!templateId) return;
+    setSendingEmails(true);
+
+    try {
+      const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
+        templateId,
+        submitters: emailRecipients.map((recipient, index) => ({
+          name: recipient.name,
+          email: recipient.email,
+          role: `Party${index + 1}`
+        }))
+      });
+
+      if (response.data.success) {
+        setShowEmailForm(false);
+        // Show success notification
+        // You can reuse your email notification component
+      }
+    } catch (error) {
+      console.error('Error sending emails:', error);
+      // Show error notification
+    } finally {
+      setSendingEmails(false);
+    }
+  };
+
+  const emailButton = (
+    <button
+      onClick={() => setShowEmailForm(true)}
+      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+    >
+      <Mail className="w-4 h-4 mr-2" />
+      Send via Email
+    </button>
+  );
+
+  const emailFormModal = showEmailForm && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold mb-4">Send Contract via Email</h3>
+        {emailRecipients.map((recipient, index) => (
+          <div key={index} className="mb-4">
+            <input
+              type="text"
+              placeholder="Name"
+              value={recipient.name}
+              onChange={(e) => {
+                const newRecipients = [...emailRecipients];
+                newRecipients[index].name = e.target.value;
+                setEmailRecipients(newRecipients);
+              }}
+              className="w-full mb-2 p-2 border rounded"
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={recipient.email}
+              onChange={(e) => {
+                const newRecipients = [...emailRecipients];
+                newRecipients[index].email = e.target.value;
+                setEmailRecipients(newRecipients);
+              }}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        ))}
+        <div className="flex justify-end gap-2 mt-4">
+          <button
+            onClick={() => setShowEmailForm(false)}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSendEmails}
+            disabled={sendingEmails}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            {sendingEmails ? 'Sending...' : 'Send'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6">
@@ -245,6 +335,7 @@ export default function ContractViewer() {
           )}
         </div>
       </div>
+      {emailFormModal}
     </div>
   );
 }
