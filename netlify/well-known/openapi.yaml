@@ -41,34 +41,102 @@ paths:
                     - {end_date}
                     - {termination_clause}
                     
-                    Party details should be directly inserted into the HTML template before sending.
-                    
-                    **Example**:
+                    The Template must include:
+                    `<signature-field>` tags with proper role attributes, for each party
+
+
+
+                    **Required HTML Tags:**
+                    - `<signature-field role="Party1">` for first party signature
+                    - `<signature-field role="Party2">` for second party signature
+        
+                    **Optional Field Tags:**
+                    - `<text-field>` for text input
+                    - `<date-field>` for dates
+                    - `<checkbox-field>` for checkboxes
+                    - `<initials-field>` for initials
+        
+                    Each field tag supports these attributes:
+                    - `name`: Field identifier
+                    - `role`: Party role (Party1/Party2)
+                    - `required`: true/false (default: true)
+                    - `readonly`: true/false (default: false)
+
+                    **Example Template Structure:**
                     ```html
-                    <!-- Instead of this -->
-                    <p>This agreement is made between {party_1_name} ({party_1_email}) and {party_2_name} ({party_2_email})</p>
-                    
-                    <!-- ChatGPT should send this -->
-                    <p>This agreement is made between John Doe (john.doe@example.com) and Jane Smith (jane.smith@example.com)</p>
+                    <div>
+                      <p>Party 1 Signature:</p>
+                      <signature-field role="Party1" name="Signature1" style="width: 200px; height: 80px;"></signature-field>
+          
+                      <p>Party 2 Signature:</p>
+                      <signature-field role="Party2" name="Signature2" style="width: 200px; height: 80px;"></signature-field>
+                    </div>
+                    ```
+                    **Example:**
+                    ```html
+                    <div style="padding: 20px;">
+                      <!-- Party details -->
+                      <p>This agreement is made between John Doe (john.doe@example.com) and Jane Smith (jane.smith@example.com)</p>
+                      
+                      <!-- Required signature fields -->
+                      <div style="margin-top: 40px;">
+                        <div style="float: left; width: 45%;">
+                          <p>Party 1:</p>
+                          <signature-field role="Party1" name="FirstPartySignature" style="width: 200px; height: 80px;"></signature-field>
+                          <date-field role="Party1" name="FirstPartyDate" style="width: 150px; height: 30px;"></date-field>
+                        </div>
+                        
+                        <div style="float: right; width: 45%;">
+                          <p>Party 2:</p>
+                          <signature-field role="Party2" name="SecondPartySignature" style="width: 200px; height: 80px;"></signature-field>
+                          <date-field role="Party2" name="SecondPartyDate" style="width: 150px; height: 30px;"></date-field>
+                        </div>
+                      </div>
+                    </div>
                     ```
 
                 parties:
                   type: array
                   description: |
-                    A list of parties involved in the contract. Each party includes fields like name and email.
+                    A list of parties involved in the contract. Each party includes fields like name, email, and role.
+                    These parties will be automatically added as DocuSeal submitters.
+                  minItems: 1
+                  maxItems: 2
                   items:
                     type: object
                     required:
                       - name
                       - email
+                      - role
                     properties:
                       name:
                         type: string
-                        description: The full name of the party, e.g., "John Doe".
+                        description: The full name of the party, e.g., "John Doe"
+                        example: "John Doe"
                       email:
                         type: string
                         format: email
-                        description: The email address of the party, e.g., "john.doe@example.com".
+                        description: The email address of the party, e.g., "john.doe@example.com"
+                        example: "john.doe@example.com"
+                      role:
+                        type: string
+                        enum: ["Party1", "Party2"]
+                        description: |
+                          The role of the party in DocuSeal. Must be either "Party1" or "Party2".
+                          - Party1 is typically the disclosing party or the first signer
+                          - Party2 is typically the receiving party or the second signer
+                        example: "Party1"
+                      fields:
+                        type: array
+                        description: Optional DocuSeal fields for this submitter
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                        default: []
                 date:
                   type: string
                   format: date
@@ -130,6 +198,26 @@ paths:
                     type: string
                     description: A success message indicating the contract was created.
                     example: Contract generated successfully!
+                  submissionDetails:
+                    type: object
+                    properties:
+                      submissionId:
+                        type: string
+                        description: The DocuSeal submission ID
+                      submitters:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            email:
+                              type: string
+                            role:
+                              type: string
+                            status:
+                              type: string
+                              enum: ["pending", "completed"]
         "400":
           description: >
             The request is invalid due to missing or improperly formatted required fields. This response includes an

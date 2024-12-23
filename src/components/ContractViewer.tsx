@@ -141,24 +141,29 @@ export default function ContractViewer() {
 
       console.log('Sending emails to:', validRecipients);
       setSendingEmails(true);
-      
+
+      // Format submitters for DocuSeal API
+      const submitters = validRecipients.map((recipient, index) => ({
+        role: `Party${index + 1}`,
+        name: recipient.name.trim(),
+        email: recipient.email.trim(),
+        send_email: true,
+        preferences: {
+          send_email: true,
+          send_sms: false
+        }
+      }));
+
       // Log the request being sent
-      console.log('📤 Sending request to create-docuseal-submission:', {
+      console.log('📤 Creating DocuSeal submission:', {
         templateId,
-        submitters: validRecipients.map((recipient, index) => ({
-          name: recipient.name.trim(),
-          email: recipient.email.trim(),
-          role: `Party${index + 1}`
-        }))
+        submitters
       });
 
       const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
-        templateId,
-        submitters: validRecipients.map((recipient, index) => ({
-          name: recipient.name.trim(),
-          email: recipient.email.trim(),
-          role: `Party${index + 1}`
-        }))
+        template_id: templateId,
+        send_email: true,
+        submitters
       });
 
       console.log('📥 DocuSeal submission response:', response.data);
@@ -172,10 +177,10 @@ export default function ContractViewer() {
           setShowEmailNotification(false);
         }, 5000);
       } else {
-        throw new Error(response.data.error || 'Submission creation failed');
+        throw new Error(response.data.error || 'Failed to create submission');
       }
     } catch (error: any) {
-      console.error('❌ Error processing payment or sending emails:', error);
+      console.error('❌ Error creating submission:', error);
       setPaymentError(
         error.message || 'Payment successful but failed to send emails. Please try again or contact support.'
       );

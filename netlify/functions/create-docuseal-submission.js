@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 const CORS_HEADERS = {
-  'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
@@ -21,51 +20,23 @@ export const handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== 'POST') {
-    console.log('❌ Invalid HTTP method:', event.httpMethod);
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
-  }
-
   try {
-    const { templateId, submitters } = JSON.parse(event.body);
+    const { template_id, submitters } = JSON.parse(event.body);
     
     // Log request data
     console.log('📥 Received submission request:', {
-      templateId,
+      template_id,
       submitters,
       timestamp: new Date().toISOString()
     });
 
-    if (!templateId || !submitters?.length) {
-      console.error('❌ Missing required fields:', { templateId, submittersCount: submitters?.length });
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Missing required fields' })
-      };
-    }
-
-    // Log DocuSeal API request
-    console.log('📤 Sending request to DocuSeal API:', {
-      url: 'https://api.docuseal.com/submissions',
-      templateId,
-      submitters
-    });
-
+    // Create submission in DocuSeal
     const response = await axios.post(
       'https://api.docuseal.com/submissions',
       {
-        template_id: templateId,
-        submitters: submitters.map(s => ({
-          name: s.name,
-          email: s.email,
-          fields: [],
-          role: s.role
-        }))
+        template_id,
+        send_email: true,
+        submitters
       },
       {
         headers: {
@@ -78,7 +49,7 @@ export const handler = async (event) => {
     // Log successful response
     console.log('✅ DocuSeal API Response:', {
       status: response.status,
-      submissionId: response.data.id,
+      data: response.data,
       timestamp: new Date().toISOString()
     });
 
@@ -87,15 +58,12 @@ export const handler = async (event) => {
       headers: CORS_HEADERS,
       body: JSON.stringify({
         success: true,
-        submissionId: response.data.id,
+        submissionId: response.data[0].submission_id,
         message: 'Emails sent successfully',
-        submissionDetails: {
-          status: response.data.status,
-          url: response.data.url,
-          submitters: response.data.submitters
-        }
+        submitters: response.data
       })
     };
+
   } catch (error) {
     // Enhanced error logging
     console.error('❌ Error in create-docuseal-submission:', {
