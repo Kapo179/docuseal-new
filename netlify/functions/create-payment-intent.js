@@ -1,92 +1,72 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is missing');
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-12-18'
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json'
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
 export const handler = async (event) => {
+  // Add initial invocation log
+  console.log('🚀 create-payment-intent function invoked:', {
+    httpMethod: event.httpMethod,
+    timestamp: new Date().toISOString()
+  });
+
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
-      headers: CORS_HEADERS,
-      body: ''
-    };
-  }
-
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Method not allowed' })
+      headers: CORS_HEADERS
     };
   }
 
   try {
-    console.log('Creating payment intent');
+    // Create a PaymentIntent with the fixed amount for contract signing
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: 299,
+      amount: 299, // Amount in cents ($2.99)
       currency: 'usd',
       automatic_payment_methods: {
         enabled: true,
       },
       metadata: {
-        service: 'agreement_signing',
-        timestamp: new Date().toISOString()
+        service: 'contract_signing'
       },
-      description: ' Digital Signing Service',
-      statement_descriptor: 'SMART CONTRACTS',
-      statement_descriptor_suffix: 'SIGN AGR',
-      capture_method: 'automatic',
-      setup_future_usage: 'off_session',
-      confirm: false,
+      description: 'Contract Signing Service'
     });
 
-    console.log('Payment intent created:', paymentIntent.id);
+    // Log successful creation
+    console.log('✅ Payment Intent created:', {
+      id: paymentIntent.id,
+      amount: paymentIntent.amount,
+      status: paymentIntent.status,
+      timestamp: new Date().toISOString()
+    });
 
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        clientSecret: paymentIntent.client_secret,
-        paymentIntent: {
-          id: paymentIntent.id,
-          status: paymentIntent.status,
-          amount: paymentIntent.amount,
-          currency: paymentIntent.currency,
-        }
+        clientSecret: paymentIntent.client_secret
       })
     };
   } catch (error) {
-    console.error('Payment Intent Creation Error:', {
-      type: error.type,
+    // Enhanced error logging
+    console.error('❌ Error creating payment intent:', {
       message: error.message,
+      type: error.type,
       code: error.code,
-      requestId: error.requestId
+      timestamp: new Date().toISOString()
     });
-    
-    const errorMessage = error.type === 'StripeCardError' ? error.message :
-      error.type === 'StripeInvalidRequestError' ? 'Invalid payment request' :
-      error.type === 'StripeAPIError' ? 'Payment service temporarily unavailable' :
-      'An unexpected error occurred';
 
     return {
-      statusCode: error.type === 'StripeAPIError' ? 503 : 400,
+      statusCode: 400,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ 
-        error: errorMessage,
+      body: JSON.stringify({
+        error: error.message || 'Invalid payment request',
         code: error.code || 'unknown_error',
-        type: error.type
+        type: error.constructor.name
       })
     };
   }
