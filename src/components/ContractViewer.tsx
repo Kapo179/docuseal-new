@@ -7,6 +7,8 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentSuccess } from './PaymentSuccess';
 import axios from 'axios';
+import { ContractHeader } from './ContractHeader';
+import { SigningPartiesForm } from './SigningPartiesForm';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -316,19 +318,10 @@ export default function ContractViewer() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
-            <div className="bg-blue-500 p-3 rounded-xl">
-              <FileText className="w-6 h-6 text-white" />
-            </div>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            Review Your Contract 
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Please review your contract carefully before proceeding with the signing process ✍️
-          </p>
-        </div>
+        <ContractHeader 
+          title="Review Your Contract"
+          subtitle="Please review your contract carefully before proceeding with the signing process ✍️"
+        />
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {loading ? (
@@ -337,90 +330,25 @@ export default function ContractViewer() {
             renderErrorState(error)
           ) : previewImageUrl ? (
             <div className="space-y-6">
-              <div className="flex justify-center items-center w-full max-h-[60vh] bg-gray-50 rounded-lg shadow-lg overflow-hidden p-4">
-                <img
-                  src={previewImageUrl}
-                  alt="Contract Preview"
-                  className="w-full max-h-full object-contain rounded-lg"
-                />
+              <div className="p-6">
+                <div className="bg-gray-50 rounded-lg shadow-lg overflow-hidden">
+                  <img
+                    src={previewImageUrl}
+                    alt="Contract Preview"
+                    className="w-full h-auto object-contain"
+                  />
+                </div>
               </div>
 
-              <div className="px-6">
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 mb-6">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-blue-100 rounded-lg p-2">
-                      <Mail className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-blue-900">Enter Signing Parties</h3>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Add the email addresses of all parties who need to sign this contract
-                      </p>
-                    </div>
-                    {contractData?.parties?.length > 0 && (
-                      <button
-                        onClick={handleAutoFill}
-                        className="ml-auto inline-flex items-center px-3 py-1.5 text-sm bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                      >
-                        <Wand2 className="w-4 h-4 mr-1.5" />
-                        Auto-fill
-                      </button>
-                    )}
-                  </div>
-                </div>
+              <div className="px-6 pb-6">
+                <SigningPartiesForm 
+                  emailRecipients={emailRecipients}
+                  setEmailRecipients={setEmailRecipients}
+                  onAutoFill={handleAutoFill}
+                  showAutoFill={!!contractData?.parties?.length}
+                />
 
-                <div className="space-y-4 mb-6">
-                  {emailRecipients.map((recipient, index) => (
-                    <div key={index} className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Party {index + 1} Name
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Full Name"
-                          value={recipient.name}
-                          onChange={(e) => {
-                            const newRecipients = [...emailRecipients];
-                            newRecipients[index].name = e.target.value;
-                            setEmailRecipients(newRecipients);
-                          }}
-                          className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          required
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Party {index + 1} Email
-                        </label>
-                        <input
-                          type="email"
-                          placeholder="Email Address"
-                          value={recipient.email}
-                          onChange={(e) => {
-                            const newRecipients = [...emailRecipients];
-                            newRecipients[index].email = e.target.value;
-                            setEmailRecipients(newRecipients);
-                          }}
-                          className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          required
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {emailRecipients.length < 2 && (
-                    <button
-                      onClick={() => setEmailRecipients([...emailRecipients, { name: '', email: '' }])}
-                      className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
-                    >
-                      <PlusCircle className="w-4 h-4 mr-1" />
-                      Add Another Party
-                    </button>
-                  )}
-                </div>
-
-                <div className="space-y-6">
+                <div className="mt-6">
                   {isComplete ? (
                     <PaymentSuccess onContinue={handlePaymentSuccess} />
                   ) : showPayment && clientSecret ? (
@@ -443,7 +371,29 @@ export default function ContractViewer() {
                         animate-pulse hover:animate-none"
                     >
                       {isProcessing ? (
-                        <ProcessingSpinner />
+                        <span className="flex items-center justify-center gap-2">
+                          <svg 
+                            className="animate-spin h-5 w-5 text-white" 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            fill="none" 
+                            viewBox="0 0 24 24"
+                          >
+                            <circle 
+                              className="opacity-25" 
+                              cx="12" 
+                              cy="12" 
+                              r="10" 
+                              stroke="currentColor" 
+                              strokeWidth="4"
+                            />
+                            <path 
+                              className="opacity-75" 
+                              fill="currentColor" 
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          Processing...
+                        </span>
                       ) : (
                         <span className="flex items-center justify-center gap-2">
                           <span>Pay & Sign Now ⚡</span>
