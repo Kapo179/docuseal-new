@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { StripePaymentElement } from './StripePaymentElement';
 import { usePaymentFlow } from '../hooks/usePaymentFlow';
-import { FileText, Loader, AlertTriangle, Lock, ArrowRight, PenTool, Check, Smartphone, Mail, Wand2 } from 'lucide-react';
+import { FileText, Loader, AlertTriangle, Lock, ArrowRight, PenTool, Check, Smartphone, Mail, Wand2, PlusCircle } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentSuccess } from './PaymentSuccess';
@@ -307,20 +307,9 @@ export default function ContractViewer() {
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {loading ? (
-            <div className="flex flex-col items-center justify-center h-96">
-              <Loader className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-              <p className="text-gray-600">Loading your contract... ⌛</p>
-            </div>
+            <LoadingState />
           ) : error ? (
-            <div className="flex flex-col items-center justify-center h-96 px-4">
-              <div className="bg-red-100 rounded-full p-3 mb-4">
-                <AlertTriangle className="w-8 h-8 text-red-500" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Oops! Something went wrong 😕
-              </h3>
-              <p className="text-gray-600 text-center max-w-md">{error}</p>
-            </div>
+            <ErrorState error={error} />
           ) : previewImageUrl ? (
             <div className="space-y-6">
               <div className="flex justify-center items-center w-full max-h-[60vh] bg-gray-50 rounded-lg shadow-lg overflow-hidden p-4">
@@ -331,96 +320,96 @@ export default function ContractViewer() {
                 />
               </div>
 
-              <div className="p-6 space-y-6">
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+              <div className="px-6">
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 mb-6">
                   <div className="flex items-start gap-3">
                     <div className="bg-blue-100 rounded-lg p-2">
-                      <Lock className="w-5 h-5 text-blue-600" />
+                      <Mail className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-blue-900">Email, Review and Sign Your Contract ✅</h3>
+                      <h3 className="font-medium text-blue-900">Enter Signing Parties</h3>
                       <p className="text-sm text-blue-700 mt-1">
-                        Your contract will be certified and emailed to you once signed 📧
+                        Add the email addresses of all parties who need to sign this contract
                       </p>
                     </div>
+                    {contractData?.parties?.length > 0 && (
+                      <button
+                        onClick={handleAutoFill}
+                        className="ml-auto inline-flex items-center px-3 py-1.5 text-sm bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                      >
+                        <Wand2 className="w-4 h-4 mr-1.5" />
+                        Auto-fill
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex gap-4 justify-center">
-                  <button
-                    onClick={() => setShowEmailForm(true)}
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
-                  >
-                    <Mail className="w-5 h-5 mr-2" />
-                    Send via Email ($2.99)
-                  </button>
+                <div className="space-y-4 mb-6">
+                  {emailRecipients.map((recipient, index) => (
+                    <div key={index} className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Party {index + 1} Name
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Full Name"
+                          value={recipient.name}
+                          onChange={(e) => {
+                            const newRecipients = [...emailRecipients];
+                            newRecipients[index].name = e.target.value;
+                            setEmailRecipients(newRecipients);
+                          }}
+                          className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Party {index + 1} Email
+                        </label>
+                        <input
+                          type="email"
+                          placeholder="Email Address"
+                          value={recipient.email}
+                          onChange={(e) => {
+                            const newRecipients = [...emailRecipients];
+                            newRecipients[index].email = e.target.value;
+                            setEmailRecipients(newRecipients);
+                          }}
+                          className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        />
+                      </div>
+                    </div>
+                  ))}
                   
-                  {pdfUrl && (
-                    <a
-                      href={pdfUrl}
-                      download={`contract-${templateId}.pdf`}
-                      className="inline-flex items-center px-6 py-3 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all duration-200"
+                  {emailRecipients.length < 2 && (
+                    <button
+                      onClick={() => setEmailRecipients([...emailRecipients, { name: '', email: '' }])}
+                      className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
                     >
-                      <FileText className="w-5 h-5 mr-2" />
-                      Download PDF
-                    </a>
+                      <PlusCircle className="w-4 h-4 mr-1" />
+                      Add Another Party
+                    </button>
                   )}
                 </div>
 
-                {isComplete ? (
-                  <PaymentSuccess onContinue={handlePaymentSuccess} />
-                ) : showPayment && clientSecret ? (
-                  <Elements stripe={stripePromise} options={{ clientSecret }}>
-                    <StripePaymentElement
-                      onSuccess={handlePaymentSuccess}
-                      onError={handlePaymentError}
-                      onCancel={() => setShowPayment(false)}
-                    />
-                  </Elements>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="bg-green-100 p-2 rounded-lg">
-                        <PenTool className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Sign Online</h3>
-                        <p className="text-sm text-gray-600">Fast, Secure, and Certified!✨</p>
-                      </div>
-                      <div className="ml-auto">
-                        <span className="text-2xl font-bold text-green-600">$2.99</span>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                      {[
-                        { icon: <PenTool className="w-4 h-4" />, text: 'Sign Hassle-free' },
-                        { icon: <Smartphone className="w-4 h-4" />, text: 'Send via text' },
-                        { icon: <Mail className="w-4 h-4" />, text: 'Send via email' }
-                      ].map((feature, index) => (
-                        <div key={index} className="flex items-center gap-2 text-gray-700">
-                          <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                          <span className="text-sm flex items-center gap-1.5">
-                            {feature.icon}
-                            {feature.text}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {paymentError && (
-                      <div className="rounded-lg bg-red-50 p-3 border border-red-200 mb-6">
-                        <div className="flex gap-2">
-                          <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                          <span className="text-sm text-red-600">{paymentError}</span>
-                        </div>
-                      </div>
-                    )}
-
+                <div className="space-y-6">
+                  {isComplete ? (
+                    <PaymentSuccess onContinue={handlePaymentSuccess} />
+                  ) : showPayment && clientSecret ? (
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                      <StripePaymentElement
+                        onSuccess={handlePaymentSuccess}
+                        onError={handlePaymentError}
+                        onCancel={() => setShowPayment(false)}
+                      />
+                    </Elements>
+                  ) : (
                     <button
-                      type="button"
                       onClick={handleSignOnline}
-                      disabled={isProcessing}
+                      disabled={isProcessing || !emailRecipients.some(r => r.name && r.email)}
                       className="w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-white rounded-xl px-6 py-3
                         font-semibold shadow-lg shadow-emerald-500/20 
                         hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02]
@@ -429,42 +418,33 @@ export default function ContractViewer() {
                         animate-pulse hover:animate-none"
                     >
                       {isProcessing ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                          Processing...
-                        </span>
+                        <ProcessingSpinner />
                       ) : (
                         <span className="flex items-center justify-center gap-2">
-                          <span>Sign Online ⚡</span>
+                          <span>Pay & Sign Now ⚡</span>
                           <span className="opacity-90">($2.99)</span>
                         </span>
                       )}
                     </button>
+                  )}
 
-                    <button
-                      type="button"
-                      onClick={() => console.log('Bypass payment')}
-                      className="mt-4 w-full px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors rounded-lg border border-gray-200 hover:border-gray-300 bg-white"
-                    >
-                      [TEMP] Skip Payment (Remove before launch)
-                    </button>
-                  </>
-                )}
-
-                {showEmailForm && emailFormModal}
-                {showEmailNotification && emailNotification}
+                  {paymentError && (
+                    <div className="rounded-lg bg-red-50 p-3 border border-red-200">
+                      <div className="flex gap-2">
+                        <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                        <span className="text-sm text-red-600">{paymentError}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-96 px-4">
-              <p className="text-gray-600">No contract preview available 😔</p>
-            </div>
+            <NoPreviewState />
           )}
         </div>
       </div>
+      {showEmailNotification && <EmailSentNotification />}
     </div>
   );
 }
