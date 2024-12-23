@@ -8,34 +8,62 @@ const CORS_HEADERS = {
 };
 
 export const handler = async (event) => {
-  const { uuid } = event.queryStringParameters;
-
-  if (!uuid) {
+  // Handle OPTIONS request for CORS
+  if (event.httpMethod === 'OPTIONS') {
     return {
-      statusCode: 400,
+      statusCode: 204,
+      headers: CORS_HEADERS
+    };
+  }
+
+  // Only allow GET requests
+  if (event.httpMethod !== 'GET') {
+    return {
+      statusCode: 405,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'UUID is required' })
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  const authToken = process.env.DOCUSEAL_AUTH_TOKEN;
+  if (!authToken) {
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Server configuration error' })
     };
   }
 
   try {
-    console.log('🔍 Fetching document with UUID:', uuid);
+    // Get templateId from query parameters
+    const templateId = event.queryStringParameters?.templateId;
+    
+    if (!templateId) {
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ error: 'Template ID is required' })
+      };
+    }
 
-    // Get template by UUID - using the correct endpoint
+    console.log('🔍 Fetching template:', templateId);
+
+    // Fetch template from DocuSeal
     const response = await axios.get(
-      `https://api.docuseal.com/templates/${uuid}`, // Updated endpoint
+      `https://api.docuseal.com/templates/${templateId}`,
       {
         headers: {
-          'X-Auth-Token': process.env.DOCUSEAL_AUTH_TOKEN,
+          'X-Auth-Token': authToken,
           'Accept': 'application/json'
         }
       }
     );
 
-    console.log('✅ DocuSeal API Response:', {
+    console.log('✅ DocuSeal API Response:', JSON.stringify({
       status: response.status,
+      statusText: response.statusText,
       data: response.data
-    });
+    }, null, 2));
 
     return {
       statusCode: 200,
@@ -43,11 +71,9 @@ export const handler = async (event) => {
       body: JSON.stringify({
         success: true,
         documents: response.data.documents,
-        content: response.data.content,
         name: response.data.name,
         created_at: response.data.created_at,
-        updated_at: response.data.updated_at,
-        submitters: response.data.submitters
+        updated_at: response.data.updated_at
       })
     };
 
@@ -55,8 +81,7 @@ export const handler = async (event) => {
     console.error('❌ Error fetching template:', {
       message: error.message,
       status: error.response?.status,
-      data: error.response?.data,
-      uuid: uuid
+      data: error.response?.data
     });
 
     // Handle specific error cases
@@ -65,18 +90,17 @@ export const handler = async (event) => {
         statusCode: 404,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error: 'Contract not found',
-          details: 'The requested contract does not exist',
-          uuid: uuid
+          error: 'Template not found',
+          details: 'The requested template does not exist'
         })
       };
     }
 
     return {
-      statusCode: error.response?.status || 500,
+      statusCode: 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: 'Failed to fetch contract',
+        error: 'Failed to fetch template',
         details: error.message,
         docusealError: error.response?.data
       })
