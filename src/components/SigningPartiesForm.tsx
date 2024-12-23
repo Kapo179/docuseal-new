@@ -1,3 +1,5 @@
+import { Mail, Wand2, PlusCircle } from 'lucide-react';
+
 interface SigningPartiesFormProps {
   emailRecipients: Array<{name: string, email: string}>;
   setEmailRecipients: (recipients: Array<{name: string, email: string}>) => void;

@@ -1,3 +1,5 @@
+import { FileText } from 'lucide-react';
+
 interface ContractHeaderProps {
   title: string;
   subtitle: string;
