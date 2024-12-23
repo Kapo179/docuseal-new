@@ -142,9 +142,9 @@ export default function ContractViewer() {
       console.log('Sending emails to:', validRecipients);
       setSendingEmails(true);
 
-      // Format submitters for DocuSeal API
+      // Format submitters for DocuSeal API with exact role names
       const submitters = validRecipients.map((recipient, index) => ({
-        role: `Party${index + 1}`,
+        role: index === 0 ? 'Party1' : 'Party2', // Exact match for DocuSeal roles
         name: recipient.name.trim(),
         email: recipient.email.trim(),
         send_email: true,
@@ -215,11 +215,13 @@ export default function ContractViewer() {
     }
 
     try {
-      // Bypass payment and directly call handlePaymentSuccess
-      await handlePaymentSuccess();
+      setPaymentError(null);
+      // Initialize payment first
+      await createPaymentIntent();
+      setShowPayment(true);
     } catch (error) {
-      console.error('Failed to send emails:', error);
-      setPaymentError('Failed to send emails. Please try again.');
+      console.error('Failed to initialize payment:', error);
+      setPaymentError('Failed to initialize payment. Please try again.');
     }
   };
 
@@ -252,7 +254,7 @@ export default function ContractViewer() {
           {emailRecipients.map((recipient, index) => (
             <div key={index} className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Recipient {index + 1}
+                {index === 0 ? 'Party1 (First Signer)' : 'Party2 (Second Signer)'}
               </label>
               <input
                 type="text"
@@ -281,12 +283,14 @@ export default function ContractViewer() {
             </div>
           ))}
           
-          <button
-            onClick={() => setEmailRecipients([...emailRecipients, { name: '', email: '' }])}
-            className="text-sm text-blue-600 hover:text-blue-700"
-          >
-            + Add Another Recipient
-          </button>
+          {emailRecipients.length < 2 && (
+            <button
+              onClick={() => setEmailRecipients([...emailRecipients, { name: '', email: '' }])}
+              className="text-sm text-blue-600 hover:text-blue-700"
+            >
+              + Add Party2 (Second Signer)
+            </button>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -295,25 +299,39 @@ export default function ContractViewer() {
               {paymentError}
             </div>
           )}
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => {
-                setShowEmailForm(false);
-                setEmailRecipients([{ name: '', email: '' }]);
-                setPaymentError(null);
-              }}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleEmailFormSubmit}
-              disabled={!emailRecipients.some(r => r.name && r.email)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              Send Emails
-            </button>
-          </div>
+
+          {showPayment && clientSecret ? (
+            <Elements stripe={stripePromise} options={{ clientSecret }}>
+              <StripePaymentElement
+                onSuccess={handlePaymentSuccess}
+                onError={handlePaymentError}
+                onCancel={() => {
+                  setShowPayment(false);
+                  setPaymentError(null);
+                }}
+              />
+            </Elements>
+          ) : (
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowEmailForm(false);
+                  setEmailRecipients([{ name: '', email: '' }]);
+                  setPaymentError(null);
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEmailFormSubmit}
+                disabled={!emailRecipients.some(r => r.name && r.email)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              >
+                Send & Sign ($2.99)
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

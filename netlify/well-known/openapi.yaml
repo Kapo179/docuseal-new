@@ -43,6 +43,7 @@ paths:
                     
                     The Template must include:
                     `<signature-field>` tags with proper role attributes, for each party
+                    The visible signature field line must be filled with the following text 'Refer to Audit Log'
 
 
 
