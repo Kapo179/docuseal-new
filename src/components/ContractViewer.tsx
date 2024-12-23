@@ -150,14 +150,9 @@ export default function ContractViewer() {
     setPaymentError(error.message);
   };
 
-  const handleSignOnline = async () => {
-    try {
-      setPaymentError(null);
-      await createPaymentIntent();
-      setShowPayment(true);
-    } catch (error) {
-      console.error('Payment initialization failed:', error);
-    }
+  const handleSignOnline = () => {
+    const returnUrl = `/contract/${templateId}`;
+    navigate(`/payment?templateId=${templateId}&returnUrl=${encodeURIComponent(returnUrl)}`);
   };
 
   const handleEmailFormSubmit = async () => {

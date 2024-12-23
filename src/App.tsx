@@ -12,6 +12,7 @@ import { PaymentSuccessPage } from './components/PaymentSuccessPage';
 import type { ContractType, FormStep } from './types';
 import ContractViewer from './components/ContractViewer';
 import LegalPage from './components/LegalPage'; // Import the LegalPage component
+import { PaymentPage } from './components/PaymentPage';
 
 
 
@@ -70,6 +71,7 @@ export default function App() {
             />
             <Route path="/signing-status" element={<SigningStatus />} />
             <Route path="/legal" element={<LegalPage />} /> {/* Add the LegalPage route */}
+            <Route path="/payment" element={<PaymentPage />} />
           </Routes>
         </Router>
       </Suspense>
