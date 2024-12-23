@@ -22,6 +22,7 @@ export default function ContractViewer() {
   const [emailRecipients, setEmailRecipients] = useState<Array<{name: string, email: string}>>([]);
   const [sendingEmails, setSendingEmails] = useState(false);
   const [showEmailNotification, setShowEmailNotification] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -66,11 +67,14 @@ export default function ContractViewer() {
   }, [templateId]);
 
   const handlePaymentSuccess = async () => {
-    console.log('Payment successful! 🎉');
-    setComplete(true);
+    if (paymentProcessing) return;
+    
+    try {
+      setPaymentProcessing(true);
+      console.log('Payment successful! 🎉');
+      setComplete(true);
 
-    if (emailRecipients.length > 0) {
-      try {
+      if (emailRecipients.length > 0) {
         setSendingEmails(true);
         const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
           templateId,
@@ -86,12 +90,13 @@ export default function ContractViewer() {
           setShowEmailNotification(true);
           setTimeout(() => setShowEmailNotification(false), 5000);
         }
-      } catch (error) {
-        console.error('Error sending emails:', error);
-        setPaymentError('Payment successful but failed to send emails. Please try again.');
-      } finally {
-        setSendingEmails(false);
       }
+    } catch (error) {
+      console.error('Error processing payment or sending emails:', error);
+      setPaymentError('Payment successful but failed to send emails. Please try again.');
+    } finally {
+      setSendingEmails(false);
+      setPaymentProcessing(false);
     }
   };
 
@@ -111,6 +116,7 @@ export default function ContractViewer() {
   };
 
   const handleEmailFormSubmit = async () => {
+    if (paymentProcessing) return;
     if (!emailRecipients.some(r => r.name && r.email)) {
       setPaymentError('Please add at least one recipient');
       return;
@@ -118,11 +124,14 @@ export default function ContractViewer() {
 
     try {
       setPaymentError(null);
+      setPaymentProcessing(true);
       await createPaymentIntent();
       setShowPayment(true);
     } catch (error) {
       console.error('Payment initialization failed:', error);
       setPaymentError('Failed to initialize payment');
+    } finally {
+      setPaymentProcessing(false);
     }
   };
 
