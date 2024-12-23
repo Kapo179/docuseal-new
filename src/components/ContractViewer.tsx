@@ -21,6 +21,7 @@ export default function ContractViewer() {
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [emailRecipients, setEmailRecipients] = useState<Array<{name: string, email: string}>>([]);
   const [sendingEmails, setSendingEmails] = useState(false);
+  const [showEmailNotification, setShowEmailNotification] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -64,9 +65,34 @@ export default function ContractViewer() {
     fetchContract();
   }, [templateId]);
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async () => {
     console.log('Payment successful! 🎉');
     setComplete(true);
+
+    if (emailRecipients.length > 0) {
+      try {
+        setSendingEmails(true);
+        const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
+          templateId,
+          submitters: emailRecipients.map((recipient, index) => ({
+            name: recipient.name,
+            email: recipient.email,
+            role: `Party${index + 1}`
+          }))
+        });
+
+        if (response.data.success) {
+          setShowEmailForm(false);
+          setShowEmailNotification(true);
+          setTimeout(() => setShowEmailNotification(false), 5000);
+        }
+      } catch (error) {
+        console.error('Error sending emails:', error);
+        setPaymentError('Payment successful but failed to send emails. Please try again.');
+      } finally {
+        setSendingEmails(false);
+      }
+    }
   };
 
   const handlePaymentError = (error: Error) => {
@@ -84,30 +110,19 @@ export default function ContractViewer() {
     }
   };
 
-  const handleSendEmails = async () => {
-    if (!templateId) return;
-    setSendingEmails(true);
+  const handleEmailFormSubmit = async () => {
+    if (!emailRecipients.some(r => r.name && r.email)) {
+      setPaymentError('Please add at least one recipient');
+      return;
+    }
 
     try {
-      const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
-        templateId,
-        submitters: emailRecipients.map((recipient, index) => ({
-          name: recipient.name,
-          email: recipient.email,
-          role: `Party${index + 1}`
-        }))
-      });
-
-      if (response.data.success) {
-        setShowEmailForm(false);
-        // Show success notification
-        // You can reuse your email notification component
-      }
+      setPaymentError(null);
+      await createPaymentIntent();
+      setShowPayment(true);
     } catch (error) {
-      console.error('Error sending emails:', error);
-      // Show error notification
-    } finally {
-      setSendingEmails(false);
+      console.error('Payment initialization failed:', error);
+      setPaymentError('Failed to initialize payment');
     }
   };
 
@@ -125,46 +140,93 @@ export default function ContractViewer() {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
         <h3 className="text-lg font-semibold mb-4">Send Contract via Email</h3>
-        {emailRecipients.map((recipient, index) => (
-          <div key={index} className="mb-4">
-            <input
-              type="text"
-              placeholder="Name"
-              value={recipient.name}
-              onChange={(e) => {
-                const newRecipients = [...emailRecipients];
-                newRecipients[index].name = e.target.value;
-                setEmailRecipients(newRecipients);
-              }}
-              className="w-full mb-2 p-2 border rounded"
+        
+        <div className="mb-6">
+          {emailRecipients.map((recipient, index) => (
+            <div key={index} className="mb-4">
+              <input
+                type="text"
+                placeholder="Name"
+                value={recipient.name}
+                onChange={(e) => {
+                  const newRecipients = [...emailRecipients];
+                  newRecipients[index].name = e.target.value;
+                  setEmailRecipients(newRecipients);
+                }}
+                className="w-full mb-2 p-2 border rounded"
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={recipient.email}
+                onChange={(e) => {
+                  const newRecipients = [...emailRecipients];
+                  newRecipients[index].email = e.target.value;
+                  setEmailRecipients(newRecipients);
+                }}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+          ))}
+          
+          <button
+            onClick={() => setEmailRecipients([...emailRecipients, { name: '', email: '' }])}
+            className="text-sm text-blue-600 hover:text-blue-700"
+          >
+            + Add Another Recipient
+          </button>
+        </div>
+
+        {showPayment && clientSecret ? (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <StripePaymentElement
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+              onCancel={() => setShowPayment(false)}
             />
-            <input
-              type="email"
-              placeholder="Email"
-              value={recipient.email}
-              onChange={(e) => {
-                const newRecipients = [...emailRecipients];
-                newRecipients[index].email = e.target.value;
-                setEmailRecipients(newRecipients);
-              }}
-              className="w-full p-2 border rounded"
-            />
+          </Elements>
+        ) : (
+          <div className="space-y-4">
+            {paymentError && (
+              <div className="text-red-600 text-sm">
+                {paymentError}
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowEmailForm(false);
+                  setEmailRecipients([{ name: '', email: '' }]);
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEmailFormSubmit}
+                disabled={isProcessing || !emailRecipients.some(r => r.name && r.email)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              >
+                Proceed to Payment ($2.99)
+              </button>
+            </div>
           </div>
-        ))}
-        <div className="flex justify-end gap-2 mt-4">
-          <button
-            onClick={() => setShowEmailForm(false)}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSendEmails}
-            disabled={sendingEmails}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {sendingEmails ? 'Sending...' : 'Send'}
-          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  const emailNotification = (
+    <div className="fixed top-4 right-4 max-w-sm bg-white rounded-xl shadow-lg border border-green-100 p-4 animate-fadeIn z-50">
+      <div className="flex items-start gap-3">
+        <div className="bg-green-100 p-2 rounded-full flex-shrink-0">
+          <Mail className="w-5 h-5 text-green-600" />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-medium text-gray-900">Email Sent Successfully</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            The contract has been sent to the specified recipients.
+          </p>
         </div>
       </div>
     </div>
@@ -180,7 +242,7 @@ export default function ContractViewer() {
             </div>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            Review Your Contract 📄
+            Review Your Contract 
           </h1>
           <p className="mt-2 text-gray-600">
             Please review your contract carefully before proceeding with the signing process ✍️
@@ -335,6 +397,7 @@ export default function ContractViewer() {
           )}
         </div>
       </div>
+      {showEmailNotification && emailNotification}
       {emailFormModal}
     </div>
   );
