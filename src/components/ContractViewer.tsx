@@ -290,6 +290,27 @@ export default function ContractViewer() {
                   </div>
                 </div>
 
+                <div className="flex gap-4 justify-center">
+                  <button
+                    onClick={() => setShowEmailForm(true)}
+                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
+                  >
+                    <Mail className="w-5 h-5 mr-2" />
+                    Send via Email ($2.99)
+                  </button>
+                  
+                  {pdfUrl && (
+                    <a
+                      href={pdfUrl}
+                      download={`contract-${templateId}.pdf`}
+                      className="inline-flex items-center px-6 py-3 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all duration-200"
+                    >
+                      <FileText className="w-5 h-5 mr-2" />
+                      Download PDF
+                    </a>
+                  )}
+                </div>
+
                 {isComplete ? (
                   <PaymentSuccess onContinue={handlePaymentSuccess} />
                 ) : showPayment && clientSecret ? (
@@ -377,17 +398,8 @@ export default function ContractViewer() {
                   </>
                 )}
 
-                {pdfUrl && (
-                  <div className="text-center mt-4">
-                    <a
-                      href={pdfUrl}
-                      download={`contract-${templateId}.pdf`}
-                      className="inline-block px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                    >
-                      Download PDF
-                    </a>
-                  </div>
-                )}
+                {showEmailForm && emailFormModal}
+                {showEmailNotification && emailNotification}
               </div>
             </div>
           ) : (
@@ -397,8 +409,6 @@ export default function ContractViewer() {
           )}
         </div>
       </div>
-      {showEmailNotification && emailNotification}
-      {emailFormModal}
     </div>
   );
 }
