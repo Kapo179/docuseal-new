@@ -29,7 +29,6 @@ export default function ContractViewer() {
   const [contractParties, setContractParties] = useState<{
     parties?: Array<{ name: string; email: string }>;
   }>({});
-  const [paymentComplete, setPaymentComplete] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -133,12 +132,52 @@ export default function ContractViewer() {
     try {
       setPaymentProcessing(true);
       console.log('Payment successful! 🎉');
-      setPaymentComplete(true);
-      setShowPayment(false);
+      
+      // Validate email recipients
+      const validRecipients = emailRecipients.filter(r => r.name && r.email);
+      if (validRecipients.length === 0) {
+        throw new Error('Please provide at least one recipient with name and email');
+      }
+
+      console.log('Sending emails to:', validRecipients);
+      setSendingEmails(true);
+
+      // Format submitters for DocuSeal API
+      const submitters = validRecipients.map((recipient, index) => ({
+        role: `Party${index + 1}`,
+        name: recipient.name.trim(),
+        email: recipient.email.trim(),
+        send_email: true,
+        preferences: {
+          send_email: true,
+          send_sms: false
+        }
+      }));
+
+      const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
+        template_id: templateId,
+        send_email: true,
+        submitters
+      });
+
+      if (response.data.success) {
+        setShowEmailForm(false);
+        setShowEmailNotification(true);
+        setComplete(true);
+        
+        setTimeout(() => {
+          setShowEmailNotification(false);
+        }, 5000);
+      } else {
+        throw new Error(response.data.error || 'Failed to create submission');
+      }
     } catch (error: any) {
-      console.error('❌ Error processing payment:', error);
-      setPaymentError(error.message);
+      console.error('❌ Error creating submission:', error);
+      setPaymentError(
+        error.message || 'Failed to send emails. Please try again or contact support.'
+      );
     } finally {
+      setSendingEmails(false);
       setPaymentProcessing(false);
     }
   };
@@ -167,52 +206,11 @@ export default function ContractViewer() {
     }
 
     try {
-      setPaymentError(null);
-      // Initialize payment first
-      await createPaymentIntent();
-      setShowPayment(true);
+      // Bypass payment and directly call handlePaymentSuccess
+      await handlePaymentSuccess();
     } catch (error) {
-      console.error('Failed to initialize payment:', error);
-      setPaymentError('Failed to initialize payment. Please try again.');
-    }
-  };
-
-  const handleSendEmails = async () => {
-    try {
-      setSendingEmails(true);
-      
-      // Format submitters for DocuSeal API
-      const validRecipients = emailRecipients.filter(r => r.name && r.email);
-      const submitters = validRecipients.map((recipient, index) => ({
-        role: index === 0 ? 'Party1' : 'Party2',
-        name: recipient.name.trim(),
-        email: recipient.email.trim(),
-        send_email: true,
-        preferences: {
-          send_email: true,
-          send_sms: false
-        }
-      }));
-
-      const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
-        template_id: templateId,
-        send_email: true,
-        submitters
-      });
-
-      if (response.data.success) {
-        setShowEmailForm(false);
-        setShowEmailNotification(true);
-        setComplete(true);
-        setTimeout(() => setShowEmailNotification(false), 5000);
-      } else {
-        throw new Error(response.data.error || 'Failed to send emails');
-      }
-    } catch (error: any) {
-      console.error('❌ Error sending emails:', error);
-      setPaymentError(error.message || 'Failed to send emails. Please try again.');
-    } finally {
-      setSendingEmails(false);
+      console.error('Failed to send emails:', error);
+      setPaymentError('Failed to send emails. Please try again.');
     }
   };
 
@@ -245,7 +243,7 @@ export default function ContractViewer() {
           {emailRecipients.map((recipient, index) => (
             <div key={index} className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {index === 0 ? 'Party1 (First Signer)' : 'Party2 (Second Signer)'}
+                Party 1 {index + 1}
               </label>
               <input
                 type="text"
@@ -274,14 +272,12 @@ export default function ContractViewer() {
             </div>
           ))}
           
-          {emailRecipients.length < 2 && (
-            <button
-              onClick={() => setEmailRecipients([...emailRecipients, { name: '', email: '' }])}
-              className="text-sm text-blue-600 hover:text-blue-700"
-            >
-              + Add Party2 (Second Signer)
-            </button>
-          )}
+          <button
+            onClick={() => setEmailRecipients([...emailRecipients, { name: '', email: '' }])}
+            className="text-sm text-blue-600 hover:text-blue-700"
+          >
+            + Add Another Recipient
+          </button>
         </div>
 
         <div className="space-y-4">
@@ -290,71 +286,25 @@ export default function ContractViewer() {
               {paymentError}
             </div>
           )}
-
-          {!paymentComplete ? (
-            showPayment && clientSecret ? (
-              <Elements stripe={stripePromise} options={{ clientSecret }}>
-                <StripePaymentElement
-                  onSuccess={handlePaymentSuccess}
-                  onError={handlePaymentError}
-                  onCancel={() => {
-                    setShowPayment(false);
-                    setPaymentError(null);
-                  }}
-                  templateId={templateId!}
-                />
-              </Elements>
-            ) : (
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setShowEmailForm(false);
-                    setEmailRecipients([{ name: '', email: '' }]);
-                    setPaymentError(null);
-                  }}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleEmailFormSubmit}
-                  disabled={!emailRecipients.some(r => r.name && r.email)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Send & Sign ($2.99)
-                </button>
-              </div>
-            )
-          ) : (
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowEmailForm(false);
-                  setEmailRecipients([{ name: '', email: '' }]);
-                }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSendEmails}
-                disabled={sendingEmails || !emailRecipients.some(r => r.name && r.email)}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center"
-              >
-                {sendingEmails ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Sending...
-                  </>
-                ) : (
-                  'Send Emails'
-                )}
-              </button>
-            </div>
-          )}
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setShowEmailForm(false);
+                setEmailRecipients([{ name: '', email: '' }]);
+                setPaymentError(null);
+              }}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleEmailFormSubmit}
+              disabled={!emailRecipients.some(r => r.name && r.email)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              Send Emails
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -463,7 +413,6 @@ export default function ContractViewer() {
                       onSuccess={handlePaymentSuccess}
                       onError={handlePaymentError}
                       onCancel={() => setShowPayment(false)}
-                      templateId={templateId!}
                     />
                   </Elements>
                 ) : (
