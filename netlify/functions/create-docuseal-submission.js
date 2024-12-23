@@ -21,16 +21,21 @@ export const handler = async (event) => {
   }
 
   try {
-    const { template_id, submitters } = JSON.parse(event.body);
+    const { uuid, submitters } = JSON.parse(event.body);
     
-    // Log request data
-    console.log('📥 Received submission request:', {
-      template_id,
-      submitters,
-      timestamp: new Date().toISOString()
-    });
+    // First get the template ID using the UUID
+    const documentResponse = await axios.get(
+      `https://api.docuseal.com/documents/${uuid}`,
+      {
+        headers: {
+          'X-Auth-Token': process.env.DOCUSEAL_AUTH_TOKEN
+        }
+      }
+    );
 
-    // Create submission in DocuSeal
+    const template_id = documentResponse.data.template_id;
+
+    // Create submission using template ID
     const response = await axios.post(
       'https://api.docuseal.com/submissions',
       {

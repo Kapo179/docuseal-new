@@ -113,9 +113,9 @@ export const handler = async (event) => {
 
     // Log the final response being sent back
     console.log('📤 Sending response:', {
-      templateId: templateResponse.data.id,
-      contractLink,
-      previewImageUrl
+      uuid: templateResponse.data.documents[0].uuid,
+      contractLink: templateResponse.data.documents[0].url,
+      previewImageUrl: templateResponse.data.documents[0].preview_image_url
     });
 
     return {
@@ -123,11 +123,10 @@ export const handler = async (event) => {
       headers: CORS_HEADERS,
       body: JSON.stringify({
         success: true,
-        message: 'Template and submission created successfully',
-        templateId: templateResponse.data.id,
-        contractLink,
-        previewImageUrl,
-      }),
+        uuid: templateResponse.data.documents[0].uuid,
+        contractLink: templateResponse.data.documents[0].url,
+        previewImageUrl: templateResponse.data.documents[0].preview_image_url
+      })
     };
   } catch (error) {
     // Enhanced error logging

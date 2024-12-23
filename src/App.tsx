@@ -49,7 +49,7 @@ export default function App() {
                 />
               )
             } />
-             <Route path="/contract/:templateId" element={<ContractViewer />} />
+             <Route path="/contract/:uuid" element={<ContractViewer />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/signing-setup" element={<SigningFlow />} />
             <Route 

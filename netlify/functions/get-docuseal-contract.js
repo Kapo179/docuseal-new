@@ -8,62 +8,26 @@ const CORS_HEADERS = {
 };
 
 export const handler = async (event) => {
-  // Handle OPTIONS request for CORS
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 204,
-      headers: CORS_HEADERS
-    };
-  }
+  const { uuid } = event.queryStringParameters;
 
-  // Only allow GET requests
-  if (event.httpMethod !== 'GET') {
+  if (!uuid) {
     return {
-      statusCode: 405,
+      statusCode: 400,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
-  }
-
-  const authToken = process.env.DOCUSEAL_AUTH_TOKEN;
-  if (!authToken) {
-    return {
-      statusCode: 500,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Server configuration error' })
+      body: JSON.stringify({ error: 'UUID is required' })
     };
   }
 
   try {
-    // Get templateId from query parameters
-    const templateId = event.queryStringParameters?.templateId;
-    
-    if (!templateId) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ error: 'Template ID is required' })
-      };
-    }
-
-    console.log('🔍 Fetching template:', templateId);
-
-    // Fetch template from DocuSeal
+    // Get template by UUID
     const response = await axios.get(
-      `https://api.docuseal.com/templates/${templateId}`,
+      `https://api.docuseal.com/documents/${uuid}`,
       {
         headers: {
-          'X-Auth-Token': authToken,
-          'Accept': 'application/json'
+          'X-Auth-Token': process.env.DOCUSEAL_AUTH_TOKEN
         }
       }
     );
-
-    console.log('✅ DocuSeal API Response:', JSON.stringify({
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data
-    }, null, 2));
 
     return {
       statusCode: 200,

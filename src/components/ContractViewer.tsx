@@ -11,7 +11,7 @@ import axios from 'axios';
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 export default function ContractViewer() {
-  const { templateId } = useParams();
+  const { uuid } = useParams();
   const navigate = useNavigate();
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -32,15 +32,15 @@ export default function ContractViewer() {
 
   useEffect(() => {
     const fetchContract = async () => {
-      if (!templateId) {
-        console.error('No template ID provided in route params.');
-        setError('No template ID provided.');
+      if (!uuid) {
+        console.error('No UUID provided in route params.');
+        setError('No contract identifier provided.');
         setLoading(false);
         return;
       }
 
       try {
-        const response = await fetch(`/.netlify/functions/get-docuseal-contract?templateId=${templateId}`);
+        const response = await fetch(`/.netlify/functions/get-docuseal-contract?uuid=${uuid}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch contract data (status: ${response.status})`);
@@ -71,11 +71,11 @@ export default function ContractViewer() {
 
     fetchContract();
     extractPartiesFromContract();
-  }, [templateId]);
+  }, [uuid]);
 
   const extractPartiesFromContract = async () => {
     try {
-      const response = await fetch(`/.netlify/functions/get-docuseal-contract?templateId=${templateId}`);
+      const response = await fetch(`/.netlify/functions/get-docuseal-contract?uuid=${uuid}`);
       if (!response.ok) throw new Error('Failed to fetch contract data');
       
       const data = await response.json();
@@ -156,12 +156,12 @@ export default function ContractViewer() {
 
       // Log the request being sent
       console.log('📤 Creating DocuSeal submission:', {
-        templateId,
+        uuid,
         submitters
       });
 
       const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
-        template_id: templateId,
+        uuid,
         send_email: true,
         submitters
       });
@@ -424,7 +424,7 @@ export default function ContractViewer() {
                   {pdfUrl && (
                     <a
                       href={pdfUrl}
-                      download={`contract-${templateId}.pdf`}
+                      download={`contract-${uuid}.pdf`}
                       className="inline-flex items-center px-6 py-3 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all duration-200"
                     >
                       <FileText className="w-5 h-5 mr-2" />
