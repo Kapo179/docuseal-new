@@ -74,19 +74,22 @@ export default function ContractViewer() {
       setPaymentProcessing(true);
       console.log('Payment successful! 🎉');
       
-      // Initialize recipients if empty
-      if (emailRecipients.length === 0) {
-        setEmailRecipients([{ name: '', email: '' }]);
+      // Validate email recipients
+      if (!emailRecipients.some(r => r.name && r.email)) {
+        throw new Error('Please provide at least one recipient with name and email');
       }
 
-      console.log('Sending emails to:', emailRecipients);
+      // Filter out empty recipients
+      const validRecipients = emailRecipients.filter(r => r.name && r.email);
+      
+      console.log('Sending emails to:', validRecipients);
       setSendingEmails(true);
       
       const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
         templateId,
-        submitters: emailRecipients.map((recipient, index) => ({
-          name: recipient.name,
-          email: recipient.email,
+        submitters: validRecipients.map((recipient, index) => ({
+          name: recipient.name.trim(),
+          email: recipient.email.trim(),
           role: `Party${index + 1}`
         }))
       });
@@ -97,21 +100,18 @@ export default function ContractViewer() {
         setShowEmailForm(false);
         setShowEmailNotification(true);
         
-        // Keep notification visible longer
         setTimeout(() => {
           setShowEmailNotification(false);
-          // Only reset and navigate after notification
           setComplete(true);
-          // Navigate to success page with submission details
           navigate(`/success?submissionId=${response.data.submissionId}`);
         }, 5000);
       } else {
-        throw new Error('Submission creation failed');
+        throw new Error(response.data.error || 'Submission creation failed');
       }
     } catch (error) {
       console.error('Error processing payment or sending emails:', error);
       setPaymentError(
-        'Payment successful but failed to send emails. Please try again or contact support.'
+        error.message || 'Payment successful but failed to send emails. Please try again or contact support.'
       );
     } finally {
       setSendingEmails(false);
@@ -136,8 +136,11 @@ export default function ContractViewer() {
 
   const handleEmailFormSubmit = async () => {
     if (paymentProcessing) return;
-    if (!emailRecipients.some(r => r.name && r.email)) {
-      setPaymentError('Please add at least one recipient');
+    
+    // Validate recipients
+    const validRecipients = emailRecipients.filter(r => r.name && r.email);
+    if (validRecipients.length === 0) {
+      setPaymentError('Please add at least one recipient with name and email');
       return;
     }
 

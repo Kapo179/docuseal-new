@@ -33,6 +33,7 @@ export const handler = async (event) => {
       timestamp: new Date().toISOString()
     });
 
+    // Validate required fields
     if (!templateId || !submitters?.length) {
       console.error('❌ Validation failed:', { templateId, submittersCount: submitters?.length });
       return {
@@ -45,7 +46,21 @@ export const handler = async (event) => {
       };
     }
 
-    console.log('🔍 Submitters to process:', submitters.map(s => ({
+    // Validate each submitter
+    const invalidSubmitters = submitters.filter(s => !s.name || !s.email);
+    if (invalidSubmitters.length > 0) {
+      console.error('❌ Invalid submitters:', invalidSubmitters);
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: 'Invalid submitters',
+          details: 'Each submitter must have a name and email'
+        })
+      };
+    }
+
+    console.log('🔍 Valid submitters to process:', submitters.map(s => ({
       name: s.name,
       email: s.email,
       role: s.role
