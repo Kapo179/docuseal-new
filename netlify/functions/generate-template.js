@@ -107,14 +107,14 @@ export const handler = async (event) => {
       throw new Error('Template creation failed: Missing template ID');
     }
 
-    // Format the contract link with your domain
-    const contractLink = templateResponse.data.documents?.[0]?.url;
+    // Format the contract link with your domain and UUID
+    const contractLink = `https://contractquickly.com/contract/${templateResponse.data.documents[0].uuid}`;
     const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
 
     // Log the final response being sent back
     console.log('📤 Sending response:', {
       uuid: templateResponse.data.documents[0].uuid,
-      contractLink: templateResponse.data.documents[0].url,
+      contractLink,
       previewImageUrl: templateResponse.data.documents[0].preview_image_url
     });
 
@@ -124,7 +124,7 @@ export const handler = async (event) => {
       body: JSON.stringify({
         success: true,
         uuid: templateResponse.data.documents[0].uuid,
-        contractLink: templateResponse.data.documents[0].url,
+        contractLink,
         previewImageUrl: templateResponse.data.documents[0].preview_image_url
       })
     };
