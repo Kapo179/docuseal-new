@@ -292,7 +292,6 @@ export default function ContractViewer() {
           )}
 
           {!paymentComplete ? (
-            // Show Stripe payment if payment not complete
             showPayment && clientSecret ? (
               <Elements stripe={stripePromise} options={{ clientSecret }}>
                 <StripePaymentElement
@@ -302,6 +301,7 @@ export default function ContractViewer() {
                     setShowPayment(false);
                     setPaymentError(null);
                   }}
+                  templateId={templateId!}
                 />
               </Elements>
             ) : (
@@ -326,7 +326,6 @@ export default function ContractViewer() {
               </div>
             )
           ) : (
-            // Show send email button after payment
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => {
@@ -464,6 +463,7 @@ export default function ContractViewer() {
                       onSuccess={handlePaymentSuccess}
                       onError={handlePaymentError}
                       onCancel={() => setShowPayment(false)}
+                      templateId={templateId!}
                     />
                   </Elements>
                 ) : (

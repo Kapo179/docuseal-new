@@ -8,9 +8,10 @@ interface Props {
   onSuccess: () => void;
   onCancel: () => void;
   onError: (error: Error) => void;
+  templateId: string;
 }
 
-export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel, onError }) => {
+export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel, onError, templateId }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isSubmitting, setIsSubmitting] = useState(false);
