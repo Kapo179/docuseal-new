@@ -43,11 +43,11 @@ export function SigningPartiesForm({
           <div key={index} className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Party {index + 1} Name
+                {`Party ${index + 1}`}
               </label>
               <input
                 type="text"
-                placeholder="Full Name"
+                placeholder={`Party ${index + 1} Name`}
                 value={recipient.name}
                 onChange={(e) => {
                   const newRecipients = [...emailRecipients];
@@ -60,11 +60,11 @@ export function SigningPartiesForm({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Party {index + 1} Email
+                {`Party ${index + 1} Email`}
               </label>
               <input
                 type="email"
-                placeholder="Email Address"
+                placeholder={`Party ${index + 1} Email`}
                 value={recipient.email}
                 onChange={(e) => {
                   const newRecipients = [...emailRecipients];
@@ -85,7 +85,7 @@ export function SigningPartiesForm({
           className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
         >
           <PlusCircle className="w-4 h-4 mr-1" />
-          Add Another Party
+          Add Party 2
         </button>
       )}
     </div>

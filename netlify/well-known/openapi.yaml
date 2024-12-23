@@ -32,18 +32,37 @@ paths:
                 template:
                   type: string
                   description: >
-                    A complete HTML contract template with all party details and placeholders already filled in. Only
-                    the following placeholders should remain in the template:
+                    A complete HTML contract template with all party details and placeholders already filled in.
+                    The following placeholders should be present in the template:
                     - {date}
                     - {contract_details}
                     - {terms}
                     - {start_date}
                     - {end_date}
                     - {termination_clause}
+                    ```
+                    The template MUST use the following format for parties:
                     
+                    Party 1: [PARTY_1_NAME] ([PARTY_1_EMAIL])
+                    Party 2: [PARTY_2_NAME] ([PARTY_2_EMAIL])
+                    
+                    Example:
+                    ```html
+                    This Agreement is made between:
+                    Party 1: [PARTY_1_NAME] ([PARTY_1_EMAIL])
+                    and
+                    Party 2: [PARTY_2_NAME] ([PARTY_2_EMAIL])
+                    ```
+                    
+                    These placeholders will be used for:
+                    1. Auto-filling the email form
+                    2. Creating DocuSeal submissions
+                    3. Assigning proper roles to signers
+
                     The Template must include:
-                    `<signature-field>` tags with proper role attributes, for each party
-                    The visible signature field line must be filled with the following text 'Refer to Audit Log'
+                    - Proper party placeholders as shown above
+                    - `<signature-field>` tags with proper role attributes for each party
+                    - The visible signature field line must be filled with 'Refer to Audit Log'
 
 
 
