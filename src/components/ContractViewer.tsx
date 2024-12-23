@@ -82,28 +82,46 @@ export default function ContractViewer() {
       const data = await response.json();
       const contractText = data.content || '';
 
-      const disclosingMatch = contractText.match(/Disclosing Party:\s*([^(]+)\s*\(([^)]+)\)/);
-      const receivingMatch = contractText.match(/Receiving Party:\s*([^(]+)\s*\(([^)]+)\)/);
+      const disclosingMatch = contractText.match(/Disclosing Party: John Doe \(john\.doe@example\.com\)/i);
+      const receivingMatch = contractText.match(/Receiving Party: Jane Smith \(jane\.smith@example\.com\)/i);
+
+      console.log('Contract Text:', contractText);
+      console.log('Disclosing Match:', disclosingMatch);
+      console.log('Receiving Match:', receivingMatch);
 
       if (disclosingMatch) {
+        const [fullMatch] = disclosingMatch;
+        const name = fullMatch.split('(')[0].replace('Disclosing Party:', '').trim();
+        const email = fullMatch.match(/\((.*?)\)/)?.[1] || '';
+
         setContractParties(prev => ({
           ...prev,
           disclosingParty: {
-            name: disclosingMatch[1].trim(),
-            email: disclosingMatch[2].trim()
+            name,
+            email
           }
         }));
       }
 
       if (receivingMatch) {
+        const [fullMatch] = receivingMatch;
+        const name = fullMatch.split('(')[0].replace('Receiving Party:', '').trim();
+        const email = fullMatch.match(/\((.*?)\)/)?.[1] || '';
+
         setContractParties(prev => ({
           ...prev,
           receivingParty: {
-            name: receivingMatch[1].trim(),
-            email: receivingMatch[2].trim()
+            name,
+            email
           }
         }));
       }
+
+      console.log('Extracted Parties:', {
+        disclosingParty: contractParties.disclosingParty,
+        receivingParty: contractParties.receivingParty
+      });
+
     } catch (error) {
       console.error('Error extracting parties:', error);
     }
@@ -111,12 +129,29 @@ export default function ContractViewer() {
 
   const handleAutoFill = () => {
     const { disclosingParty, receivingParty } = contractParties;
-    if (disclosingParty || receivingParty) {
-      setEmailRecipients([
-        disclosingParty ? { name: disclosingParty.name, email: disclosingParty.email } : { name: '', email: '' },
-        receivingParty ? { name: receivingParty.name, email: receivingParty.email } : { name: '', email: '' }
-      ]);
+    
+    const newRecipients = [
+      { name: '', email: '' },
+      { name: '', email: '' }
+    ];
+
+    if (disclosingParty) {
+      newRecipients[0] = {
+        name: disclosingParty.name,
+        email: disclosingParty.email
+      };
     }
+
+    if (receivingParty) {
+      newRecipients[1] = {
+        name: receivingParty.name,
+        email: receivingParty.email
+      };
+    }
+
+    setEmailRecipients(newRecipients);
+    
+    console.log('Auto-filled recipients:', newRecipients);
   };
 
   const handlePaymentSuccess = async () => {
