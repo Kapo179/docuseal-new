@@ -5,7 +5,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16'
+  apiVersion: '2024-12-18'
 });
 
 const CORS_HEADERS = {
@@ -41,12 +41,12 @@ export const handler = async (event) => {
         enabled: true,
       },
       metadata: {
-        service: 'vehicle_agreement_signing',
+        service: 'agreement_signing',
         timestamp: new Date().toISOString()
       },
-      description: 'Vehicle Sales Agreement Digital Signing Service',
+      description: ' Digital Signing Service',
       statement_descriptor: 'SMART CONTRACTS',
-      statement_descriptor_suffix: 'VEHICLE AGR',
+      statement_descriptor_suffix: 'SIGN AGR',
       capture_method: 'automatic',
       setup_future_usage: 'off_session',
       confirm: false,

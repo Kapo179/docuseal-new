@@ -1,7 +1,6 @@
 import { useState, type FC } from 'react';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import type { StripePaymentElementOptions } from '@stripe/stripe-js';
-import { useNavigate } from 'react-router-dom';
 import { PenTool, AlertTriangle } from 'lucide-react';
 import { usePaymentFlow } from '../hooks/usePaymentFlow';
 
@@ -12,7 +11,6 @@ interface Props {
 }
 
 export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel, onError }) => {
-  const navigate = useNavigate();
   const stripe = useStripe();
   const elements = useElements();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,19 +29,20 @@ export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel, onError }
       const { error: paymentError } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/signing-setup`,
+          return_url: `${window.location.origin}/contract/${templateId}`,
           payment_method_data: {
             billing_details: {
-              name: 'Vehicle Agreement Signing',
+              name: 'Agreement Signing',
             },
           },
         },
+        redirect: 'if_required',
       });
 
       if (paymentError) {
         console.error('Payment confirmation error:', paymentError);
         setError(paymentError.message || 'Payment failed. Please try again.');
-        onError(new Error(paymentError.message)); // Convert StripeError to Error
+        onError(new Error(paymentError.message));
         return;
       }
 
@@ -51,13 +50,10 @@ export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel, onError }
       console.log('Payment successful');
       setComplete(true);
       onSuccess();
-      
-      // Navigate to signing setup
-      navigate('/signing-setup');
     } catch (err) {
       console.error('Unexpected payment error:', err);
       setError('An unexpected error occurred. Please try again.');
-      onError(err instanceof Error ? err : new Error('Unexpected error')); // Handle unknown type
+      onError(err instanceof Error ? err : new Error('Unexpected error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -65,9 +61,10 @@ export const StripePaymentElement: FC<Props> = ({ onSuccess, onCancel, onError }
 
   const paymentElementOptions: StripePaymentElementOptions = {
     layout: 'tabs',
+    theme: 'Minimal',
     defaultValues: {
       billingDetails: {
-        name: 'Vehicle Agreement Signing',
+        name: 'Agreement Signing',
       },
     },
     business: { name: 'Smart Contracts' },
