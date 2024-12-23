@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { StripePaymentElement } from './StripePaymentElement';
 import { usePaymentFlow } from '../hooks/usePaymentFlow';
 import { FileText, Loader, AlertTriangle, Lock, ArrowRight, PenTool, Check, Smartphone, Mail } from 'lucide-react';
@@ -7,12 +7,12 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentSuccess } from './PaymentSuccess';
 import axios from 'axios';
-import { navigate } from 'react-router-dom';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 export default function ContractViewer() {
   const { templateId } = useParams();
+  const navigate = useNavigate();
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +79,6 @@ export default function ContractViewer() {
         throw new Error('Please provide at least one recipient with name and email');
       }
 
-      // Filter out empty recipients
       const validRecipients = emailRecipients.filter(r => r.name && r.email);
       
       console.log('Sending emails to:', validRecipients);
