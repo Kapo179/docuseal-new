@@ -19,15 +19,23 @@ export const handler = async (event) => {
   }
 
   try {
-    // Get template by UUID
+    console.log('🔍 Fetching document with UUID:', uuid);
+
+    // Get template by UUID - using the correct endpoint
     const response = await axios.get(
-      `https://api.docuseal.com/documents/${uuid}`,
+      `https://api.docuseal.com/templates/${uuid}`, // Updated endpoint
       {
         headers: {
-          'X-Auth-Token': process.env.DOCUSEAL_AUTH_TOKEN
+          'X-Auth-Token': process.env.DOCUSEAL_AUTH_TOKEN,
+          'Accept': 'application/json'
         }
       }
     );
+
+    console.log('✅ DocuSeal API Response:', {
+      status: response.status,
+      data: response.data
+    });
 
     return {
       statusCode: 200,
@@ -35,9 +43,11 @@ export const handler = async (event) => {
       body: JSON.stringify({
         success: true,
         documents: response.data.documents,
+        content: response.data.content,
         name: response.data.name,
         created_at: response.data.created_at,
-        updated_at: response.data.updated_at
+        updated_at: response.data.updated_at,
+        submitters: response.data.submitters
       })
     };
 
@@ -45,7 +55,8 @@ export const handler = async (event) => {
     console.error('❌ Error fetching template:', {
       message: error.message,
       status: error.response?.status,
-      data: error.response?.data
+      data: error.response?.data,
+      uuid: uuid
     });
 
     // Handle specific error cases
@@ -54,17 +65,18 @@ export const handler = async (event) => {
         statusCode: 404,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          error: 'Template not found',
-          details: 'The requested template does not exist'
+          error: 'Contract not found',
+          details: 'The requested contract does not exist',
+          uuid: uuid
         })
       };
     }
 
     return {
-      statusCode: 500,
+      statusCode: error.response?.status || 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
-        error: 'Failed to fetch template',
+        error: 'Failed to fetch contract',
         details: error.message,
         docusealError: error.response?.data
       })

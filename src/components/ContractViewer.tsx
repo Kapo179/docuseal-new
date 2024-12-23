@@ -40,15 +40,23 @@ export default function ContractViewer() {
       }
 
       try {
+        console.log('Fetching contract with UUID:', uuid);
         const response = await fetch(`/.netlify/functions/get-docuseal-contract?uuid=${uuid}`);
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch contract data (status: ${response.status})`);
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to fetch contract data (status: ${response.status})`);
         }
 
         const data = await response.json();
-        const imageUrl = data.documents?.[0]?.preview_image_url;
-        const pdfUrl = data.documents?.[0]?.url;
+        console.log('Contract data received:', data);
+
+        if (!data.documents?.[0]) {
+          throw new Error('No document data found in response');
+        }
+
+        const imageUrl = data.documents[0].preview_image_url;
+        const pdfUrl = data.documents[0].url;
 
         if (imageUrl) {
           setPreviewImageUrl(imageUrl);
