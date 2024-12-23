@@ -207,9 +207,7 @@ export default function ContractViewer() {
   };
 
   const handleEmailFormSubmit = async () => {
-    if (paymentProcessing) return;
-    
-    // Validate recipients before showing payment
+    // Validate recipients
     const validRecipients = emailRecipients.filter(r => r.name && r.email);
     if (validRecipients.length === 0) {
       setPaymentError('Please add at least one recipient with name and email');
@@ -217,15 +215,11 @@ export default function ContractViewer() {
     }
 
     try {
-      setPaymentError(null);
-      setPaymentProcessing(true);
-      await createPaymentIntent();
-      setShowPayment(true);
+      // Bypass payment and directly call handlePaymentSuccess
+      await handlePaymentSuccess();
     } catch (error) {
-      console.error('Payment initialization failed:', error);
-      setPaymentError('Failed to initialize payment');
-    } finally {
-      setPaymentProcessing(false);
+      console.error('Failed to send emails:', error);
+      setPaymentError('Failed to send emails. Please try again.');
     }
   };
 
@@ -295,45 +289,32 @@ export default function ContractViewer() {
           </button>
         </div>
 
-        {showPayment && clientSecret ? (
-          <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <StripePaymentElement
-              onSuccess={handlePaymentSuccess}
-              onError={handlePaymentError}
-              onCancel={() => {
-                setShowPayment(false);
-                setPaymentProcessing(false);
-              }}
-            />
-          </Elements>
-        ) : (
-          <div className="space-y-4">
-            {paymentError && (
-              <div className="text-red-600 text-sm">
-                {paymentError}
-              </div>
-            )}
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowEmailForm(false);
-                  setEmailRecipients([{ name: '', email: '' }]);
-                  setPaymentError(null);
-                }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleEmailFormSubmit}
-                disabled={isProcessing || !emailRecipients.some(r => r.name && r.email)}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-              >
-                Proceed to Payment ($2.99)
-              </button>
+        <div className="space-y-4">
+          {paymentError && (
+            <div className="text-red-600 text-sm">
+              {paymentError}
             </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setShowEmailForm(false);
+                setEmailRecipients([{ name: '', email: '' }]);
+                setPaymentError(null);
+              }}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleEmailFormSubmit}
+              disabled={!emailRecipients.some(r => r.name && r.email)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              Send Emails
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
