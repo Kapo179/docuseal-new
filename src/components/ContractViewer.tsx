@@ -7,6 +7,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentSuccess } from './PaymentSuccess';
 import axios from 'axios';
+import { navigate } from 'react-router-dom';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -72,28 +73,46 @@ export default function ContractViewer() {
     try {
       setPaymentProcessing(true);
       console.log('Payment successful! 🎉');
-      setComplete(true);
+      
+      // Initialize recipients if empty
+      if (emailRecipients.length === 0) {
+        setEmailRecipients([{ name: '', email: '' }]);
+      }
 
-      if (emailRecipients.length > 0) {
-        setSendingEmails(true);
-        const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
-          templateId,
-          submitters: emailRecipients.map((recipient, index) => ({
-            name: recipient.name,
-            email: recipient.email,
-            role: `Party${index + 1}`
-          }))
-        });
+      console.log('Sending emails to:', emailRecipients);
+      setSendingEmails(true);
+      
+      const response = await axios.post('/.netlify/functions/create-docuseal-submission', {
+        templateId,
+        submitters: emailRecipients.map((recipient, index) => ({
+          name: recipient.name,
+          email: recipient.email,
+          role: `Party${index + 1}`
+        }))
+      });
 
-        if (response.data.success) {
-          setShowEmailForm(false);
-          setShowEmailNotification(true);
-          setTimeout(() => setShowEmailNotification(false), 5000);
-        }
+      console.log('DocuSeal submission response:', response.data);
+
+      if (response.data.success) {
+        setShowEmailForm(false);
+        setShowEmailNotification(true);
+        
+        // Keep notification visible longer
+        setTimeout(() => {
+          setShowEmailNotification(false);
+          // Only reset and navigate after notification
+          setComplete(true);
+          // Navigate to success page with submission details
+          navigate(`/success?submissionId=${response.data.submissionId}`);
+        }, 5000);
+      } else {
+        throw new Error('Submission creation failed');
       }
     } catch (error) {
       console.error('Error processing payment or sending emails:', error);
-      setPaymentError('Payment successful but failed to send emails. Please try again.');
+      setPaymentError(
+        'Payment successful but failed to send emails. Please try again or contact support.'
+      );
     } finally {
       setSendingEmails(false);
       setPaymentProcessing(false);
