@@ -27,6 +27,7 @@
     Cross-Origin-Embedder-Policy = "credentialless"
     Cross-Origin-Resource-Policy = "cross-origin"
     Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+    Timing-Allow-Origin = "*"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "SAMEORIGIN"
     X-XSS-Protection = "1; mode=block"
@@ -62,6 +63,18 @@
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
+    Timing-Allow-Origin = "*"
+    Cache-Control = "max-age=60, stale-while-revalidate=900"
+
+# Special headers for Stripe controller
+[[headers]]
+  for = "/v3/controller-with-preconnect-*.html"
+    [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Cross-Origin-Embedder-Policy = "credentialless"
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "max-age=60, stale-while-revalidate=900"
+    Timing-Allow-Origin = "*"
 
 # Redirect for API requests to Netlify Functions
 [[redirects]]
