@@ -26,9 +26,9 @@ export default function ContractViewer() {
   const [sendingEmails, setSendingEmails] = useState(false);
   const [showEmailNotification, setShowEmailNotification] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [contractParties, setContractParties] = useState<{
+  const [contractData, setContractData] = useState<{
     parties?: Array<{ name: string; email: string }>;
-  }>({});
+  } | null>(null);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -50,6 +50,9 @@ export default function ContractViewer() {
         const imageUrl = data.documents?.[0]?.preview_image_url;
         const pdfUrl = data.documents?.[0]?.url;
 
+        // Store contract data for auto-fill
+        setContractData(data);
+
         if (imageUrl) {
           setPreviewImageUrl(imageUrl);
         } else {
@@ -70,59 +73,16 @@ export default function ContractViewer() {
     };
 
     fetchContract();
-    extractPartiesFromContract();
   }, [templateId]);
 
-  const extractPartiesFromContract = async () => {
-    try {
-      const response = await fetch(`/.netlify/functions/get-docuseal-contract?templateId=${templateId}`);
-      if (!response.ok) throw new Error('Failed to fetch contract data');
-      
-      const data = await response.json();
-      const contractText = data.content || '';
-
-      // Generic pattern to match any name and email in parentheses
-      const partyPattern = /([^(]+)\s*\(([^)]+@[^)]+)\)/g;
-      const matches = [...contractText.matchAll(partyPattern)];
-
-      console.log('Contract Text:', contractText);
-      console.log('Found Matches:', matches);
-
-      // Extract all parties found
-      const parties = matches.map(match => ({
-        name: match[1].trim(),
-        email: match[2].trim()
-      }));
-
-      console.log('Extracted Parties:', parties);
-
-      // Store in state
-      setContractParties({
-        parties
-      });
-
-    } catch (error) {
-      console.error('Error extracting parties:', error);
-    }
-  };
-
   const handleAutoFill = () => {
-    const { parties } = contractParties;
-    
-    if (parties?.length) {
-      // Fill in as many recipients as we found, up to 2
-      const newRecipients = parties.slice(0, 2).map(party => ({
-        name: party.name,
-        email: party.email
-      }));
-
-      // Ensure we always have at least one recipient field
-      while (newRecipients.length < 1) {
-        newRecipients.push({ name: '', email: '' });
-      }
-
-      setEmailRecipients(newRecipients);
-      console.log('Auto-filled recipients:', newRecipients);
+    if (contractData?.parties?.length) {
+      setEmailRecipients(
+        contractData.parties.map(party => ({
+          name: party.name,
+          email: party.email
+        }))
+      );
     }
   };
 
@@ -229,21 +189,23 @@ export default function ContractViewer() {
       <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Send Contract via Email</h3>
-          <button
-            onClick={handleAutoFill}
-            className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-            title="Auto-fill from contract"
-          >
-            <Wand2 className="w-4 h-4 mr-1.5" />
-            Auto-fill
-          </button>
+          {contractData?.parties?.length > 0 && (
+            <button
+              onClick={handleAutoFill}
+              className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+              title="Auto-fill from contract"
+            >
+              <Wand2 className="w-4 h-4 mr-1.5" />
+              Auto-fill
+            </button>
+          )}
         </div>
         
         <div className="mb-6">
           {emailRecipients.map((recipient, index) => (
             <div key={index} className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Party 1 {index + 1}
+                Party {index + 1}
               </label>
               <input
                 type="text"
