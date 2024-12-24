@@ -88,7 +88,6 @@
   for = "/v3/controller-with-preconnect-*.html"
     [headers.values]
     Cross-Origin-Resource-Policy = "cross-origin"
-    Cross-Origin-Embedder-Policy = "credentialless"
     Access-Control-Allow-Origin = "*"
     Cache-Control = "max-age=60, stale-while-revalidate=900"
     Timing-Allow-Origin = "*"
@@ -141,5 +140,4 @@ DOCUSEAL_API_URL = "https://api.docuseal.com"
       img-src 'self' data: https://*.stripe.com;
       style-src 'self' 'unsafe-inline';
     """
-    Cross-Origin-Embedder-Policy = "credentialless"
     Cross-Origin-Resource-Policy = "cross-origin"
