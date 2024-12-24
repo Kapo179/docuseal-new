@@ -141,3 +141,44 @@ DOCUSEAL_API_URL = "https://api.docuseal.com"
       style-src 'self' 'unsafe-inline';
     """
     Cross-Origin-Resource-Policy = "cross-origin"
+
+# Add specific headers for Stripe UI elements
+[[headers]]
+  for = "https://js.stripe.com/v3/elements-inner-loader-ui-*.html"
+    [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
+
+[[headers]]
+  for = "https://js.stripe.com/v3/elements-inner-payment-*.html"
+    [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
+
+[[headers]]
+  for = "https://js.stripe.com/v3/payment-request-inner-browser-*.html"
+    [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
+
+[[headers]]
+  for = "https://js.stripe.com/v3/m-outer-*.html"
+    [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
+
+[[headers]]
+  for = "https://js.stripe.com/v3/controller-with-preconnect-*.html"
+    [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
