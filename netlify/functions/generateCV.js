@@ -1,12 +1,41 @@
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 
+// Initialize S3 client with renamed environment variables
+const s3Client = new S3Client({
+  region: process.env.MY_AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.MY_AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.MY_AWS_SECRET_ACCESS_KEY
+  }
+});
+
+const BUCKET_NAME = process.env.AWS_S3_BUCKET;
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
+
+async function uploadToS3(buffer, key, contentType) {
+  try {
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+      ACL: 'public-read' // Make sure bucket policy allows this
+    });
+
+    await s3Client.send(command);
+    return `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
+  } catch (error) {
+    console.error('S3 upload error:', error);
+    throw error;
+  }
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -140,6 +169,12 @@ exports.handler = async (event) => {
       </html>
     `;
 
+    // Generate unique filename based on timestamp and name
+    const timestamp = Date.now();
+    const sanitizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const pdfKey = `cvs/${timestamp}-${sanitizedName}.pdf`;
+    const pngKey = `previews/${timestamp}-${sanitizedName}.png`;
+
     browser = await puppeteer.launch({
       args: [
         ...chromium.args,
@@ -159,7 +194,7 @@ exports.handler = async (event) => {
     const page = await browser.newPage();
     await page.setContent(htmlTemplate);
 
-    // Generate PDF
+    // Generate PDF and PNG
     const pdfBuffer = await page.pdf({ 
       format: 'A4',
       margin: {
@@ -171,37 +206,39 @@ exports.handler = async (event) => {
       printBackground: true
     });
 
-    // Generate PNG preview of the first page
     const pngBuffer = await page.screenshot({
       type: 'png',
       fullPage: true,
-      omitBackground: false,
-      encoding: 'binary'
+      omitBackground: false
     });
 
     await browser.close();
 
+    // Upload both files to S3 with new environment variable names
+    const [pdfUrl, previewUrl] = await Promise.all([
+      uploadToS3(pdfBuffer, pdfKey, 'application/pdf'),
+      uploadToS3(pngBuffer, pngKey, 'image/png')
+    ]);
+
     return {
       statusCode: 200,
-      headers: {
-        ...CORS_HEADERS,
-        'Content-Type': 'application/json'
-      },
+      headers: CORS_HEADERS,
       body: JSON.stringify({
         success: true,
-        message: 'CV generated successfully',
-        cvHtml: htmlTemplate,
-        pdfBase64: pdfBuffer.toString('base64'),
-        previewImageBase64: pngBuffer.toString('base64')
+        message: 'CV generated and uploaded successfully',
+        pdfUrl,
+        previewUrl,
+        filename: `${sanitizedName}.pdf`
       })
     };
+
   } catch (error) {
-    console.error('Error generating CV:', error);
+    console.error('Error in CV generation:', error);
     if (browser) {
       await browser.close();
     }
-    return { 
-      statusCode: 500, 
+    return {
+      statusCode: 500,
       headers: CORS_HEADERS,
       body: JSON.stringify({
         error: 'Failed to generate CV',
