@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { StripePaymentElement } from './StripePaymentElement';
 import { usePaymentFlow } from '../hooks/usePaymentFlow';
-import { FileText, Loader, AlertTriangle, Lock, ArrowRight, PenTool, Check, Smartphone, Mail, Wand2, PlusCircle } from 'lucide-react';
+import { FileText, Loader, AlertTriangle, Lock, ArrowRight, PenTool, Check, Smartphone, Mail, Wand2, PlusCircle, FileDown } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentSuccess } from './PaymentSuccess';
@@ -180,10 +180,32 @@ export default function ContractViewer() {
   const emailButton = (
     <button
       onClick={() => setShowEmailForm(true)}
-      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      className="w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-white rounded-xl px-6 py-3
+        font-semibold shadow-lg shadow-emerald-500/20 
+        hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02]
+        active:scale-[0.98] transform transition-all duration-200
+        disabled:opacity-75 disabled:cursor-not-allowed"
     >
-      <Mail className="w-4 h-4 mr-2" />
-      Send via Email
+      <span className="flex items-center justify-center gap-2">
+        <Mail className="w-4 h-4" />
+        Send via Email
+      </span>
+    </button>
+  );
+
+  const downloadButton = (
+    <button
+      onClick={() => window.open(pdfUrl, '_blank')}
+      className="w-full mt-2 bg-white text-gray-600 border border-gray-200 rounded-xl px-6 py-3
+        font-semibold shadow-sm
+        hover:bg-gray-50 hover:border-gray-300 hover:scale-[1.02]
+        active:scale-[0.98] transform transition-all duration-200
+        disabled:opacity-75 disabled:cursor-not-allowed"
+    >
+      <span className="flex items-center justify-center gap-2">
+        <FileDown className="w-4 h-4" />
+        Download Template
+      </span>
     </button>
   );
 
