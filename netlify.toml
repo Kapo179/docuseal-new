@@ -9,9 +9,9 @@
     [headers.values]
     Content-Security-Policy = """
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.js.stripe.com https://js.stripe.com https://maps.googleapis.com;
-      connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://maps.googleapis.com;
-      frame-src 'self' https://*.js.stripe.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://*.js.stripe.com https://js.stripe.com https://maps.googleapis.com;
+      connect-src 'self' https://*.stripe.com https://api.stripe.com https://checkout.stripe.com https://maps.googleapis.com;
+      frame-src 'self' https://*.stripe.com https://*.js.stripe.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com;
       img-src 'self' data: https://*.stripe.com https://*.docuseal.com https://docuseal.com;
       style-src 'self' 'unsafe-inline';
       font-src 'self' data:;
@@ -39,19 +39,6 @@
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
-
-[[headers]]
-  for = "/payment/*"
-    [headers.values]
-    Content-Security-Policy = """
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com;
-      connect-src 'self' https://*.stripe.com https://api.stripe.com;
-      frame-src 'self' https://*.stripe.com https://hooks.stripe.com;
-      img-src 'self' data: https://*.stripe.com;
-      style-src 'self' 'unsafe-inline';
-    """
-    Cross-Origin-Resource-Policy = "cross-origin"
 
 # Special headers for DocuSeal resources
 [[headers]]
@@ -98,7 +85,7 @@
   to = "/.netlify/functions/:splat"
   status = 200
   force = true
-  headers = {Cross-Origin-Resource-Policy = "same-site"}
+  headers = {Cross-Origin-Resource-Policy = "cross-origin"}
 
 # Redirect for DocuSeal Templates Fetch
 [[redirects]]
@@ -128,19 +115,6 @@ DOCUSEAL_API_URL = "https://api.docuseal.com"
   for = "/assets/*"
     [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/payment"
-    [headers.values]
-    Content-Security-Policy = """
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com;
-      connect-src 'self' https://*.stripe.com https://api.stripe.com;
-      frame-src 'self' https://*.stripe.com;
-      img-src 'self' data: https://*.stripe.com;
-      style-src 'self' 'unsafe-inline';
-    """
-    Cross-Origin-Resource-Policy = "cross-origin"
 
 # Add specific headers for Stripe UI elements
 [[headers]]
@@ -182,3 +156,12 @@ DOCUSEAL_API_URL = "https://api.docuseal.com"
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
+
+[[headers]]
+  for = "https://js.stripe.com/v3/controller-*"
+    [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
+    Access-Control-Allow-Credentials = "true"
