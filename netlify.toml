@@ -19,65 +19,25 @@
       worker-src 'self' blob:;
     """
     Cross-Origin-Resource-Policy = "cross-origin"
-    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+    Cross-Origin-Opener-Policy = "unsafe-none"
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
+    Access-Control-Allow-Credentials = "true"
 
-[[headers]]
-  for = "https://*.js.stripe.com/*"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
-
-[[headers]]
-  for = "https://hooks.stripe.com/*"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
-
-# Special headers for DocuSeal resources
-[[headers]]
-  for = "https://*.docuseal.com/*"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-
-# Special headers for PDF and image resources
-[[headers]]
-  for = "/*.pdf"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Content-Type = "application/pdf"
-    Content-Disposition = "inline"
-
-[[headers]]
-  for = "/*.{jpg,jpeg,png,gif,webp}"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# Special headers for Stripe resources
+# Single header for all Stripe resources
 [[headers]]
   for = "https://*.stripe.com/*"
     [headers.values]
     Cross-Origin-Resource-Policy = "cross-origin"
+    Cross-Origin-Opener-Policy = "unsafe-none"
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
-    Cache-Control = "no-cache"
-
-# Special headers for Stripe controller
-[[headers]]
-  for = "/v3/controller-with-preconnect-*.html"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Access-Control-Allow-Origin = "*"
-    Cache-Control = "max-age=60, stale-while-revalidate=900"
+    Access-Control-Allow-Headers = "*"
+    Access-Control-Allow-Credentials = "true"
+    Access-Control-Expose-Headers = "*"
     Timing-Allow-Origin = "*"
+    Cache-Control = "no-cache"
 
 # Redirect for API requests to Netlify Functions
 [[redirects]]
@@ -115,53 +75,3 @@ DOCUSEAL_API_URL = "https://api.docuseal.com"
   for = "/assets/*"
     [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
-
-# Add specific headers for Stripe UI elements
-[[headers]]
-  for = "https://js.stripe.com/v3/elements-inner-loader-ui-*.html"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
-
-[[headers]]
-  for = "https://js.stripe.com/v3/elements-inner-payment-*.html"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
-
-[[headers]]
-  for = "https://js.stripe.com/v3/payment-request-inner-browser-*.html"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
-
-[[headers]]
-  for = "https://js.stripe.com/v3/m-outer-*.html"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
-
-[[headers]]
-  for = "https://js.stripe.com/v3/controller-with-preconnect-*.html"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
-
-[[headers]]
-  for = "https://js.stripe.com/v3/controller-*"
-    [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Stripe-Version, Stripe-Signature"
-    Access-Control-Allow-Credentials = "true"
