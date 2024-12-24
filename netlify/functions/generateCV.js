@@ -26,6 +26,7 @@ async function uploadToS3(buffer, key, contentType) {
       Key: key,
       Body: buffer,
       ContentType: contentType,
+      ACL: 'public-read' // Make sure bucket policy allows this
     });
 
     await s3Client.send(command);
@@ -84,13 +85,18 @@ exports.handler = async (event) => {
           <meta charset="UTF-8">
           <title>${name} - CV</title>
           <style>
+            @page {
+              size: A4;
+              margin: 0;
+            }
             body {
-              /* Use system fonts as fallback */
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
               line-height: 1.6;
-              max-width: 800px;
+              max-width: 210mm; /* A4 width */
+              min-height: 297mm; /* A4 height */
               margin: 0 auto;
-              padding: 20px;
+              padding: 20mm; /* Matches the PDF margins */
+              box-sizing: border-box;
             }
             h1 { color: #2c3e50; }
             h2 { 
@@ -178,13 +184,12 @@ exports.handler = async (event) => {
       args: [
         ...chromium.args,
         '--hide-scrollbars',
-        '--disable-web-security',
-        '--font-render-hinting=none'
+        '--disable-web-security'
       ],
       defaultViewport: {
-        width: 1240,
-        height: 1754, // A4 size at 96 DPI
-        deviceScaleFactor: 2 // For better quality PNG
+        width: 794,  // A4 width in pixels (assuming 96 DPI)
+        height: 1123, // A4 height in pixels (assuming 96 DPI)
+        deviceScaleFactor: 2
       },
       executablePath: await chromium.executablePath(),
       headless: chromium.headless
@@ -196,13 +201,13 @@ exports.handler = async (event) => {
     // Generate PDF and PNG
     const pdfBuffer = await page.pdf({ 
       format: 'A4',
+      printBackground: true,
       margin: {
         top: '20mm',
         right: '20mm',
         bottom: '20mm',
         left: '20mm'
-      },
-      printBackground: true
+      }
     });
 
     const pngBuffer = await page.screenshot({
