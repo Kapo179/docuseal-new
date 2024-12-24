@@ -29,7 +29,8 @@ export function StripePaymentElement({ onSuccess, onError, onCancel }: Props) {
             billing_details: {
               name: 'Contract Signing'
             }
-          }
+          },
+          setup_future_usage: null
         },
         redirect: 'if_required'
       });
