@@ -26,7 +26,7 @@ async function uploadToS3(buffer, key, contentType) {
       Key: key,
       Body: buffer,
       ContentType: contentType,
-      ACL: 'public-read' // Make sure bucket policy allows this
+      
     });
 
     await s3Client.send(command);
