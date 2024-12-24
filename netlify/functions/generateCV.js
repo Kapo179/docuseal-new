@@ -26,6 +26,20 @@ exports.handler = async (event) => {
 
   let browser;
   try {
+    const body = JSON.parse(event.body);
+    
+    // Validate required fields
+    if (!body.name || !body.contactDetails || !body.education || !body.workExperience || !body.skills) {
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: 'Missing required fields',
+          details: 'Please provide all required CV information'
+        })
+      };
+    }
+
     const { 
       name, 
       contactDetails, 
@@ -33,7 +47,7 @@ exports.handler = async (event) => {
       workExperience, 
       skills, 
       hobbies 
-    } = JSON.parse(event.body).params;
+    } = body;
 
     const htmlTemplate = `
       <!DOCTYPE html>
