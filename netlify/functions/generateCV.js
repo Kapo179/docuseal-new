@@ -57,7 +57,8 @@ exports.handler = async (event) => {
           <title>${name} - CV</title>
           <style>
             body {
-              font-family: 'Arial', sans-serif;
+              /* Use system fonts as fallback */
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
               line-height: 1.6;
               max-width: 800px;
               margin: 0 auto;
@@ -139,16 +140,20 @@ exports.handler = async (event) => {
       </html>
     `;
 
-    await chromium.font('/tmp/fonts');
     browser = await puppeteer.launch({
-      args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
+      args: [
+        ...chromium.args,
+        '--hide-scrollbars',
+        '--disable-web-security',
+        '--font-render-hinting=none'
+      ],
       defaultViewport: {
         width: 1240,
         height: 1754, // A4 size at 96 DPI
         deviceScaleFactor: 2 // For better quality PNG
       },
-      executablePath: process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath('/tmp/chromium'),
-      headless: true
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless
     });
 
     const page = await browser.newPage();
