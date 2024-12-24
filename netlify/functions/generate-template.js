@@ -125,7 +125,7 @@ export const handler = async (event) => {
     }
 
     // Format the contract link with your domain
-    const contractLink = templateResponse.data.documents?.[0]?.url;
+    const contractLink = `https://contractquickly.com/contract/${templateResponse.data.id}`;
     const previewImageUrl = templateResponse.data.documents?.[0]?.preview_image_url;
 
     // Log the final response being sent back
