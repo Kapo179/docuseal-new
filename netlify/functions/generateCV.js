@@ -26,7 +26,7 @@ async function uploadToS3(buffer, key, contentType) {
       Key: key,
       Body: buffer,
       ContentType: contentType,
-      
+
     });
 
     await s3Client.send(command);
@@ -92,11 +92,9 @@ exports.handler = async (event) => {
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
               line-height: 1.6;
-              max-width: 210mm; /* A4 width */
-              min-height: 297mm; /* A4 height */
+              max-width: 800px;
               margin: 0 auto;
-              padding: 20mm; /* Matches the PDF margins */
-              box-sizing: border-box;
+              padding: 20px;
             }
             h1 { color: #2c3e50; }
             h2 { 
@@ -184,11 +182,12 @@ exports.handler = async (event) => {
       args: [
         ...chromium.args,
         '--hide-scrollbars',
-        '--disable-web-security'
+        '--disable-web-security',
+        '--font-render-hinting=none'
       ],
       defaultViewport: {
-        width: 794,  // A4 width in pixels (assuming 96 DPI)
-        height: 1123, // A4 height in pixels (assuming 96 DPI)
+        width: 794,
+        height: 1123,
         deviceScaleFactor: 2
       },
       executablePath: await chromium.executablePath(),
@@ -201,13 +200,13 @@ exports.handler = async (event) => {
     // Generate PDF and PNG
     const pdfBuffer = await page.pdf({ 
       format: 'A4',
-      printBackground: true,
       margin: {
         top: '20mm',
         right: '20mm',
         bottom: '20mm',
         left: '20mm'
-      }
+      },
+      printBackground: true
     });
 
     const pngBuffer = await page.screenshot({
