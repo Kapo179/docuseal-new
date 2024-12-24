@@ -92,34 +92,58 @@ exports.handler = async (event) => {
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
               line-height: 1.6;
-              max-width: 800px;
+              max-width: 210mm; /* A4 width */
+              min-height: 297mm; /* A4 height */
               margin: 0 auto;
-              padding: 20px;
+              padding: 40px 50px; /* Increased padding */
+              box-sizing: border-box;
+              background: white;
             }
-            h1 { color: #2c3e50; }
-            h2 { 
+            h1 {
+              color: #2c3e50;
+              margin-top: 0;
+              margin-bottom: 20px;
+              font-size: 32px;
+            }
+            h2 {
               color: #34495e;
               border-bottom: 2px solid #3498db;
-              padding-bottom: 5px;
-            }
-            .contact-details {
+              padding-bottom: 8px;
+              margin-top: 30px;
               margin-bottom: 20px;
             }
-            .section {
+            .contact-details {
+              margin-bottom: 30px;
+            }
+            .contact-details p {
+              margin: 8px 0;
+            }
+            .education-item, .experience-item {
               margin-bottom: 25px;
             }
-            .experience-item, .education-item {
-              margin-bottom: 15px;
+            .education-item h3, .experience-item h3 {
+              margin-bottom: 8px;
+              color: #2c3e50;
+            }
+            .duration {
+              color: #666;
+              font-style: italic;
+              margin-bottom: 10px;
             }
             .skills-list {
               display: flex;
               flex-wrap: wrap;
               gap: 10px;
+              margin-top: 15px;
             }
             .skill-item {
-              background: #f0f0f0;
-              padding: 5px 10px;
-              border-radius: 3px;
+              background: #f5f6fa;
+              padding: 6px 12px;
+              border-radius: 4px;
+              font-size: 14px;
+            }
+            section {
+              margin-bottom: 30px;
             }
           </style>
         </head>
@@ -200,13 +224,13 @@ exports.handler = async (event) => {
     // Generate PDF and PNG
     const pdfBuffer = await page.pdf({ 
       format: 'A4',
+      printBackground: true,
       margin: {
-        top: '20mm',
-        right: '20mm',
-        bottom: '20mm',
-        left: '20mm'
-      },
-      printBackground: true
+        top: '25mm',
+        right: '25mm',
+        bottom: '25mm',
+        left: '25mm'
+      }
     });
 
     const pngBuffer = await page.screenshot({
