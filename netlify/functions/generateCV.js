@@ -45,22 +45,39 @@ exports.handler = async (event) => {
     };
   }
 
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  let browser;
   try {
-    const body = JSON.parse(event.body);
-    
-    // Extract fields with defaults
-    const {
-      name = '',
-      contactDetails = {},
-      education = [],
-      workExperience = [],
-      // Split skills into technical and soft if provided that way, otherwise use single skills array
-      technicalSkills = body.skills?.filter(s => typeof s === 'string') || [],
-      softSkills = [],
-      languages = '',
+    const { 
+      name, 
+      contactDetails, 
+      education, 
+      workExperience, 
+      skills = [],
       hobbies = [],
-      ...additionalSections
-    } = body;
+      languages = '',
+      achievements = [],
+      certifications = []
+    } = JSON.parse(event.body);
+    
+    // Validate required fields
+    if (!name || !contactDetails || !education || !workExperience || !skills) {
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: 'Missing required fields',
+          details: 'Please provide all required CV information'
+        })
+      };
+    }
 
     const htmlTemplate = `
       <!DOCTYPE html>
@@ -75,109 +92,140 @@ exports.handler = async (event) => {
             }
             body {
               font-family: Arial, sans-serif;
-              line-height: 1.4;
+              line-height: 1.3;
               max-width: 210mm;
               min-height: 297mm;
               margin: 0 auto;
-              padding: 15mm 25mm;
+              padding: 12mm 20mm;
               box-sizing: border-box;
+              font-size: 11pt;
             }
 
             /* Header styling */
             .header {
               text-align: center;
-              margin-bottom: 20px;
+              margin-bottom: 15px;
             }
             .header h1 {
-              font-size: 16px;
-              margin: 0 0 5px 0;
-              font-weight: normal;
+              font-size: 14pt;
+              margin: 0 0 3px 0;
+              font-weight: bold;
             }
-            
+            .contact-details {
+              font-size: 11pt;
+              line-height: 1.2;
+            }
+            .contact-details a {
+              color: #000;
+              text-decoration: none;
+            }
+
             /* Section Headers */
             .section-header {
               text-transform: uppercase;
               font-weight: bold;
               border-bottom: 1px solid black;
-              margin: 25px 0 15px 0;
-              padding-bottom: 2px;
-              font-size: 14px;
+              margin: 15px 0 8px 0;
+              padding-bottom: 1px;
+              font-size: 11pt;
             }
 
             /* Education styling */
             .education-entry {
-              margin-bottom: 15px;
+              margin-bottom: 8px;
             }
             .education-title {
               display: flex;
               justify-content: space-between;
-              align-items: flex-start;
+              align-items: baseline;
             }
             .institution-degree {
               font-weight: bold;
+              font-size: 11pt;
             }
             .year {
               text-align: right;
-              min-width: 140px;
-            }
-            .education-details {
-              margin: 5px 0 0 0;
+              min-width: 85px;
+              font-size: 11pt;
             }
 
             /* Work Experience styling */
             .experience-entry {
-              margin-bottom: 20px;
+              margin-bottom: 12px;
             }
             .experience-header {
               display: flex;
               justify-content: space-between;
-              align-items: flex-start;
+              align-items: baseline;
+              margin-bottom: 3px;
             }
             .company-position {
               font-weight: bold;
+              font-size: 11pt;
             }
             .responsibilities {
-              margin: 5px 0 0 0;
-              padding-left: 20px;
+              margin: 3px 0 0 0;
+              padding-left: 15px;
             }
             .responsibilities li {
-              margin-bottom: 5px;
+              margin-bottom: 3px;
+              font-size: 11pt;
             }
 
             /* Skills styling */
-            .skills-grid {
-              display: grid;
-              grid-template-columns: auto;
-              gap: 5px;
+            .skills-section {
+              margin-bottom: 8px;
             }
             .skill-category {
               font-weight: bold;
-              margin-right: 10px;
+              display: inline;
+              margin-right: 5px;
+            }
+            .skills-content {
+              display: inline;
+            }
+
+            /* Hobbies styling */
+            .hobbies-list {
+              margin: 5px 0;
+              padding-left: 15px;
+            }
+            .hobbies-list li {
+              margin-bottom: 2px;
+              font-size: 11pt;
+            }
+
+            /* Additional spacing adjustments */
+            ul {
+              margin: 3px 0;
+            }
+            p {
+              margin: 3px 0;
             }
           </style>
         </head>
         <body>
           <div class="header">
             <h1>${name}</h1>
-            <div>
-              ${contactDetails.phone} | <a href="mailto:${contactDetails.email}">${contactDetails.email}</a>
-              ${contactDetails.linkedin ? `<br>${contactDetails.linkedin}` : ''}
+            <div class="contact-details">
+              ${contactDetails.phone} • <a href="mailto:${contactDetails.email}">${contactDetails.email}</a>
+              ${contactDetails.linkedin && contactDetails.linkedin !== 'N/A' ? 
+                `<br>${contactDetails.linkedin}` : 
+                ''}
             </div>
           </div>
 
-          <div class="section-header">EDUCATION & QUALIFICATIONS</div>
+          <div class="section-header">EDUCATION AND QUALIFICATIONS</div>
           ${education.map(edu => `
             <div class="education-entry">
               <div class="education-title">
-                <div class="institution-degree">${edu.institution} – ${edu.degree}</div>
-                <div class="year">${edu.year}</div>
+                <span class="institution-degree">${edu.institution} – ${edu.degree}</span>
+                <span class="year">${edu.year}</span>
               </div>
               ${edu.details ? `
-                <div class="education-details">
-                  ${edu.details.includes('\n') ? 
-                    `<ul>${edu.details.split('\n').map(detail => `<li>${detail.trim()}</li>`).join('')}</ul>` :
-                    edu.details}
-                </div>
+                <ul class="education-details">
+                  ${edu.details.split('. ').map(detail => `<li>${detail}</li>`).join('')}
+                </ul>
               ` : ''}
             </div>
           `).join('')}
@@ -186,40 +234,30 @@ exports.handler = async (event) => {
           ${workExperience.map(exp => `
             <div class="experience-entry">
               <div class="experience-header">
-                <div class="company-position">${exp.company}${exp.position ? ` – ${exp.position}` : ''}</div>
-                <div class="year">${exp.duration}</div>
+                <span class="company-position">${exp.company}${exp.team ? `, ${exp.team}` : ''} – ${exp.position}</span>
+                <span class="duration">${exp.duration}</span>
               </div>
               <ul class="responsibilities">
-                ${exp.responsibilities.split('\n').map(r => `
-                  <li>${r.trim().replace(/^-\s*/, '')}</li>
-                `).join('')}
+                ${exp.responsibilities.split('. ').filter(r => r.trim()).map(r => 
+                  `<li>${r.trim()}${r.endsWith('.') ? '' : '.'}</li>`
+                ).join('')}
               </ul>
             </div>
           `).join('')}
 
           <div class="section-header">ADDITIONAL SKILLS</div>
           <div class="skills-grid">
-            ${technicalSkills.length ? `
-              <div>
-                <span class="skill-category">Technical Skills:</span>
-                ${technicalSkills.join(', ')}
-              </div>
+            ${skills && skills.length > 0 ? `
+              <div class="skill-category">IT Skills</div>
+              <div>${Array.isArray(skills) ? skills.join(', ') : skills}</div>
             ` : ''}
-            ${softSkills.length ? `
-              <div>
-                <span class="skill-category">Soft Skills:</span>
-                ${softSkills.join(', ')}
-              </div>
-            ` : ''}
-            ${languages ? `
-              <div>
-                <span class="skill-category">Languages:</span>
-                ${languages}
-              </div>
+            ${typeof languages !== 'undefined' && languages ? `
+              <div class="skill-category">Languages</div>
+              <div>${languages}</div>
             ` : ''}
           </div>
 
-          ${hobbies && hobbies.length ? `
+          ${hobbies && hobbies.length > 0 ? `
             <div class="section-header">HOBBIES & INTERESTS</div>
             <ul class="hobbies-list">
               ${hobbies.map(hobby => `<li>${hobby}</li>`).join('')}
@@ -235,9 +273,18 @@ exports.handler = async (event) => {
     const pdfKey = `cvs/${timestamp}-${sanitizedName}.pdf`;
     const pngKey = `previews/${timestamp}-${sanitizedName}.png`;
 
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
+    browser = await puppeteer.launch({
+      args: [
+        ...chromium.args,
+        '--hide-scrollbars',
+        '--disable-web-security',
+        '--font-render-hinting=none'
+      ],
+      defaultViewport: {
+        width: 794,
+        height: 1123,
+        deviceScaleFactor: 2
+      },
       executablePath: await chromium.executablePath(),
       headless: chromium.headless
     });
@@ -276,14 +323,18 @@ exports.handler = async (event) => {
       headers: CORS_HEADERS,
       body: JSON.stringify({
         success: true,
-        message: 'CV generated successfully',
+        message: 'CV generated and uploaded successfully',
         pdfUrl,
-        previewUrl
+        previewUrl,
+        filename: `${sanitizedName}.pdf`
       })
     };
 
   } catch (error) {
     console.error('Error in CV generation:', error);
+    if (browser) {
+      await browser.close();
+    }
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
