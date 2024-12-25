@@ -95,18 +95,19 @@ exports.handler = async (event) => {
               max-width: 210mm;
               min-height: 297mm;
               margin: 0 auto;
-              padding: 30mm 25mm;
+              padding: 15mm 25mm;
               box-sizing: border-box;
             }
 
             /* Header/Contact styling */
             .header {
               text-align: center;
-              margin-bottom: 20px;
+              margin-bottom: 15px;
+              margin-top: 0;
             }
             .header h1 {
               font-size: 24px;
-              margin-bottom: 10px;
+              margin: 0 0 10px 0;
             }
             .contact-details {
               font-size: 14px;
