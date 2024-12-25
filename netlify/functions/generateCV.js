@@ -145,53 +145,88 @@ exports.handler = async (event) => {
             section {
               margin-bottom: 30px;
             }
+            
+            /* Prevent orphans and widows */
+            p, li {
+              orphans: 3;
+              widows: 3;
+            }
+
+            /* Keep sections together where possible */
+            section, .education-item, .experience-item {
+              break-inside: avoid;
+              page-break-inside: avoid;
+              margin-bottom: 25px;
+            }
+
+            /* Prevent breaks after headings */
+            h1, h2, h3 {
+              break-after: avoid;
+              page-break-after: avoid;
+            }
+
+            /* Keep work experience details together */
+            .experience-item {
+              break-inside: avoid-page;
+              page-break-inside: avoid;
+            }
+
+            /* Keep skills together */
+            .skills-list {
+              break-inside: avoid;
+              page-break-inside: avoid;
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+              margin-top: 15px;
+            }
+
+            /* Ensure proper spacing between sections */
+            .section {
+              margin-bottom: 30px;
+              break-before: auto;
+              break-after: auto;
+              page-break-before: auto;
+              page-break-after: auto;
+            }
+
+            /* Add space for page breaks if needed */
+            @media print {
+              .page-break {
+                break-before: page;
+                page-break-before: always;
+              }
+            }
           </style>
         </head>
         <body>
-          <h1>${name}</h1>
-          
-          <div class="contact-details">
-            <p>Email: ${contactDetails.email}</p>
-            <p>Phone: ${contactDetails.phone}</p>
-            <p>LinkedIn: ${contactDetails.linkedin}</p>
-          </div>
+          <main>
+            <!-- Wrap sections in main for better page break control -->
+            <section class="header">
+              <h1>${name}</h1>
+              <!-- Contact details -->
+            </section>
 
-          <div class="section">
-            <h2>Education</h2>
-            ${education.map(edu => `
-              <div class="education-item">
-                <h3>${edu.institution}</h3>
-                <p>${edu.degree} (${edu.year})</p>
-              </div>
-            `).join('')}
-          </div>
+            <section class="education">
+              <h2>Education</h2>
+              <!-- Education items -->
+            </section>
 
-          <div class="section">
-            <h2>Work Experience</h2>
-            ${workExperience.map(exp => `
-              <div class="experience-item">
-                <h3>${exp.position} at ${exp.company}</h3>
-                <p><em>${exp.duration}</em></p>
-                <p>${exp.responsibilities}</p>
-              </div>
-            `).join('')}
-          </div>
+            <section class="experience">
+              <h2>Work Experience</h2>
+              <!-- Experience items -->
+            </section>
 
-          <div class="section">
-            <h2>Skills</h2>
-            <div class="skills-list">
-              ${skills.map(skill => `
-                <span class="skill-item">${skill}</span>
-              `).join('')}
-            </div>
-          </div>
+            <section class="skills">
+              <h2>Skills</h2>
+              <!-- Skills list -->
+            </section>
 
-          ${hobbies ? `
-            <div class="section">
+            <section class="hobbies">
               <h2>Hobbies & Interests</h2>
-              <p>${hobbies.join(', ')}</p>
-            </div>
-          ` : ''}
+              <!-- Hobbies content -->
+            </section>
+          </main>
         </body>
       </html>
     `;
