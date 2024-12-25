@@ -55,10 +55,20 @@ exports.handler = async (event) => {
 
   let browser;
   try {
-    const body = JSON.parse(event.body);
+    const { 
+      name, 
+      contactDetails, 
+      education, 
+      workExperience, 
+      skills = [],
+      hobbies = [],
+      languages = '',
+      achievements = [],
+      certifications = []
+    } = JSON.parse(event.body);
     
     // Validate required fields
-    if (!body.name || !body.contactDetails || !body.education || !body.workExperience || !body.skills) {
+    if (!name || !contactDetails || !education || !workExperience || !skills) {
       return {
         statusCode: 400,
         headers: CORS_HEADERS,
@@ -68,17 +78,6 @@ exports.handler = async (event) => {
         })
       };
     }
-
-    const { 
-      name, 
-      contactDetails, 
-      education, 
-      workExperience, 
-      skills, 
-      hobbies,
-      achievements = [],
-      certifications = []
-    } = body;
 
     const htmlTemplate = `
       <!DOCTYPE html>
@@ -239,9 +238,11 @@ exports.handler = async (event) => {
 
           <div class="section-header">ADDITIONAL SKILLS</div>
           <div class="skills-grid">
-            <div class="skill-category">IT Skills</div>
-            <div>${Array.isArray(skills) ? skills.join(', ') : skills}</div>
-            ${languages ? `
+            ${skills && skills.length > 0 ? `
+              <div class="skill-category">IT Skills</div>
+              <div>${Array.isArray(skills) ? skills.join(', ') : skills}</div>
+            ` : ''}
+            ${typeof languages !== 'undefined' && languages ? `
               <div class="skill-category">Languages</div>
               <div>${languages}</div>
             ` : ''}
