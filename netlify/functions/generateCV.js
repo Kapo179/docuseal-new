@@ -46,65 +46,188 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Parse the entire body without destructuring first
     const body = JSON.parse(event.body);
     
-    // Extract required fields with defaults
+    // Extract fields with defaults
     const {
       name = '',
       contactDetails = {},
       education = [],
       workExperience = [],
-      skills = [],
-      hobbies = [],
-      // Add optional sections with defaults
+      // Split skills into technical and soft if provided that way, otherwise use single skills array
+      technicalSkills = body.skills?.filter(s => typeof s === 'string') || [],
+      softSkills = [],
       languages = '',
-      achievements = [],
-      certifications = [],
-      projects = [],
-      volunteerWork = [],
-      // Spread operator to catch any additional fields
+      hobbies = [],
       ...additionalSections
     } = body;
 
-    // Validate only the minimum required fields
-    if (!name || !contactDetails) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: 'Missing required fields',
-          details: 'Name and contact details are required'
-        })
-      };
-    }
+    const htmlTemplate = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${name} - CV</title>
+          <style>
+            @page {
+              size: A4;
+              margin: 0;
+            }
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.4;
+              max-width: 210mm;
+              min-height: 297mm;
+              margin: 0 auto;
+              padding: 15mm 25mm;
+              box-sizing: border-box;
+            }
 
-    // Create a sections object that includes all possible sections
-    const sections = {
-      education,
-      workExperience,
-      skills,
-      hobbies,
-      languages,
-      achievements,
-      certifications,
-      projects,
-      volunteerWork,
-      ...additionalSections // Include any additional sections
-    };
+            /* Header styling */
+            .header {
+              text-align: center;
+              margin-bottom: 20px;
+            }
+            .header h1 {
+              font-size: 16px;
+              margin: 0 0 5px 0;
+              font-weight: normal;
+            }
+            
+            /* Section Headers */
+            .section-header {
+              text-transform: uppercase;
+              font-weight: bold;
+              border-bottom: 1px solid black;
+              margin: 25px 0 15px 0;
+              padding-bottom: 2px;
+              font-size: 14px;
+            }
 
-    // Filter out empty sections
-    const validSections = Object.entries(sections).reduce((acc, [key, value]) => {
-      if (Array.isArray(value) && value.length > 0) {
-        acc[key] = value;
-      } else if (typeof value === 'string' && value.trim()) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
+            /* Education styling */
+            .education-entry {
+              margin-bottom: 15px;
+            }
+            .education-title {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+            }
+            .institution-degree {
+              font-weight: bold;
+            }
+            .year {
+              text-align: right;
+              min-width: 140px;
+            }
+            .education-details {
+              margin: 5px 0 0 0;
+            }
 
-    // Generate the HTML template with all valid sections
-    const htmlContent = generateTemplate(name, contactDetails, validSections);
+            /* Work Experience styling */
+            .experience-entry {
+              margin-bottom: 20px;
+            }
+            .experience-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+            }
+            .company-position {
+              font-weight: bold;
+            }
+            .responsibilities {
+              margin: 5px 0 0 0;
+              padding-left: 20px;
+            }
+            .responsibilities li {
+              margin-bottom: 5px;
+            }
+
+            /* Skills styling */
+            .skills-grid {
+              display: grid;
+              grid-template-columns: auto;
+              gap: 5px;
+            }
+            .skill-category {
+              font-weight: bold;
+              margin-right: 10px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${name}</h1>
+            <div>
+              ${contactDetails.phone} | <a href="mailto:${contactDetails.email}">${contactDetails.email}</a>
+              ${contactDetails.linkedin ? `<br>${contactDetails.linkedin}` : ''}
+            </div>
+          </div>
+
+          <div class="section-header">EDUCATION & QUALIFICATIONS</div>
+          ${education.map(edu => `
+            <div class="education-entry">
+              <div class="education-title">
+                <div class="institution-degree">${edu.institution} – ${edu.degree}</div>
+                <div class="year">${edu.year}</div>
+              </div>
+              ${edu.details ? `
+                <div class="education-details">
+                  ${edu.details.includes('\n') ? 
+                    `<ul>${edu.details.split('\n').map(detail => `<li>${detail.trim()}</li>`).join('')}</ul>` :
+                    edu.details}
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+
+          <div class="section-header">WORK EXPERIENCE</div>
+          ${workExperience.map(exp => `
+            <div class="experience-entry">
+              <div class="experience-header">
+                <div class="company-position">${exp.company}${exp.position ? ` – ${exp.position}` : ''}</div>
+                <div class="year">${exp.duration}</div>
+              </div>
+              <ul class="responsibilities">
+                ${exp.responsibilities.split('\n').map(r => `
+                  <li>${r.trim().replace(/^-\s*/, '')}</li>
+                `).join('')}
+              </ul>
+            </div>
+          `).join('')}
+
+          <div class="section-header">ADDITIONAL SKILLS</div>
+          <div class="skills-grid">
+            ${technicalSkills.length ? `
+              <div>
+                <span class="skill-category">Technical Skills:</span>
+                ${technicalSkills.join(', ')}
+              </div>
+            ` : ''}
+            ${softSkills.length ? `
+              <div>
+                <span class="skill-category">Soft Skills:</span>
+                ${softSkills.join(', ')}
+              </div>
+            ` : ''}
+            ${languages ? `
+              <div>
+                <span class="skill-category">Languages:</span>
+                ${languages}
+              </div>
+            ` : ''}
+          </div>
+
+          ${hobbies && hobbies.length ? `
+            <div class="section-header">HOBBIES & INTERESTS</div>
+            <ul class="hobbies-list">
+              ${hobbies.map(hobby => `<li>${hobby}</li>`).join('')}
+            </ul>
+          ` : ''}
+        </body>
+      </html>
+    `;
 
     // Generate unique filename based on timestamp and name
     const timestamp = Date.now();
@@ -120,7 +243,7 @@ exports.handler = async (event) => {
     });
 
     const page = await browser.newPage();
-    await page.setContent(htmlContent);
+    await page.setContent(htmlTemplate);
 
     // Generate PDF and PNG
     const pdfBuffer = await page.pdf({ 
@@ -171,69 +294,4 @@ exports.handler = async (event) => {
     };
   }
 };
-
-// Separate template generation function
-function generateTemplate(name, contactDetails, sections) {
-  return `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <!-- ... your styles ... -->
-      </head>
-      <body>
-        <!-- Header Section -->
-        <div class="header">
-          <h1>${name}</h1>
-          <div class="contact-details">
-            ${contactDetails.phone} • <a href="mailto:${contactDetails.email}">${contactDetails.email}</a>
-            ${contactDetails.linkedin && contactDetails.linkedin !== 'N/A' ? 
-              `<br>${contactDetails.linkedin}` : 
-              ''}
-          </div>
-        </div>
-
-        <!-- Dynamic Sections -->
-        ${Object.entries(sections).map(([sectionName, content]) => {
-          // Convert section name to title case and handle special cases
-          const title = sectionName
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/^./, str => str.toUpperCase())
-            .trim();
-
-          return content && content.length ? `
-            <div class="section-header">${title.toUpperCase()}</div>
-            ${generateSectionContent(sectionName, content)}
-          ` : '';
-        }).join('')}
-      </body>
-    </html>
-  `;
-}
-
-// Helper function to generate section content based on section type
-function generateSectionContent(sectionName, content) {
-  switch(sectionName) {
-    case 'education':
-      return generateEducationSection(content);
-    case 'workExperience':
-      return generateWorkExperienceSection(content);
-    case 'skills':
-      return generateSkillsSection(content);
-    case 'projects':
-      return generateProjectsSection(content);
-    case 'certifications':
-      return generateCertificationsSection(content);
-    case 'volunteerWork':
-      return generateVolunteerSection(content);
-    case 'hobbies':
-      return generateHobbiesSection(content);
-    default:
-      // Handle any other section type
-      return Array.isArray(content) 
-        ? `<ul>${content.map(item => `<li>${item}</li>`).join('')}</ul>`
-        : `<p>${content}</p>`;
-  }
-}
-
-// Add your section generation functions here...
 
