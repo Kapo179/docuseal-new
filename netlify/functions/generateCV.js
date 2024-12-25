@@ -101,19 +101,18 @@ exports.handler = async (event) => {
               box-sizing: border-box;
             }
 
-            /* Header/Contact styling */
+            /* Header styling */
             .header {
               text-align: center;
-              margin-bottom: 15px;
-              margin-top: 0;
+              margin-bottom: 20px;
             }
             .header h1 {
-              font-size: 24px;
-              margin: 0 0 10px 0;
+              font-size: 16px;
+              margin: 0 0 5px 0;
+              font-weight: normal;
             }
             .contact-details {
               font-size: 14px;
-              color: #333;
             }
             .contact-details a {
               color: #0066cc;
@@ -125,46 +124,61 @@ exports.handler = async (event) => {
               font-weight: bold;
               border-bottom: 1px solid black;
               margin: 25px 0 15px 0;
-              padding-bottom: 5px;
+              padding-bottom: 2px;
+              font-size: 14px;
             }
 
-            /* Education Entry */
+            /* Education styling */
             .education-entry {
               margin-bottom: 15px;
             }
             .education-title {
               display: flex;
               justify-content: space-between;
+              margin-bottom: 3px;
+            }
+            .education-name {
               font-weight: bold;
-              margin-bottom: 5px;
+            }
+            .education-year {
+              font-style: italic;
             }
             .education-details {
               margin-left: 0;
-              font-size: 14px;
+              padding-left: 20px;
+              margin-top: 5px;
+            }
+            .education-details li {
+              margin-bottom: 3px;
             }
 
-            /* Work Experience */
+            /* Work Experience styling */
             .experience-entry {
               margin-bottom: 15px;
             }
-            .experience-title {
+            .experience-header {
               display: flex;
               justify-content: space-between;
+              margin-bottom: 5px;
+            }
+            .company-position {
               font-weight: bold;
-              margin-bottom: 5px;
             }
-            .experience-details {
-              margin-left: 20px;
-              font-size: 14px;
+            .duration {
+              font-style: italic;
             }
-            .experience-details li {
-              margin-bottom: 5px;
+            .responsibilities {
+              margin: 5px 0 0 0;
+              padding-left: 20px;
+            }
+            .responsibilities li {
+              margin-bottom: 3px;
             }
 
-            /* Skills Section */
+            /* Skills section */
             .skills-grid {
               display: grid;
-              grid-template-columns: 150px auto;
+              grid-template-columns: 120px auto;
               gap: 10px;
               margin-top: 10px;
             }
@@ -172,34 +186,13 @@ exports.handler = async (event) => {
               font-weight: bold;
             }
 
-            /* Lists */
-            ul {
+            /* Hobbies section */
+            .hobbies-list {
               margin: 5px 0;
               padding-left: 20px;
             }
-            li {
+            .hobbies-list li {
               margin-bottom: 3px;
-            }
-
-            .achievements-list {
-              margin: 10px 0;
-              padding-left: 20px;
-            }
-            .achievements-list li {
-              margin-bottom: 5px;
-            }
-
-            .certifications-list {
-              margin: 10px 0;
-            }
-            .certification-entry {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 5px;
-            }
-            .certification-validity {
-              color: #666;
-              font-size: 14px;
             }
           </style>
         </head>
@@ -207,8 +200,10 @@ exports.handler = async (event) => {
           <div class="header">
             <h1>${name}</h1>
             <div class="contact-details">
-              ${contactDetails.phone} • <a href="mailto:${contactDetails.email}">${contactDetails.email}</a><br>
-              ${contactDetails.linkedin}
+              ${contactDetails.phone} • <a href="mailto:${contactDetails.email}">${contactDetails.email}</a>
+              ${contactDetails.linkedin && contactDetails.linkedin !== 'N/A' ? 
+                `<br>${contactDetails.linkedin}` : 
+                ''}
             </div>
           </div>
 
@@ -216,25 +211,27 @@ exports.handler = async (event) => {
           ${education.map(edu => `
             <div class="education-entry">
               <div class="education-title">
-                <span>${edu.institution} – ${edu.degree}</span>
-                <span>${edu.year}</span>
+                <span class="education-name">${edu.institution} – ${edu.degree}</span>
+                <span class="education-year">${edu.year}</span>
               </div>
-              <div class="education-details">
-                ${edu.details || ''}
-              </div>
+              ${edu.details ? `
+                <ul class="education-details">
+                  ${edu.details.split('. ').map(detail => `<li>${detail}</li>`).join('')}
+                </ul>
+              ` : ''}
             </div>
           `).join('')}
 
           <div class="section-header">WORK EXPERIENCE</div>
           ${workExperience.map(exp => `
             <div class="experience-entry">
-              <div class="experience-title">
-                <span>${exp.company} – ${exp.position}</span>
-                <span>${exp.duration}</span>
+              <div class="experience-header">
+                <span class="company-position">${exp.company}${exp.team ? `, ${exp.team}` : ''} – ${exp.position}</span>
+                <span class="duration">${exp.duration}</span>
               </div>
-              <ul class="experience-details">
-                ${exp.responsibilities.split('. ').map(resp => 
-                  `<li>${resp.trim()}</li>`
+              <ul class="responsibilities">
+                ${exp.responsibilities.split('. ').filter(r => r.trim()).map(r => 
+                  `<li>${r.trim()}${r.endsWith('.') ? '' : '.'}</li>`
                 ).join('')}
               </ul>
             </div>
@@ -243,35 +240,18 @@ exports.handler = async (event) => {
           <div class="section-header">ADDITIONAL SKILLS</div>
           <div class="skills-grid">
             <div class="skill-category">IT Skills</div>
-            <div>${skills.filter(s => s.category === 'IT').join(', ')}</div>
-            <div class="skill-category">Languages</div>
-            <div>${skills.filter(s => s.category === 'Language').join(', ')}</div>
+            <div>${Array.isArray(skills) ? skills.join(', ') : skills}</div>
+            ${languages ? `
+              <div class="skill-category">Languages</div>
+              <div>${languages}</div>
+            ` : ''}
           </div>
 
-          <div class="section-header">HOBBIES & INTERESTS</div>
-          <ul>
-            ${hobbies.map(hobby => `<li>${hobby}</li>`).join('')}
-          </ul>
-
-          ${achievements.length > 0 ? `
-            <div class="section-header">KEY ACHIEVEMENTS</div>
-            <ul class="achievements-list">
-              ${achievements.map(achievement => `
-                <li>${achievement}</li>
-              `).join('')}
+          ${hobbies && hobbies.length > 0 ? `
+            <div class="section-header">HOBBIES & INTERESTS</div>
+            <ul class="hobbies-list">
+              ${hobbies.map(hobby => `<li>${hobby}</li>`).join('')}
             </ul>
-          ` : ''}
-
-          ${certifications.length > 0 ? `
-            <div class="section-header">CERTIFICATIONS</div>
-            <div class="certifications-list">
-              ${certifications.map(cert => `
-                <div class="certification-entry">
-                  <span class="certification-name">${cert.certification}</span>
-                  ${cert.validity ? `<span class="certification-validity">${cert.validity}</span>` : ''}
-                </div>
-              `).join('')}
-            </div>
           ` : ''}
         </body>
       </html>
@@ -355,3 +335,4 @@ exports.handler = async (event) => {
     };
   }
 };
+
