@@ -90,111 +90,144 @@ exports.handler = async (event) => {
               margin: 0;
             }
             body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-              line-height: 1.6;
-              max-width: 210mm; /* A4 width */
-              min-height: 297mm; /* A4 height */
+              font-family: Arial, sans-serif;
+              line-height: 1.4;
+              max-width: 210mm;
+              min-height: 297mm;
               margin: 0 auto;
-              padding: 40px 50px; /* Increased padding */
+              padding: 30mm 25mm;
               box-sizing: border-box;
-              background: white;
             }
-            h1 {
-              color: #2c3e50;
-              margin-top: 0;
-              margin-bottom: 20px;
-              font-size: 32px;
-            }
-            h2 {
-              color: #34495e;
-              border-bottom: 2px solid #3498db;
-              padding-bottom: 8px;
-              margin-top: 30px;
+
+            /* Header/Contact styling */
+            .header {
+              text-align: center;
               margin-bottom: 20px;
             }
-            .contact-details {
-              margin-bottom: 30px;
-            }
-            .contact-details p {
-              margin: 8px 0;
-            }
-            .education-item, .experience-item {
-              margin-bottom: 25px;
-            }
-            .education-item h3, .experience-item h3 {
-              margin-bottom: 8px;
-              color: #2c3e50;
-            }
-            .duration {
-              color: #666;
-              font-style: italic;
+            .header h1 {
+              font-size: 24px;
               margin-bottom: 10px;
             }
-            .skills-list {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              margin-top: 15px;
+            .contact-details {
+              font-size: 14px;
+              color: #333;
             }
-            .skill-item {
-              background: #f5f6fa;
-              padding: 6px 12px;
-              border-radius: 4px;
+            .contact-details a {
+              color: #0066cc;
+            }
+
+            /* Section Headers */
+            .section-header {
+              text-transform: uppercase;
+              font-weight: bold;
+              border-bottom: 1px solid black;
+              margin: 25px 0 15px 0;
+              padding-bottom: 5px;
+            }
+
+            /* Education Entry */
+            .education-entry {
+              margin-bottom: 15px;
+            }
+            .education-title {
+              display: flex;
+              justify-content: space-between;
+              font-weight: bold;
+              margin-bottom: 5px;
+            }
+            .education-details {
+              margin-left: 0;
               font-size: 14px;
             }
-            section {
-              margin-bottom: 30px;
+
+            /* Work Experience */
+            .experience-entry {
+              margin-bottom: 15px;
+            }
+            .experience-title {
+              display: flex;
+              justify-content: space-between;
+              font-weight: bold;
+              margin-bottom: 5px;
+            }
+            .experience-details {
+              margin-left: 20px;
+              font-size: 14px;
+            }
+            .experience-details li {
+              margin-bottom: 5px;
+            }
+
+            /* Skills Section */
+            .skills-grid {
+              display: grid;
+              grid-template-columns: 150px auto;
+              gap: 10px;
+              margin-top: 10px;
+            }
+            .skill-category {
+              font-weight: bold;
+            }
+
+            /* Lists */
+            ul {
+              margin: 5px 0;
+              padding-left: 20px;
+            }
+            li {
+              margin-bottom: 3px;
             }
           </style>
         </head>
         <body>
-          <h1>${name}</h1>
-          
-          <div class="contact-details">
-            <p>Email: ${contactDetails.email}</p>
-            <p>Phone: ${contactDetails.phone}</p>
-            <p>LinkedIn: ${contactDetails.linkedin}</p>
-          </div>
-
-          <div class="section">
-            <h2>Education</h2>
-            ${education.map(edu => `
-              <div class="education-item">
-                <h3>${edu.institution}</h3>
-                <p>${edu.degree} (${edu.year})</p>
-              </div>
-            `).join('')}
-          </div>
-
-          <div class="section">
-            <h2>Work Experience</h2>
-            ${workExperience.map(exp => `
-              <div class="experience-item">
-                <h3>${exp.position} at ${exp.company}</h3>
-                <p><em>${exp.duration}</em></p>
-                <p>${exp.responsibilities}</p>
-              </div>
-            `).join('')}
-          </div>
-
-          <section class="skills-section">
-            <h2>Skills</h2>
-            <div class="skills-list">
-              ${skills.map(skill => `
-                <span class="skill-item">${skill}</span>
-              `).join('')}
+          <div class="header">
+            <h1>${name}</h1>
+            <div class="contact-details">
+              ${contactDetails.phone} • <a href="mailto:${contactDetails.email}">${contactDetails.email}</a><br>
+              ${contactDetails.linkedin}
             </div>
-          </section>
+          </div>
 
-          <!-- Add footer space -->
-          <div class="footer-space"></div>
-
-          ${hobbies ? `
-            <div class="section">
-              <h2>Hobbies & Interests</h2>
-              <p>${hobbies.join(', ')}</p>
+          <div class="section-header">EDUCATION AND QUALIFICATIONS</div>
+          ${education.map(edu => `
+            <div class="education-entry">
+              <div class="education-title">
+                <span>${edu.institution} – ${edu.degree}</span>
+                <span>${edu.year}</span>
+              </div>
+              <div class="education-details">
+                ${edu.details || ''}
+              </div>
             </div>
-          ` : ''}
+          `).join('')}
+
+          <div class="section-header">WORK EXPERIENCE</div>
+          ${workExperience.map(exp => `
+            <div class="experience-entry">
+              <div class="experience-title">
+                <span>${exp.company} – ${exp.position}</span>
+                <span>${exp.duration}</span>
+              </div>
+              <ul class="experience-details">
+                ${exp.responsibilities.split('. ').map(resp => 
+                  `<li>${resp.trim()}</li>`
+                ).join('')}
+              </ul>
+            </div>
+          `).join('')}
+
+          <div class="section-header">ADDITIONAL SKILLS</div>
+          <div class="skills-grid">
+            <div class="skill-category">IT Skills</div>
+            <div>${skills.filter(s => s.category === 'IT').join(', ')}</div>
+            <div class="skill-category">Languages</div>
+            <div>${skills.filter(s => s.category === 'Language').join(', ')}</div>
+          </div>
+
+          <div class="section-header">HOBBIES & INTERESTS</div>
+          <ul>
+            ${hobbies.map(hobby => `<li>${hobby}</li>`).join('')}
+          </ul>
         </body>
       </html>
     `;
