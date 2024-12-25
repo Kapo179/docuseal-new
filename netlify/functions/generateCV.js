@@ -146,67 +146,6 @@ exports.handler = async (event) => {
               position: relative;
               margin-bottom: 30px;
             }
-
-            /* Detect and handle sections near page bottom */
-            @media print {
-              section {
-                /* Standard A4 height minus margins */
-                max-height: 257mm;
-              }
-
-              /* Force page break if section is within 100px of page bottom */
-              section::after {
-                content: '';
-                display: block;
-                height: 100px;
-                margin-bottom: -100px;
-                position: relative;
-              }
-
-              section:last-of-type {
-                min-height: 150px; /* Minimum height for last section */
-                break-inside: avoid;
-                page-break-inside: avoid;
-              }
-
-              /* Move to next page if less than 200px space available */
-              section[data-page-break="true"] {
-                break-before: page;
-                page-break-before: always;
-              }
-            }
-
-            /* Skills section specific handling */
-            .skills-section {
-              break-inside: avoid;
-              page-break-inside: avoid;
-              margin-bottom: 40px;
-            }
-
-            .skills-list {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              padding-bottom: 20px; /* Extra padding to prevent tight bottom fit */
-            }
-
-            /* Ensure skill items stay together */
-            .skill-item {
-              break-inside: avoid;
-              page-break-inside: avoid;
-              background: #f5f6fa;
-              padding: 6px 12px;
-              border-radius: 4px;
-              margin-bottom: 10px;
-            }
-
-            /* Footer space reservation */
-            .footer-space {
-              height: 50px;
-              margin-top: auto;
-              break-after: avoid;
-              page-break-after: avoid;
-            }
           </style>
         </head>
         <body>
