@@ -75,7 +75,9 @@ exports.handler = async (event) => {
       education, 
       workExperience, 
       skills, 
-      hobbies 
+      hobbies,
+      achievements = [],
+      certifications = []
     } = body;
 
     const htmlTemplate = `
@@ -178,6 +180,27 @@ exports.handler = async (event) => {
             li {
               margin-bottom: 3px;
             }
+
+            .achievements-list {
+              margin: 10px 0;
+              padding-left: 20px;
+            }
+            .achievements-list li {
+              margin-bottom: 5px;
+            }
+
+            .certifications-list {
+              margin: 10px 0;
+            }
+            .certification-entry {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 5px;
+            }
+            .certification-validity {
+              color: #666;
+              font-size: 14px;
+            }
           </style>
         </head>
         <body>
@@ -229,6 +252,27 @@ exports.handler = async (event) => {
           <ul>
             ${hobbies.map(hobby => `<li>${hobby}</li>`).join('')}
           </ul>
+
+          ${achievements.length > 0 ? `
+            <div class="section-header">KEY ACHIEVEMENTS</div>
+            <ul class="achievements-list">
+              ${achievements.map(achievement => `
+                <li>${achievement}</li>
+              `).join('')}
+            </ul>
+          ` : ''}
+
+          ${certifications.length > 0 ? `
+            <div class="section-header">CERTIFICATIONS</div>
+            <div class="certifications-list">
+              ${certifications.map(cert => `
+                <div class="certification-entry">
+                  <span class="certification-name">${cert.certification}</span>
+                  ${cert.validity ? `<span class="certification-validity">${cert.validity}</span>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
         </body>
       </html>
     `;
