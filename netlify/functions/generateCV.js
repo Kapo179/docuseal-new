@@ -143,7 +143,6 @@ exports.handler = async (event) => {
               font-size: 14px;
             }
             section {
-              position: relative;
               margin-bottom: 30px;
             }
           </style>
