@@ -139,14 +139,32 @@ exports.handler = async (event) => {
               justify-content: space-between;
               align-items: baseline;
             }
-            .institution-degree {
+            .institution {
               font-weight: bold;
               font-size: 11pt;
+            }
+            .degree {
+              font-weight: normal;
+              margin-left: 5px;
             }
             .year {
               text-align: right;
               min-width: 85px;
               font-size: 11pt;
+            }
+            .education-details {
+              margin: 3px 0 0 0;
+              padding-left: 15px;
+              font-size: 10.5pt;
+              color: #333;
+            }
+            .education-details ul {
+              margin: 3px 0;
+              padding-left: 20px;
+            }
+            .education-details li {
+              margin-bottom: 2px;
+              line-height: 1.3;
             }
 
             /* Work Experience styling */
@@ -219,13 +237,21 @@ exports.handler = async (event) => {
           ${education.map(edu => `
             <div class="education-entry">
               <div class="education-title">
-                <span class="institution-degree">${edu.institution} – ${edu.degree}</span>
-                <span class="year">${edu.year}</span>
+                <div>
+                  <span class="institution">${edu.institution}</span>
+                  <span class="degree">– ${edu.degree}</span>
+                </div>
+                <div class="year">${edu.year}</div>
               </div>
               ${edu.details ? `
-                <ul class="education-details">
-                  ${edu.details.split('. ').map(detail => `<li>${detail}</li>`).join('')}
-                </ul>
+                <div class="education-details">
+                  ${Array.isArray(edu.details) 
+                    ? `<ul>${edu.details.map(detail => `<li>${detail}</li>`).join('')}</ul>`
+                    : edu.details.includes('\n')
+                      ? `<ul>${edu.details.split('\n').map(detail => `<li>${detail.trim()}</li>`).join('')}</ul>`
+                      : `<ul><li>${edu.details}</li></ul>`
+                  }
+                </div>
               ` : ''}
             </div>
           `).join('')}
