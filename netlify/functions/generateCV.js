@@ -64,7 +64,10 @@ exports.handler = async (event) => {
       hobbies = [],
       languages = '',
       achievements = [],
-      certifications = []
+      certifications = [],
+      professionalSummary,
+      professionalQualifications,
+      references
     } = JSON.parse(event.body);
     
     // Validate required fields
@@ -124,10 +127,11 @@ exports.handler = async (event) => {
             .section-header {
               text-transform: uppercase;
               font-weight: bold;
-              border-bottom: 1px solid black;
+              border-bottom: 1px solid #cc0000;
               margin: 15px 0 8px 0;
               padding-bottom: 1px;
-              font-size: 11pt;
+              font-size: 12pt;
+              color: #000;
             }
 
             /* Education styling */
@@ -220,20 +224,97 @@ exports.handler = async (event) => {
             p {
               margin: 3px 0;
             }
+
+            /* Add styles for Professional Summary */
+            .professional-summary {
+              margin: 10px 0;
+              text-align: justify;
+              font-size: 11pt;
+              line-height: 1.3;
+            }
+
+            /* Skills styling */
+            .key-skills {
+              margin: 5px 0;
+              padding-left: 15px;
+            }
+            .key-skills li {
+              margin-bottom: 3px;
+              font-size: 11pt;
+              line-height: 1.3;
+            }
+
+            /* Experience styling */
+            .experience-entry {
+              margin-bottom: 12px;
+            }
+            .job-title {
+              font-weight: bold;
+              font-size: 11pt;
+            }
+            .company-location {
+              font-style: italic;
+            }
+            .job-details {
+              margin: 3px 0 0 15px;
+            }
+            .job-details li {
+              margin-bottom: 3px;
+              font-size: 11pt;
+              line-height: 1.3;
+            }
+
+            /* References section */
+            .references {
+              font-style: italic;
+              margin: 10px 0;
+              font-size: 11pt;
+            }
           </style>
         </head>
         <body>
           <div class="header">
             <h1>${name}</h1>
             <div class="contact-details">
-              ${contactDetails.phone} • <a href="mailto:${contactDetails.email}">${contactDetails.email}</a>
-              ${contactDetails.linkedin && contactDetails.linkedin !== 'N/A' ? 
-                `<br>${contactDetails.linkedin}` : 
-                ''}
+              ${contactDetails.address || ''} ${contactDetails.address ? '|' : ''} 
+              ${contactDetails.phone} | 
+              <a href="mailto:${contactDetails.email}">${contactDetails.email}</a>
             </div>
           </div>
 
-          <div class="section-header">EDUCATION AND QUALIFICATIONS</div>
+          ${professionalSummary ? `
+            <div class="section-header">Professional Summary</div>
+            <div class="professional-summary">
+              ${professionalSummary}
+            </div>
+          ` : ''}
+
+          ${professionalQualifications?.length ? `
+            <div class="section-header">Professional Qualifications</div>
+            <ul class="key-skills">
+              ${professionalQualifications.map(qual => `<li>${qual}</li>`).join('')}
+            </ul>
+          ` : ''}
+
+          <div class="section-header">Key Skills</div>
+          <ul class="key-skills">
+            ${skills.map(skill => `<li>${skill}</li>`).join('')}
+          </ul>
+
+          <div class="section-header">Experience</div>
+          ${workExperience.map(exp => `
+            <div class="experience-entry">
+              <div class="job-title">${exp.position}</div>
+              <div class="company-location">${exp.company} (${exp.duration})</div>
+              <ul class="job-details">
+                ${exp.responsibilities.split('\n').map(resp => 
+                  `<li>${resp.trim().replace(/^-\s*/, '')}</li>`
+                ).join('')}
+              </ul>
+            </div>
+          `).join('')}
+
+          <div class="section-header">Academic Qualifications</div>
           ${education.map(edu => `
             <div class="education-entry">
               <div class="education-title">
@@ -247,47 +328,18 @@ exports.handler = async (event) => {
                 <div class="education-details">
                   ${Array.isArray(edu.details) 
                     ? `<ul>${edu.details.map(detail => `<li>${detail}</li>`).join('')}</ul>`
-                    : edu.details.includes('\n')
-                      ? `<ul>${edu.details.split('\n').map(detail => `<li>${detail.trim()}</li>`).join('')}</ul>`
-                      : `<ul><li>${edu.details}</li></ul>`
+                    : `<ul><li>${edu.details}</li></ul>`
                   }
                 </div>
               ` : ''}
             </div>
           `).join('')}
 
-          <div class="section-header">WORK EXPERIENCE</div>
-          ${workExperience.map(exp => `
-            <div class="experience-entry">
-              <div class="experience-header">
-                <span class="company-position">${exp.company}${exp.team ? `, ${exp.team}` : ''} – ${exp.position}</span>
-                <span class="duration">${exp.duration}</span>
-              </div>
-              <ul class="responsibilities">
-                ${exp.responsibilities.split('. ').filter(r => r.trim()).map(r => 
-                  `<li>${r.trim()}${r.endsWith('.') ? '' : '.'}</li>`
-                ).join('')}
-              </ul>
+          ${references ? `
+            <div class="section-header">References</div>
+            <div class="references">
+              ${references}
             </div>
-          `).join('')}
-
-          <div class="section-header">ADDITIONAL SKILLS</div>
-          <div class="skills-grid">
-            ${skills && skills.length > 0 ? `
-              <div class="skill-category">IT Skills</div>
-              <div>${Array.isArray(skills) ? skills.join(', ') : skills}</div>
-            ` : ''}
-            ${typeof languages !== 'undefined' && languages ? `
-              <div class="skill-category">Languages</div>
-              <div>${languages}</div>
-            ` : ''}
-          </div>
-
-          ${hobbies && hobbies.length > 0 ? `
-            <div class="section-header">HOBBIES & INTERESTS</div>
-            <ul class="hobbies-list">
-              ${hobbies.map(hobby => `<li>${hobby}</li>`).join('')}
-            </ul>
           ` : ''}
         </body>
       </html>

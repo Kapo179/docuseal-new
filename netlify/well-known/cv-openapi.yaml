@@ -51,6 +51,20 @@ paths:
                       format: uri
                       description: LinkedIn profile URL of the CV owner.
                       example: https://www.linkedin.com/in/johndoe
+                    address:
+                      type: string
+                      description: Full address or location
+                      example: "123 Main St, City, Country"
+                professionalSummary:
+                  type: string
+                  description: A brief overview of professional background and key strengths
+                  example: "Experienced software engineer with 5+ years in web development"
+                professionalQualifications:
+                  type: array
+                  description: List of professional certifications and qualifications
+                  items:
+                    type: string
+                  example: ["AWS Certified Developer", "Scrum Master Certification"]
                 education:
                   type: array
                   description: List of educational qualifications.
@@ -69,6 +83,14 @@ paths:
                         type: string
                         description: Year of graduation.
                         example: "2023"
+                      details:
+                        oneOf:
+                          - type: string
+                          - type: array
+                            items:
+                              type: string
+                        description: Detailed information about the education entry
+                        example: ["Dean's List 2020-2021", "Research Assistant"]
                 workExperience:
                   type: array
                   description: List of work experiences.
@@ -103,6 +125,10 @@ paths:
                   items:
                     type: string
                   example: ["Photography", "Reading", "Hiking"]
+                references:
+                  type: string
+                  description: Reference availability statement
+                  example: "References available upon request"
       responses:
         "200":
           description: >
