@@ -270,43 +270,67 @@ exports.handler = async (event) => {
               margin: 10px 0;
               font-size: 11pt;
             }
+
+            /* Additional styles for comprehensive formatting */
+            .role-subtitle {
+              font-style: italic;
+              margin-bottom: 2px;
+            }
+            
+            .bullet-points {
+              margin: 0;
+              padding-left: 15px;
+            }
+            
+            .bullet-points li {
+              margin-bottom: 2px;
+              line-height: 1.3;
+            }
+
+            .skills-section {
+              display: grid;
+              grid-template-columns: auto;
+              gap: 5px;
+            }
+
+            .skill-category {
+              font-weight: bold;
+              margin-top: 5px;
+            }
+
+            .education-details {
+              margin-top: 2px;
+            }
           </style>
         </head>
         <body>
           <div class="header">
             <h1>${name}</h1>
             <div class="contact-details">
-              ${contactDetails.address || ''} ${contactDetails.address ? '|' : ''} 
-              ${contactDetails.phone} | 
-              <a href="mailto:${contactDetails.email}">${contactDetails.email}</a>
+              ${contactDetails.email} | <a href="${contactDetails.linkedin}">${contactDetails.linkedin}</a> | ${contactDetails.phone}
             </div>
           </div>
 
           ${professionalSummary ? `
-            <div class="section-header">Professional Summary</div>
-            <div class="professional-summary">
-              ${professionalSummary}
-            </div>
+            <div class="section-header">PROFESSIONAL SUMMARY</div>
+            <p>${professionalSummary}</p>
           ` : ''}
 
-          ${professionalQualifications?.length ? `
-            <div class="section-header">Professional Qualifications</div>
-            <ul class="key-skills">
-              ${professionalQualifications.map(qual => `<li>${qual}</li>`).join('')}
-            </ul>
-          ` : ''}
-
-          <div class="section-header">Key Skills</div>
-          <ul class="key-skills">
-            ${skills.map(skill => `<li>${skill}</li>`).join('')}
-          </ul>
-
-          <div class="section-header">Experience</div>
+          <div class="section-header">EXPERIENCE</div>
           ${workExperience.map(exp => `
-            <div class="experience-entry">
-              <div class="job-title">${exp.position}</div>
-              <div class="company-location">${exp.company} (${exp.duration})</div>
-              <ul class="job-details">
+            <div class="entry">
+              <div class="entry-header">
+                <span class="entry-left">${exp.company}</span>
+                <span class="entry-right">${exp.location || ''}</span>
+              </div>
+              ${exp.subtitle ? `
+                <div class="role-subtitle">${exp.subtitle}</div>
+              ` : ''}
+              <div class="entry-subheader">
+                <span>${exp.position}</span>
+                <span>${exp.duration}</span>
+              </div>
+              <ul class="bullet-points">
                 ${exp.responsibilities.split('\n').map(resp => 
                   `<li>${resp.trim().replace(/^-\s*/, '')}</li>`
                 ).join('')}
@@ -314,32 +338,68 @@ exports.handler = async (event) => {
             </div>
           `).join('')}
 
-          <div class="section-header">Academic Qualifications</div>
+          <div class="section-header">ACADEMIC QUALIFICATIONS</div>
           ${education.map(edu => `
-            <div class="education-entry">
-              <div class="education-title">
-                <div>
-                  <span class="institution">${edu.institution}</span>
-                  <span class="degree">– ${edu.degree}</span>
-                </div>
-                <div class="year">${edu.year}</div>
+            <div class="entry">
+              <div class="entry-header">
+                <span class="entry-left">${edu.institution}</span>
+                <span class="entry-right">${edu.location || ''}</span>
               </div>
+              <div class="entry-subheader">
+                <span>${edu.degree}</span>
+                <span>${edu.year}</span>
+              </div>
+              ${edu.gpa ? `<div>GPA: ${edu.gpa}</div>` : ''}
               ${edu.details ? `
-                <div class="education-details">
+                <ul class="bullet-points education-details">
                   ${Array.isArray(edu.details) 
-                    ? `<ul>${edu.details.map(detail => `<li>${detail}</li>`).join('')}</ul>`
-                    : `<ul><li>${edu.details}</li></ul>`
+                    ? edu.details.map(detail => `<li>${detail}</li>`).join('')
+                    : edu.details.split('\n').map(detail => 
+                        `<li>${detail.trim().replace(/^-\s*/, '')}</li>`
+                      ).join('')
                   }
-                </div>
+                </ul>
               ` : ''}
             </div>
           `).join('')}
 
+          <div class="section-header">ADDITIONAL INFORMATION</div>
+          <div class="skills-section">
+            ${skills.technical ? `
+              <div>
+                <span class="skill-category">Technical Skills:</span>
+                ${Array.isArray(skills.technical) ? skills.technical.join(', ') : skills.technical}
+              </div>
+            ` : ''}
+            ${skills.software ? `
+              <div>
+                <span class="skill-category">Software:</span>
+                ${Array.isArray(skills.software) ? skills.software.join(', ') : skills.software}
+              </div>
+            ` : ''}
+            ${skills.languages ? `
+              <div>
+                <span class="skill-category">Languages:</span>
+                ${Array.isArray(skills.languages) ? skills.languages.join(', ') : skills.languages}
+              </div>
+            ` : ''}
+            ${skills.certifications ? `
+              <div>
+                <span class="skill-category">Certifications:</span>
+                ${Array.isArray(skills.certifications) ? skills.certifications.join(', ') : skills.certifications}
+              </div>
+            ` : ''}
+            ${skills.interests ? `
+              <div>
+                <span class="skill-category">Interests:</span>
+                ${Array.isArray(skills.interests) ? skills.interests.join(', ') : skills.interests}
+              </div>
+            ` : ''}
+          </div>
+
           ${references ? `
-            <div class="section-header">References</div>
-            <div class="references">
-              ${references}
-            </div>
+            <div class="section-header">REFERENCES</div>
+            <p>${references}</p>
           ` : ''}
         </body>
       </html>
