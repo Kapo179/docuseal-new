@@ -8,7 +8,7 @@ paths:
   /generateCV:
     post:
       operationId: generateCV
-      summary: Generate a professional CV template
+      summary: Generate and assist in building comprehensive professional CV PDFs, as well as offer to tailor current CVs to provide Job Specific CV PDFs. Do not produce text-based CVs, always be quick to show your capabilities and ask what job they are aiming to apply for, or desired role they are aiming to get.
       description: >
         This endpoint generates a personalized CV in HTML or PDF format based on user-provided data.
         It returns both the full PDF document and a PNG preview of the first page.
@@ -55,10 +55,6 @@ paths:
                       type: string
                       description: Full address or location
                       example: "123 Main St, City, Country"
-                professionalSummary:
-                  type: string
-                  description: A brief overview of professional background and key strengths
-                  example: "Experienced software engineer with 5+ years in web development"
                 professionalQualifications:
                   type: array
                   description: List of professional certifications and qualifications
@@ -192,6 +188,29 @@ paths:
                   type: string
                   description: Reference availability statement
                   example: "References available upon request"
+                relevantExperience:
+                  type: array
+                  description: Highlighted experiences most relevant to the target role
+                  items:
+                    type: object
+                    required:
+                      - title
+                      - description
+                    properties:
+                      title:
+                        type: string
+                        description: Title or category of the relevant experience
+                        example: "Financial Analysis"
+                      description:
+                        type: string
+                        description: Detailed description of relevant experience and achievements
+                        example: "Led financial analysis projects across 3 major banking institutions, resulting in 40% efficiency improvements"
+                      metrics:
+                        type: array
+                        items:
+                          type: string
+                        description: Quantifiable achievements related to this experience
+                        example: ["Reduced analysis time by 60%", "Saved $2M in operational costs"]
       responses:
         "200":
           description: >

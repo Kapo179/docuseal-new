@@ -67,7 +67,7 @@ exports.handler = async (event) => {
         certifications: [],
         interests: []
       },
-      professionalSummary,
+      relevantExperience = [],
       references
     } = JSON.parse(event.body);
     
@@ -310,6 +310,33 @@ exports.handler = async (event) => {
             .education-details {
               margin-top: 2px;
             }
+
+            .relevant-experience-entry {
+              margin-bottom: 12px;
+            }
+            
+            .experience-title {
+              font-weight: bold;
+              font-size: 11pt;
+              margin-bottom: 3px;
+            }
+            
+            .experience-description {
+              font-size: 11pt;
+              margin-bottom: 5px;
+              text-align: justify;
+            }
+            
+            .experience-metrics {
+              margin: 0;
+              padding-left: 20px;
+            }
+            
+            .experience-metrics li {
+              font-size: 10.5pt;
+              margin-bottom: 2px;
+              color: #333;
+            }
           </style>
         </head>
         <body>
@@ -320,9 +347,21 @@ exports.handler = async (event) => {
             </div>
           </div>
 
-          ${professionalSummary ? `
-            <div class="section-header">PROFESSIONAL SUMMARY</div>
-            <p>${professionalSummary}</p>
+          ${relevantExperience.length > 0 ? `
+            <div class="section-header">RELEVANT EXPERIENCE</div>
+            ${relevantExperience.map(exp => `
+              <div class="relevant-experience-entry">
+                <div class="experience-title">${exp.title}</div>
+                <div class="experience-description">${exp.description}</div>
+                ${exp.metrics ? `
+                  <ul class="experience-metrics">
+                    ${exp.metrics.map(metric => `
+                      <li>${metric}</li>
+                    `).join('')}
+                  </ul>
+                ` : ''}
+              </div>
+            `).join('')}
           ` : ''}
 
           <div class="section-header">EXPERIENCE</div>
