@@ -114,6 +114,14 @@ exports.handler = async (event) => {
               margin: 0 0 3px 0;
               font-weight: bold;
             }
+            .entry-header {
+              font-weight: bold;
+              font-size: 11pt;
+            }
+            .entry-header {
+              font-weight: semi-bold;
+              font-size: 11pt;
+            }
             .contact-details {
               font-size: 11pt;
               line-height: 1.2;
