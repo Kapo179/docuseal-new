@@ -67,22 +67,34 @@ paths:
                   example: ["AWS Certified Developer", "Scrum Master Certification"]
                 education:
                   type: array
-                  description: List of educational qualifications.
+                  description: List of educational qualifications
                   items:
                     type: object
+                    required:
+                      - institution
+                      - degree
+                      - year
                     properties:
                       institution:
                         type: string
-                        description: Name of the institution.
+                        description: Name of the institution
                         example: University of Example
                       degree:
                         type: string
-                        description: Degree earned.
+                        description: Degree earned
                         example: BSc in Computer Science
+                      location:
+                        type: string
+                        description: Institution location
+                        example: "Boston, MA"
                       year:
                         type: string
-                        description: Year of graduation.
+                        description: Year of graduation
                         example: "2023"
+                      gpa:
+                        type: string
+                        description: Grade Point Average
+                        example: "3.8/4.0"
                       details:
                         oneOf:
                           - type: string
@@ -96,29 +108,80 @@ paths:
                   description: List of work experiences.
                   items:
                     type: object
+                    required:
+                      - company
+                      - position
+                      - duration
+                      - responsibilities
                     properties:
                       company:
                         type: string
-                        description: Name of the company.
+                        description: Name of the company
                         example: Example Corp
                       position:
                         type: string
-                        description: Job title or position.
+                        description: Job title or position
                         example: Software Engineer
+                      location:
+                        type: string
+                        description: Job location
+                        example: "San Francisco, CA"
+                      subtitle:
+                        type: string
+                        description: Additional role information
+                        example: "Full Stack Development Team"
                       duration:
                         type: string
-                        description: Duration of employment.
+                        description: Duration of employment
                         example: 2020-2023
                       responsibilities:
                         type: string
-                        description: Key responsibilities and achievements.
-                        example: Developed and maintained web applications.
+                        description: Key responsibilities and achievements (newline separated)
+                        example: "Led development of microservices architecture\nImplemented CI/CD pipeline\nMentored junior developers"
                 skills:
-                  type: array
-                  description: List of professional skills.
-                  items:
-                    type: string
-                  example: ["JavaScript", "Python", "React"]
+                  type: object
+                  description: Categorized professional skills
+                  properties:
+                    technical:
+                      oneOf:
+                        - type: array
+                          items:
+                            type: string
+                        - type: string
+                      description: Technical skills and programming languages
+                      example: ["JavaScript", "Python", "React"]
+                    software:
+                      oneOf:
+                        - type: array
+                          items:
+                            type: string
+                        - type: string
+                      description: Software and tools proficiency
+                      example: ["VS Code", "Git", "Docker"]
+                    languages:
+                      oneOf:
+                        - type: array
+                          items:
+                            type: string
+                        - type: string
+                      description: Language proficiencies
+                      example: ["English (Native)", "Spanish (Fluent)"]
+                    certifications:
+                      oneOf:
+                        - type: array
+                          items:
+                            type: string
+                        - type: string
+                      description: Professional certifications
+                      example: ["AWS Certified Developer", "MCSD"]
+                    interests:
+                      oneOf:
+                        - type: array
+                          items:
+                            type: string
+                        - type: string
+                      description: Personal interests and hobbies
+                      example: ["Photography", "Reading", "Hiking"]
                 hobbies:
                   type: array
                   description: List of hobbies and interests (optional).

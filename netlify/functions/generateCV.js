@@ -60,13 +60,14 @@ exports.handler = async (event) => {
       contactDetails, 
       education, 
       workExperience, 
-      skills = [],
-      hobbies = [],
-      languages = '',
-      achievements = [],
-      certifications = [],
+      skills = {
+        technical: [],
+        software: [],
+        languages: [],
+        certifications: [],
+        interests: []
+      },
       professionalSummary,
-      professionalQualifications,
       references
     } = JSON.parse(event.body);
     
@@ -118,7 +119,7 @@ exports.handler = async (event) => {
               font-weight: bold;
               font-size: 11pt;
             }
-            .entry-header {
+            .entry-subheader {
               font-weight: semi-bold;
               font-size: 11pt;
             }
