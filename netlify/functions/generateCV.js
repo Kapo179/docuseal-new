@@ -127,7 +127,7 @@ exports.handler = async (event) => {
             .section-header {
               text-transform: uppercase;
               font-weight: bold;
-              border-bottom: 1px solid #cc0000;
+              border-bottom: 1px solid black;
               margin: 15px 0 8px 0;
               padding-bottom: 1px;
               font-size: 12pt;
