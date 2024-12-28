@@ -48,7 +48,14 @@ exports.handler = async function(event, context) {
     // Add the CV content and job details to the thread
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: `CV Content: ${cvContent}\n\nTarget Position: ${jobDetails}`
+      content: `Please analyze this CV and optimize it for the target position. Return a JSON object that matches the generateCV function schema.
+
+      CV Content:
+      ${cvContent}
+
+      Target Position: ${jobDetails}
+
+      Remember to return only a valid JSON object that matches the schema, with no additional text or explanations.`
     });
 
     console.log('Running assistant...');
