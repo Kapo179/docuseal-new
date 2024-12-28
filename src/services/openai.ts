@@ -2,13 +2,13 @@ import axios from 'axios';
 
 interface TailorCVResponse {
   success: boolean;
-  tailoredCV?: string;
+  pdfUrl?: string;
+  previewUrl?: string;
   error?: string;
 }
 
 export async function tailorCV(pdfFile: File, jobDetails: string): Promise<TailorCVResponse> {
   try {
-    // Create form data to send the PDF file
     const formData = new FormData();
     formData.append('cv', pdfFile);
     formData.append('jobDetails', jobDetails);
@@ -21,7 +21,8 @@ export async function tailorCV(pdfFile: File, jobDetails: string): Promise<Tailo
 
     return {
       success: true,
-      tailoredCV: response.data.tailoredCV
+      pdfUrl: response.data.pdfUrl,
+      previewUrl: response.data.previewUrl
     };
   } catch (error) {
     console.error('Error tailoring CV:', error);

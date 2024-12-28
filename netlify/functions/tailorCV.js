@@ -7,12 +7,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are an expert CV tailoring assistant. Analyze the provided CV and job details to suggest specific improvements that will better align the CV with the job requirements. Focus on:
-1. Relevant skills and experiences to highlight
-2. Keywords to include
-3. Specific achievements to emphasize
-4. Structure and formatting suggestions
-Be concise and specific in your recommendations.`;
+// Assistant ID
+const ASSISTANT_ID = 'asst_M3lC3fr10FG7E0qlo5e6Eglw';
 
 exports.handler = async function(event, context) {
   if (event.httpMethod !== 'POST') {
@@ -32,15 +28,38 @@ exports.handler = async function(event, context) {
     const cvFile = files.cv;
     const jobDetails = fields.jobDetails;
 
-    // Send to OpenAI using the new API format
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `CV Content: ${fs.readFileSync(cvFile.path, 'utf8')}\n\nJob Details: ${jobDetails}` }
-      ],
-      max_tokens: 1000
+    // Create a thread
+    const thread = await openai.beta.threads.create();
+
+    // Add the CV content and job details to the thread
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: `CV Content: ${fs.readFileSync(cvFile.path, 'utf8')}\n\nTarget Position: ${jobDetails}`
     });
+
+    // Run the assistant
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: ASSISTANT_ID
+    });
+
+    // Wait for the run to complete
+    let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+    while (runStatus.status !== 'completed') {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+      
+      if (runStatus.status === 'failed') {
+        throw new Error('Assistant run failed');
+      }
+    }
+
+    // Get the assistant's response
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const assistantResponse = messages.data[0].content[0].text;
+
+    // Parse the JSON response and generate CV
+    const cvData = JSON.parse(assistantResponse);
+    const generatedCV = await generateCV(cvData);
 
     return {
       statusCode: 200,
@@ -49,7 +68,8 @@ exports.handler = async function(event, context) {
       },
       body: JSON.stringify({
         success: true,
-        tailoredCV: response.choices[0].message.content
+        pdfUrl: generatedCV.pdfUrl,
+        previewUrl: generatedCV.previewUrl
       })
     };
   } catch (error) {
@@ -62,4 +82,7 @@ exports.handler = async function(event, context) {
       })
     };
   }
-}; 
+};
+
+// Import and use the existing generateCV function
+const { generateCV } = require('./generateCV'); 

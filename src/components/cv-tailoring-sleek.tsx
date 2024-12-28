@@ -15,7 +15,7 @@ export function CVTailoringInterface() {
   const [objectUrl, setObjectUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [tailoredContent, setTailoredContent] = useState<string | null>(null)
+  const [tailoredCV, setTailoredCV] = useState<{ pdfUrl: string; previewUrl: string } | null>(null)
 
   useEffect(() => {
     return () => {
@@ -70,19 +70,22 @@ export function CVTailoringInterface() {
     try {
       setIsLoading(true)
       setError(null)
+      setTailoredCV(null)
 
       if (!file || !jobTitle) {
         throw new Error('Please provide both a CV and job details')
       }
 
-      // Send the PDF file directly
       const result = await tailorCV(file, jobTitle)
       
-      if (!result.success) {
-        throw new Error(result.error)
+      if (!result.success || !result.pdfUrl || !result.previewUrl) {
+        throw new Error(result.error || 'Failed to generate CV')
       }
 
-      setTailoredContent(result.tailoredCV)
+      setTailoredCV({
+        pdfUrl: result.pdfUrl,
+        previewUrl: result.previewUrl
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -202,11 +205,37 @@ export function CVTailoringInterface() {
               <p className="text-red-500 text-xs mt-2">{error}</p>
             )}
 
-            {tailoredContent && !error && (
-              <div className="mt-4 p-4 bg-[#C7F9CC]/10 rounded-lg border border-[#57CC99]">
-                <h3 className="text-sm font-medium text-[#22577A] mb-2">Tailored CV Suggestions:</h3>
-                <div className="text-xs text-[#22577A]/80 whitespace-pre-wrap">
-                  {tailoredContent}
+            {tailoredCV && !error && (
+              <div className="mt-4 space-y-4">
+                <div className="aspect-[210/297] w-full max-h-[500px] rounded-lg border border-[#57CC99] overflow-hidden bg-white">
+                  <img 
+                    src={tailoredCV.previewUrl} 
+                    alt="Tailored CV Preview" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                
+                <div className="flex justify-center gap-4">
+                  <a
+                    href={tailoredCV.pdfUrl}
+                    download="tailored-cv.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 rounded-md bg-[#80ED99] hover:bg-[#57CC99] transition-colors text-[#22577A] text-sm font-medium"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </a>
+                  <a
+                    href={tailoredCV.previewUrl}
+                    download="cv-preview.png"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 rounded-md border border-[#57CC99] hover:bg-[#C7F9CC]/10 transition-colors text-[#22577A] text-sm font-medium"
+                  >
+                    <img src={tailoredCV.previewUrl} className="w-4 h-4 mr-2" />
+                    Download Preview
+                  </a>
                 </div>
               </div>
             )}
