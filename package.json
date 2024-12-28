@@ -28,6 +28,8 @@
     "ioredis": "^5.4.1",
     "js-cookie": "3.0.5",
     "lucide-react": "^0.344.0",
+    "openai": "^4.77.0",
+    "pdfjs-dist": "^4.9.155",
     "pdfmake": "0.2.7",
     "puppeteer": "^19.11.1",
     "puppeteer-core": "^23.10.4",
