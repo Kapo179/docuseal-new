@@ -1,11 +1,11 @@
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 const formidable = require('formidable');
 const fs = require('fs');
 
-const configuration = new Configuration({
+// Initialize OpenAI client
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 const SYSTEM_PROMPT = `You are an expert CV tailoring assistant. Analyze the provided CV and job details to suggest specific improvements that will better align the CV with the job requirements. Focus on:
 1. Relevant skills and experiences to highlight
@@ -32,27 +32,12 @@ exports.handler = async function(event, context) {
     const cvFile = files.cv;
     const jobDetails = fields.jobDetails;
 
-    // Send the PDF to OpenAI
-    const response = await openai.createChatCompletion({
-      model: "gpt-4o",
+    // Send to OpenAI using the new API format
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { 
-          role: "user", 
-          content: [
-            { 
-              type: "text", 
-              text: `Job Details: ${jobDetails}` 
-            },
-            {
-              type: "image",
-              image: {
-                type: "image/png",
-                data: fs.readFileSync(cvFile.path).toString('base64')
-              }
-            }
-          ]
-        }
+        { role: "user", content: `CV Content: ${fs.readFileSync(cvFile.path, 'utf8')}\n\nJob Details: ${jobDetails}` }
       ],
       max_tokens: 1000
     });
@@ -64,7 +49,7 @@ exports.handler = async function(event, context) {
       },
       body: JSON.stringify({
         success: true,
-        tailoredCV: response.data.choices[0].message.content
+        tailoredCV: response.choices[0].message.content
       })
     };
   } catch (error) {
