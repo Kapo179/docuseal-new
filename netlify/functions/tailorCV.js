@@ -2,12 +2,10 @@ const OpenAI = require('openai');
 const formidable = require('formidable');
 const fs = require('fs');
 
-// Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Assistant ID
 const ASSISTANT_ID = 'asst_M3lC3fr10FG7E0qlo5e6Eglw';
 
 exports.handler = async function(event, context) {
@@ -18,7 +16,6 @@ exports.handler = async function(event, context) {
   try {
     console.log('Starting CV processing...');
 
-    // Parse the multipart form data
     const form = formidable({ multiples: true });
     const { fields, files } = await new Promise((resolve, reject) => {
       form.parse(event, (err, fields, files) => {
@@ -38,33 +35,69 @@ exports.handler = async function(event, context) {
     const jobDetails = fields.jobDetails;
 
     console.log('Creating OpenAI thread...');
-    // Create a thread
     const thread = await openai.beta.threads.create();
 
     console.log('Reading CV file...');
     const cvContent = fs.readFileSync(cvFile.path, 'utf8');
 
     console.log('Adding message to thread...');
-    // Add the CV content and job details to the thread
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: `Please analyze this CV and optimize it for the target position. Return a JSON object that matches the generateCV function schema.
+      content: `Analyze this CV and return a JSON object matching the following schema exactly.
 
       CV Content:
       ${cvContent}
 
       Target Position: ${jobDetails}
 
-      Remember to return only a valid JSON object that matches the schema, with no additional text or explanations.`
+      Return a JSON object with this EXACT structure:
+      {
+        "name": "string",
+        "contactDetails": {
+          "email": "string",
+          "phone": "string",
+          "linkedin": "string",
+          "address": "string"
+        },
+        "professionalSummary": "string",
+        "professionalQualifications": ["string"],
+        "education": [{
+          "institution": "string",
+          "degree": "string",
+          "location": "string",
+          "year": "string",
+          "gpa": "string",
+          "details": ["string"]
+        }],
+        "workExperience": [{
+          "company": "string",
+          "position": "string",
+          "location": "string",
+          "subtitle": "string",
+          "duration": "string",
+          "responsibilities": ["string"]
+        }],
+        "skills": {
+          "technical": ["string"],
+          "software": ["string"],
+          "languages": ["string"],
+          "certifications": ["string"],
+          "interests": ["string"]
+        },
+        "hobbies": ["string"],
+        "references": "string"
+      }
+
+      Ensure all required fields are included and match the schema exactly. Return ONLY the JSON object, no other text.`
     });
 
     console.log('Running assistant...');
-    // Run the assistant
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: ASSISTANT_ID
+      assistant_id: ASSISTANT_ID,
+      instructions: "Return only a valid JSON object matching the schema exactly. No markdown, no explanations, just the JSON.",
+      response_format: { type: "json_object" }
     });
 
-    // Wait for the run to complete
     let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
     console.log('Initial run status:', runStatus.status);
 
@@ -86,28 +119,37 @@ exports.handler = async function(event, context) {
       throw new Error('No response from assistant');
     }
 
-    const assistantResponse = messages.data[0].content[0].text;
-    console.log('Assistant raw response type:', typeof assistantResponse);
-    console.log('Assistant raw response:', assistantResponse);
-    console.log('Response length:', assistantResponse.length);
-    console.log('First 100 characters:', assistantResponse.substring(0, 100));
-    console.log('Response character codes:', Array.from(assistantResponse.substring(0, 20)).map(c => c.charCodeAt(0)));
+    const assistantResponse = messages.data[0].content[0].text.value;
+    console.log('Raw assistant response:', assistantResponse);
 
     try {
-      // Try to clean any potential whitespace or hidden characters
+      // Clean the response
       const cleanedResponse = assistantResponse
         .trim()
-        .replace(/^\uFEFF/, '') // Remove BOM if present
-        .replace(/^[^{]*/, '') // Remove anything before the first {
-        .replace(/[^}]*$/, ''); // Remove anything after the last }
+        .replace(/```json\n?|\n?```/g, '')  // Remove JSON code blocks
+        .replace(/^\uFEFF/, '')             // Remove BOM
+        .replace(/^[^{]*{/, '{')            // Clean start
+        .replace(/}[^}]*$/, '}');           // Clean end
 
       console.log('Cleaned response:', cleanedResponse);
 
-      // Parse the JSON response
+      // Parse and validate the JSON structure
       const cvData = JSON.parse(cleanedResponse);
-      console.log('Successfully parsed assistant response');
+      
+      // Validate required fields
+      const requiredFields = [
+        'name', 'contactDetails', 'professionalSummary', 
+        'professionalQualifications', 'education', 'workExperience',
+        'skills', 'hobbies', 'references'
+      ];
 
-      // Generate CV
+      const missingFields = requiredFields.filter(field => !(field in cvData));
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+      }
+
+      console.log('Successfully parsed and validated JSON');
+
       console.log('Generating CV...');
       const generatedCV = await generateCV(cvData);
 
@@ -125,13 +167,28 @@ exports.handler = async function(event, context) {
     } catch (parseError) {
       console.error('JSON parsing error:', parseError);
       console.error('Raw response:', assistantResponse);
-      throw new Error('Failed to parse assistant response as JSON');
+      
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: false,
+          error: 'Failed to parse assistant response',
+          details: parseError.message,
+          rawResponse: assistantResponse
+        })
+      };
     }
 
   } catch (error) {
     console.error('Error in CV processing:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         success: false,
         error: 'Failed to process CV',
@@ -140,6 +197,3 @@ exports.handler = async function(event, context) {
     };
   }
 };
-
-// Import and use the existing generateCV function
-const { generateCV } = require('./generateCV'); 
