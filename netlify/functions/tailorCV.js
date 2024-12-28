@@ -77,7 +77,7 @@ async function handleFunctionCall(runStatus, threadId, runId) {
   const toolOutputs = [];
 
   for (const toolCall of toolCalls) {
-    if (toolCall.function.name === 'generateCV') {
+    if (toolCall.function.name === 'generateCV()') {
       try {
         console.log('Processing function call:', toolCall.function.name);
         const args = JSON.parse(toolCall.function.arguments);
