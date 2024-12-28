@@ -169,6 +169,39 @@ Focus on:
         console.error('Run failed:', runStatus);
         throw new Error('Assistant run failed: ' + (runStatus.last_error?.message || 'Unknown error'));
       }
+
+      // Handle function calls
+      if (runStatus.status === 'requires_action') {
+        console.log('Function call required');
+        const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
+        
+        const toolOutputs = [];
+        
+        for (const toolCall of toolCalls) {
+          if (toolCall.function.name === 'generateCV') {
+            console.log('Executing generateCV function');
+            const arguments = JSON.parse(toolCall.function.arguments);
+            
+            try {
+              const result = await generateCV(arguments);
+              toolOutputs.push({
+                tool_call_id: toolCall.id,
+                output: JSON.stringify(result)
+              });
+            } catch (error) {
+              console.error('Error in generateCV:', error);
+              throw error;
+            }
+          }
+        }
+
+        // Submit the outputs back to the assistant
+        await openai.beta.threads.runs.submitToolOutputs(
+          thread.id,
+          run.id,
+          { tool_outputs: toolOutputs }
+        );
+      }
     }
 
     console.log('Getting assistant response...');
