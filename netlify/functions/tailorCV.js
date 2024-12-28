@@ -42,15 +42,16 @@ ${cvContent}`
         for (const toolCall of toolCalls) {
           if (toolCall.function.name === 'generateCV') {
             try {
-              // Parse the structured data from the Assistant
               const cvData = JSON.parse(toolCall.function.arguments);
               console.log('Structured CV data:', cvData);
 
-              // Call our actual generateCV function
               const result = await generateCV(cvData);
               console.log('GenerateCV result:', result);
 
-              // Send the result back to the Assistant
+              if (!result || !result.pdfUrl || !result.previewUrl) {
+                throw new Error('Invalid result from generateCV');
+              }
+
               toolOutputs.push({
                 tool_call_id: toolCall.id,
                 output: JSON.stringify({
@@ -70,6 +71,11 @@ ${cvContent}`
               });
             }
           }
+        }
+
+        // Make sure we have outputs before submitting
+        if (toolOutputs.length === 0) {
+          throw new Error('No tool outputs generated');
         }
 
         // Submit results back to the Assistant

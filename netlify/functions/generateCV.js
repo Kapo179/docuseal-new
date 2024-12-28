@@ -532,7 +532,33 @@ exports.handler = async (event) => {
   }
 };
 
-exports.generateCV = async function(cvData) {
-  // Your existing generateCV implementation
+module.exports = {
+  generateCV: async function(cvData) {
+    let browser;
+    try {
+      console.log('Starting CV generation...');
+      
+      // ... browser setup and PDF generation ...
+
+      const [pdfUrl, previewUrl] = await Promise.all([
+        uploadToS3(pdfBuffer, pdfKey, 'application/pdf'),
+        uploadToS3(pngBuffer, pngKey, 'image/png')
+      ]);
+
+      console.log('Generated URLs:', { pdfUrl, previewUrl });
+
+      return {
+        pdfUrl,
+        previewUrl
+      };
+    } catch (error) {
+      console.error('Error in CV generation:', error);
+      throw error;
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  }
 };
 
