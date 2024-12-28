@@ -1,27 +1,21 @@
-import { ButtonHTMLAttributes, forwardRef } from "react"
+import { InputHTMLAttributes, forwardRef } from "react"
 import { cn } from "../../lib/utils"
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'ghost'
-  size?: 'default' | 'icon'
-}
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {}
 
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
+const Input = forwardRef<HTMLInputElement, InputProps>(({
   className,
-  variant = 'default',
-  size = 'default',
+  type,
   ...props
 }, ref) => {
   return (
-    <button
+    <input
+      type={type}
       className={cn(
-        "inline-flex items-center justify-center rounded-md font-medium transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400",
-        "disabled:pointer-events-none disabled:opacity-50",
-        variant === 'default' && "bg-purple-600 text-white hover:bg-purple-700",
-        variant === 'ghost' && "hover:bg-gray-100",
-        size === 'default' && "h-10 px-4 py-2",
-        size === 'icon' && "h-10 w-10",
+        "flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm",
+        "ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium",
+        "placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2",
+        "focus-visible:ring-purple-400 disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       ref={ref}
@@ -29,6 +23,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     />
   )
 })
-Button.displayName = "Button"
+Input.displayName = "Input"
 
-export { Button }
+export { Input }
