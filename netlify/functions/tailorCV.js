@@ -1,5 +1,5 @@
 const OpenAI = require('openai');
-const { formidable } = require('formidable');
+const formidable = require('formidable').default;
 const fs = require('fs');
 
 const openai = new OpenAI({
@@ -17,7 +17,7 @@ exports.handler = async function(event, context) {
     console.log('Starting CV processing...');
 
     // Initialize formidable with options
-    const form = new formidable({
+    const form = formidable({
       multiples: true,
       keepExtensions: true,
       maxFileSize: 10 * 1024 * 1024, // 10MB limit
