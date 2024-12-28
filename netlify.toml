@@ -65,12 +65,14 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  included_files = ["node_modules/@sparticuz/chromium/bin/*"]
+  included_files = ["node_modules/@sparticuz/chromium/**/*"]
+  external_node_modules = ["@sparticuz/chromium"]
 
 # Environment Variables for Build Time
 [build.environment]
 DOCUSEAL_API_URL = "https://api.docuseal.com"
 AWS_LAMBDA_JS_RUNTIME = "nodejs18.x"
+CHROME_EXECUTABLE_PATH = "/var/task/node_modules/@sparticuz/chromium/bin/chromium"
 
 # Caching settings for optimization
 [[headers]]

@@ -43,27 +43,32 @@ function generateHTMLTemplate(cvData) {
 
 async function setupBrowser() {
   try {
-    // Configure Chromium
-    await chromium.font('/var/task/fonts/');  // Optional: Add custom fonts if needed
-    
+    // Configure Chromium for Netlify environment
     const executablePath = await chromium.executablePath;
-
-    // Launch browser with specific configurations for Netlify environment
+    
     const browser = await puppeteer.launch({
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process'
+      ],
       defaultViewport: {
         width: 794,
         height: 1123,
         deviceScaleFactor: 2,
       },
-      executablePath: executablePath,
-      headless: chromium.headless,
-      ignoreHTTPSErrors: true,
+      executablePath: process.env.CHROME_EXECUTABLE_PATH || executablePath,
+      headless: true,
+      ignoreHTTPSErrors: true
     });
 
     return browser;
   } catch (error) {
     console.error('Browser setup error:', error);
+    console.error('Chromium path:', await chromium.executablePath);
+    console.error('Environment:', process.env.AWS_LAMBDA_JS_RUNTIME);
     throw error;
   }
 }
