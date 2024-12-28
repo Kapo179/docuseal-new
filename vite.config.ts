@@ -15,6 +15,10 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      external: [
+        'pdfjs-dist/build/pdf.worker.min.js',
+        'pdfjs-dist/build/pdf.worker.entry'
+      ],
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
