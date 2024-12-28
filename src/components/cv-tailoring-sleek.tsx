@@ -4,13 +4,21 @@ import { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
-import { Upload, FileText, X } from 'lucide-react'
+import { Upload, FileText, X, Loader2 } from 'lucide-react'
+import { tailorCV } from '../services/openai'
+import * as pdfjs from 'pdfjs-dist'
+
+// Initialize PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
 
 export function CVTailoringInterface() {
   const [file, setFile] = useState<File | null>(null)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [jobTitle, setJobTitle] = useState('')
   const [objectUrl, setObjectUrl] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [tailoredContent, setTailoredContent] = useState<string | null>(null)
 
   useEffect(() => {
     return () => {
@@ -59,6 +67,57 @@ export function CVTailoringInterface() {
     { title: "Best Practices", icon: "✓" },
     { title: "Instant Updates", icon: "✓" }
   ]
+
+  // Function to extract text from PDF
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer()
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
+      let fullText = ''
+      
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i)
+        const textContent = await page.getTextContent()
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ')
+        fullText += pageText + '\n'
+      }
+      
+      return fullText
+    } catch (error) {
+      console.error('Error extracting PDF text:', error)
+      throw new Error('Failed to read PDF content')
+    }
+  }
+
+  // Handle CV tailoring
+  const handleTailorCV = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      if (!file || !jobTitle) {
+        throw new Error('Please provide both a CV and job details')
+      }
+
+      // Extract text from PDF
+      const cvText = await extractTextFromPDF(file)
+      
+      // Call the tailoring service
+      const result = await tailorCV(cvText, jobTitle)
+      
+      if (!result.success) {
+        throw new Error(result.error)
+      }
+
+      setTailoredContent(result.tailoredCV)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className="h-screen w-full bg-gradient-to-br from-[#C7F9CC] via-white to-[#C7F9CC] flex items-center justify-center p-4">
@@ -144,17 +203,39 @@ export function CVTailoringInterface() {
             {file && (
               <div className="flex space-x-2">
                 <Input
-                  placeholder="Enter target job title..."
+                  placeholder="Enter target job title or Job listing URL..."
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
                   className="h-8 text-xs border-[#57CC99] focus-visible:ring-[#38A3A5] text-[#22577A]"
+                  disabled={isLoading}
                 />
                 <Button 
                   className="h-8 bg-[#80ED99] hover:bg-[#57CC99] transition-colors text-[#22577A] text-xs font-medium px-3"
-                  disabled={!jobTitle.trim()}
+                  disabled={!jobTitle.trim() || isLoading}
+                  onClick={handleTailorCV}
                 >
-                  Tailor CV
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Tailor CV'
+                  )}
                 </Button>
+              </div>
+            )}
+
+            {error && (
+              <p className="text-red-500 text-xs mt-2">{error}</p>
+            )}
+
+            {tailoredContent && !error && (
+              <div className="mt-4 p-4 bg-[#C7F9CC]/10 rounded-lg border border-[#57CC99]">
+                <h3 className="text-sm font-medium text-[#22577A] mb-2">Tailored CV Suggestions:</h3>
+                <div className="text-xs text-[#22577A]/80 whitespace-pre-wrap">
+                  {tailoredContent}
+                </div>
               </div>
             )}
           </div>
