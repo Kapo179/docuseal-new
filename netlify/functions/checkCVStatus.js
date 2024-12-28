@@ -1,5 +1,5 @@
 const OpenAI = require('openai');
-const { generateCV } = require('./generateCV');
+const { generateCVFromAssistant } = require('./generateCVFromAssistant');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -37,21 +37,12 @@ exports.handler = async function(event, context) {
         console.log('Assistant content:', content);
 
         if (content.type === 'text') {
-          // Try to parse the text as JSON
-          const result = JSON.parse(content.text);
-          return {
-            statusCode: 200,
-            body: JSON.stringify({
-              status: 'completed',
-              result: {
-                pdfUrl: result.pdfUrl,
-                previewUrl: result.previewUrl
-              }
-            })
-          };
-        } else if (content.type === 'function_call') {
-          // Handle function call result
-          const result = JSON.parse(content.function_call.output);
+          // Extract JSON from markdown code block if present
+          const jsonMatch = content.text.value.match(/```json\n([\s\S]*?)\n```/);
+          const jsonStr = jsonMatch ? jsonMatch[1] : content.text.value;
+          
+          // Parse the JSON
+          const result = JSON.parse(jsonStr);
           return {
             statusCode: 200,
             body: JSON.stringify({
@@ -85,7 +76,7 @@ exports.handler = async function(event, context) {
             const cvData = JSON.parse(toolCall.function.arguments);
             console.log('CV Data:', JSON.stringify(cvData, null, 2));
 
-            const result = await generateCV(cvData);
+            const result = await generateCVFromAssistant(cvData);
             console.log('GenerateCV result:', JSON.stringify(result, null, 2));
 
             if (!result || !result.pdfUrl || !result.previewUrl) {
