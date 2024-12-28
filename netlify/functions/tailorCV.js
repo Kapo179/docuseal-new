@@ -24,7 +24,12 @@ exports.handler = async function(event, context) {
     const thread = await openai.beta.threads.create();
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: `Analyze this CV for ${jobDetails} position and call generateCV with the structured data.
+      content: `Please analyze this CV for the ${jobDetails} position and use the generateCV function to create an optimized version.
+      
+Focus on:
+- Highlighting relevant skills and experience for the position
+- Optimizing keywords for ATS systems
+- Emphasizing achievements that match the role
 
 CV Content:
 ${cvContent}`
