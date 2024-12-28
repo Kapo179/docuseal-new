@@ -76,8 +76,10 @@ async function handleFunctionCall(runStatus, threadId, runId) {
   const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
   const toolOutputs = [];
 
+  console.log('Tool calls received:', toolCalls);
+
   for (const toolCall of toolCalls) {
-    if (toolCall.function.name === 'generateCV()') {
+    if (toolCall.function.name.replace('()', '') === 'generateCV') {
       try {
         console.log('Processing function call:', toolCall.function.name);
         const args = JSON.parse(toolCall.function.arguments);
@@ -85,6 +87,10 @@ async function handleFunctionCall(runStatus, threadId, runId) {
         
         const result = await generateCV(args);
         console.log('GenerateCV result:', result);
+
+        if (!result) {
+          throw new Error('generateCV returned no result');
+        }
 
         toolOutputs.push({
           tool_call_id: toolCall.id,
@@ -106,6 +112,13 @@ async function handleFunctionCall(runStatus, threadId, runId) {
       }
     }
   }
+
+  if (toolOutputs.length === 0) {
+    console.error('No tool outputs generated');
+    throw new Error('No tool outputs generated');
+  }
+
+  console.log('Submitting tool outputs:', toolOutputs);
 
   // Submit tool outputs back to OpenAI
   await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
