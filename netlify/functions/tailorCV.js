@@ -37,52 +37,27 @@ exports.handler = async function(event, context) {
     console.log('Adding message to thread...');
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: `Analyze this CV and return a JSON object matching the following schema exactly.
+      content: `
+      You are an expert CV optimization system. Your task is to:
+1. Analyze the provided CV and target job position
+2. Restructure and enhance the CV content to better match the target role
+3. Call the generateCV function with the optimized content
+4. Return only the generated PDF URL and PNG preview image
+5. Do not provide any text explanations or suggestions
+
+Focus on:
+- Highlighting relevant skills and experiences
+- Optimizing keywords for ATS systems
+- Emphasizing achievements that align with the target role
+- Professional formatting and structure
+- Maintaining all essential information while improving presentation
+      
+      Analyze this CV and utilise the generateCV function using
 
       CV Content:
       ${cvContent}
 
-      Target Position: ${jobDetails}
-
-      Return a JSON object with this EXACT structure:
-      {
-        "name": "string",
-        "contactDetails": {
-          "email": "string",
-          "phone": "string",
-          "linkedin": "string",
-          "address": "string"
-        },
-        "professionalSummary": "string",
-        "professionalQualifications": ["string"],
-        "education": [{
-          "institution": "string",
-          "degree": "string",
-          "location": "string",
-          "year": "string",
-          "gpa": "string",
-          "details": ["string"]
-        }],
-        "workExperience": [{
-          "company": "string",
-          "position": "string",
-          "location": "string",
-          "subtitle": "string",
-          "duration": "string",
-          "responsibilities": ["string"]
-        }],
-        "skills": {
-          "technical": ["string"],
-          "software": ["string"],
-          "languages": ["string"],
-          "certifications": ["string"],
-          "interests": ["string"]
-        },
-        "hobbies": ["string"],
-        "references": "string"
-      }
-
-      Ensure all required fields are included and match the schema exactly. Return ONLY the JSON object, no other text.`
+      Target Position: ${jobDetails}`
     });
 
     console.log('Running assistant...');
