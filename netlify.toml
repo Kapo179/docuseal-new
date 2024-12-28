@@ -67,6 +67,7 @@
   node_bundler = "esbuild"
   included_files = ["node_modules/@sparticuz/chromium/**/*"]
   external_node_modules = ["@sparticuz/chromium"]
+  timeout = 30 # Maximum allowed timeout in seconds
 
 # Environment Variables for Build Time
 [build.environment]

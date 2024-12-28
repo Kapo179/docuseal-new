@@ -13,17 +13,29 @@ export async function tailorCV(pdfFile: File, jobDetails: string): Promise<Tailo
     formData.append('cv', pdfFile);
     formData.append('jobDetails', jobDetails);
 
-    const response = await axios.post('/.netlify/functions/tailorCV', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axios.post('/.netlify/functions/tailorCV', formData);
+    const { threadId, runId } = response.data;
 
-    return {
-      success: true,
-      pdfUrl: response.data.pdfUrl,
-      previewUrl: response.data.previewUrl
-    };
+    while (true) {
+      const statusResponse = await axios.post('/.netlify/functions/checkCVStatus', {
+        threadId,
+        runId
+      });
+
+      if (statusResponse.data.status === 'completed') {
+        return {
+          success: true,
+          pdfUrl: statusResponse.data.result.pdfUrl,
+          previewUrl: statusResponse.data.result.previewUrl
+        };
+      }
+
+      if (statusResponse.data.status === 'failed') {
+        throw new Error(statusResponse.data.error);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
   } catch (error) {
     console.error('Error tailoring CV:', error);
     return {
