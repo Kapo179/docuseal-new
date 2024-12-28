@@ -9,8 +9,8 @@ import { tailorCV } from '../services/openai'
 import * as pdfjs from 'pdfjs-dist'
 import { AnimatedBackground } from './ui/animated-background'
 
-// Set worker path
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Set worker path to use UNPKG CDN
+pdfjs.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
 export function CVTailoringInterface() {
   const [file, setFile] = useState<File | null>(null)

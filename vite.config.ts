@@ -50,12 +50,6 @@ export default defineConfig({
       'zustand',
       'lucide-react',
       'pdfjs-dist'
-    ],
-    exclude: ['pdfjs-dist/build/pdf.worker.min.js']
-  },
-  resolve: {
-    alias: {
-      'pdfjs-dist': 'pdfjs-dist/legacy/build/pdf.js'
-    }
+    ]
   }
 });
