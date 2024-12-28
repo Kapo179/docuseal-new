@@ -7,6 +7,7 @@ import { Input } from "./ui/input"
 import { Upload, FileText, X, Loader2 } from 'lucide-react'
 import { tailorCV } from '../services/openai'
 import * as pdfjs from 'pdfjs-dist'
+import { AnimatedBackground } from './ui/animated-background'
 
 // Initialize PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
@@ -120,8 +121,9 @@ export function CVTailoringInterface() {
   }
 
   return (
-    <div className="h-screen w-full bg-gradient-to-br from-[#C7F9CC] via-white to-[#C7F9CC] flex items-center justify-center p-4">
-      <div className="w-full max-w-3xl bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 flex flex-col space-y-6">
+    <div className="h-screen w-full flex items-center justify-center p-4 relative">
+      <AnimatedBackground />
+      <div className="w-full max-w-3xl bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 flex flex-col space-y-6 relative z-10">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 relative flex-shrink-0">
             <img

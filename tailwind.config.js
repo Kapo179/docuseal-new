@@ -6,6 +6,9 @@ export default {
       animation: {
         'ping-slow': 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
         fadeIn: 'fadeIn 0.3s ease-out',
+        'blob': 'blob 7s infinite',
+        'blob-slow': 'blob 10s infinite',
+        'blob-delay': 'blob 8s infinite',
       },
       keyframes: {
         fadeIn: {
@@ -16,6 +19,20 @@ export default {
           '75%, 100%': {
             transform: 'scale(1.5)',
             opacity: '0',
+          },
+        },
+        blob: {
+          '0%': {
+            transform: 'translate(0px, 0px) scale(1)',
+          },
+          '33%': {
+            transform: 'translate(30px, -50px) scale(1.1)',
+          },
+          '66%': {
+            transform: 'translate(-20px, 20px) scale(0.9)',
+          },
+          '100%': {
+            transform: 'translate(0px, 0px) scale(1)',
           },
         },
       },
