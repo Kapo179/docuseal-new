@@ -32,7 +32,14 @@ exports.handler = async function(event, context) {
     console.log('Adding message to thread...');
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: `Analyze this CV for ${jobDetails} position...`
+      content: `Analyze this CV for ${jobDetails} position and return a JSON object with the following structure:
+{
+  "pdfUrl": "URL of the generated PDF",
+  "previewUrl": "URL of the preview image"
+}
+
+CV Content:
+${cvContent}`
     });
 
     console.log('Starting assistant run...');

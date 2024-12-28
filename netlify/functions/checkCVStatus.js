@@ -9,43 +9,84 @@ exports.handler = async function(event, context) {
   try {
     console.log('Checking CV status...');
     
-    // Log the incoming request
     const { threadId, runId } = JSON.parse(event.body);
     console.log('Thread ID:', threadId);
     console.log('Run ID:', runId);
 
     const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
     console.log('Run status:', runStatus.status);
+    console.log('Full run status:', JSON.stringify(runStatus, null, 2));
     
     if (runStatus.status === 'completed') {
       console.log('Run completed, getting messages...');
       const messages = await openai.beta.threads.messages.list(threadId);
-      console.log('Messages received:', messages.data.length);
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          status: 'completed',
-          result: messages.data[0]
-        })
-      };
+      console.log('Messages:', messages.data.map(m => ({
+        role: m.role,
+        content: m.content
+      })));
+
+      // Get the assistant's response
+      const assistantMessage = messages.data.find(m => m.role === 'assistant');
+      if (!assistantMessage) {
+        throw new Error('No assistant response found');
+      }
+
+      // Parse the function call result
+      try {
+        const content = assistantMessage.content[0];
+        console.log('Assistant content:', content);
+
+        if (content.type === 'text') {
+          // Try to parse the text as JSON
+          const result = JSON.parse(content.text);
+          return {
+            statusCode: 200,
+            body: JSON.stringify({
+              status: 'completed',
+              result: {
+                pdfUrl: result.pdfUrl,
+                previewUrl: result.previewUrl
+              }
+            })
+          };
+        } else if (content.type === 'function_call') {
+          // Handle function call result
+          const result = JSON.parse(content.function_call.output);
+          return {
+            statusCode: 200,
+            body: JSON.stringify({
+              status: 'completed',
+              result: {
+                pdfUrl: result.pdfUrl,
+                previewUrl: result.previewUrl
+              }
+            })
+          };
+        }
+
+        throw new Error('Unexpected content type: ' + content.type);
+      } catch (error) {
+        console.error('Error parsing assistant response:', error);
+        console.error('Raw content:', assistantMessage.content);
+        throw new Error('Failed to parse assistant response');
+      }
     }
 
     if (runStatus.status === 'requires_action') {
       console.log('Function calls required...');
       const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
-      console.log('Tool calls:', toolCalls);
+      console.log('Tool calls:', JSON.stringify(toolCalls, null, 2));
 
       const toolOutputs = [];
 
       for (const toolCall of toolCalls) {
         if (toolCall.function.name === 'generateCV') {
           try {
-            console.log('Processing function call:', toolCall.function.name);
             const cvData = JSON.parse(toolCall.function.arguments);
-            console.log('CV Data:', cvData);
+            console.log('CV Data:', JSON.stringify(cvData, null, 2));
 
             const result = await generateCV(cvData);
-            console.log('GenerateCV result:', result);
+            console.log('GenerateCV result:', JSON.stringify(result, null, 2));
 
             if (!result || !result.pdfUrl || !result.previewUrl) {
               throw new Error('Invalid result from generateCV');
@@ -61,18 +102,20 @@ exports.handler = async function(event, context) {
             });
           } catch (error) {
             console.error('Error in generateCV:', error);
+            console.error('Error stack:', error.stack);
             toolOutputs.push({
               tool_call_id: toolCall.id,
               output: JSON.stringify({
                 success: false,
-                error: error.message
+                error: error.message,
+                stack: error.stack
               })
             });
           }
         }
       }
 
-      // Submit the outputs back to OpenAI
+      console.log('Submitting tool outputs:', JSON.stringify(toolOutputs, null, 2));
       await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
         tool_outputs: toolOutputs
       });
@@ -86,7 +129,6 @@ exports.handler = async function(event, context) {
       };
     }
 
-    console.log('Returning status:', runStatus.status);
     return {
       statusCode: 200,
       body: JSON.stringify({
