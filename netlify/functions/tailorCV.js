@@ -34,7 +34,7 @@ exports.handler = async function(event, context) {
 
     // Send the PDF to OpenAI
     const response = await openai.createChatCompletion({
-      model: "gpt-4-vision-preview",
+      model: "gpt-4o",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { 
