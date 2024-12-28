@@ -6,11 +6,17 @@ interface TailorCVResponse {
   error?: string;
 }
 
-export async function tailorCV(cvText: string, jobDetails: string): Promise<TailorCVResponse> {
+export async function tailorCV(pdfFile: File, jobDetails: string): Promise<TailorCVResponse> {
   try {
-    const response = await axios.post('/.netlify/functions/tailorCV', {
-      cv: cvText,
-      jobDetails
+    // Create form data to send the PDF file
+    const formData = new FormData();
+    formData.append('cv', pdfFile);
+    formData.append('jobDetails', jobDetails);
+
+    const response = await axios.post('/.netlify/functions/tailorCV', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
 
     return {

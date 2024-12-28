@@ -1,4 +1,6 @@
 const { Configuration, OpenAIApi } = require('openai');
+const formidable = require('formidable');
+const fs = require('fs');
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -18,15 +20,40 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    const { cv, jobDetails } = JSON.parse(event.body);
+    // Parse the multipart form data
+    const form = formidable({ multiples: true });
+    const { fields, files } = await new Promise((resolve, reject) => {
+      form.parse(event, (err, fields, files) => {
+        if (err) reject(err);
+        resolve({ fields, files });
+      });
+    });
 
-    const completion = await openai.createChatCompletion({
-      model: "gpt-4o",
+    const cvFile = files.cv;
+    const jobDetails = fields.jobDetails;
+
+    // Send the PDF to OpenAI
+    const response = await openai.createChatCompletion({
+      model: "gpt-4-vision-preview",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `CV Content:\n${cv}\n\nJob Details:\n${jobDetails}` }
+        { 
+          role: "user", 
+          content: [
+            { 
+              type: "text", 
+              text: `Job Details: ${jobDetails}` 
+            },
+            {
+              type: "image",
+              image: {
+                type: "image/png",
+                data: fs.readFileSync(cvFile.path).toString('base64')
+              }
+            }
+          ]
+        }
       ],
-      temperature: 0.7,
       max_tokens: 1000
     });
 
@@ -37,7 +64,7 @@ exports.handler = async function(event, context) {
       },
       body: JSON.stringify({
         success: true,
-        tailoredCV: completion.data.choices[0].message.content
+        tailoredCV: response.data.choices[0].message.content
       })
     };
   } catch (error) {

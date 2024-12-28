@@ -6,11 +6,7 @@ import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Upload, FileText, X, Loader2 } from 'lucide-react'
 import { tailorCV } from '../services/openai'
-import * as pdfjs from 'pdfjs-dist'
 import { AnimatedBackground } from './ui/animated-background'
-
-// Set worker path to use UNPKG CDN
-pdfjs.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
 export function CVTailoringInterface() {
   const [file, setFile] = useState<File | null>(null)
@@ -69,29 +65,6 @@ export function CVTailoringInterface() {
     { title: "Instant Updates", icon: "✓" }
   ]
 
-  // Function to extract text from PDF
-  const extractTextFromPDF = async (file: File): Promise<string> => {
-    try {
-      const arrayBuffer = await file.arrayBuffer()
-      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
-      let fullText = ''
-      
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i)
-        const textContent = await page.getTextContent()
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(' ')
-        fullText += pageText + '\n'
-      }
-      
-      return fullText
-    } catch (error) {
-      console.error('Error extracting PDF text:', error)
-      throw new Error('Failed to read PDF content')
-    }
-  }
-
   // Handle CV tailoring
   const handleTailorCV = async () => {
     try {
@@ -102,11 +75,8 @@ export function CVTailoringInterface() {
         throw new Error('Please provide both a CV and job details')
       }
 
-      // Extract text from PDF
-      const cvText = await extractTextFromPDF(file)
-      
-      // Call the tailoring service
-      const result = await tailorCV(cvText, jobTitle)
+      // Send the PDF file directly
+      const result = await tailorCV(file, jobTitle)
       
       if (!result.success) {
         throw new Error(result.error)
