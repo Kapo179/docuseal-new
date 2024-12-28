@@ -75,20 +75,44 @@ Target Position: ${jobDetails}`
 
         for (const toolCall of toolCalls) {
           if (toolCall.function.name === 'generateCV') {
-            const cvData = JSON.parse(toolCall.function.arguments);
-            const result = await generateCV(cvData);
-            toolOutputs.push({
-              tool_call_id: toolCall.id,
-              output: JSON.stringify(result)
-            });
+            try {
+              console.log('Parsing function arguments:', toolCall.function.arguments);
+              const cvData = JSON.parse(toolCall.function.arguments);
+              const result = await generateCV(cvData);
+              
+              // Make sure we're sending a string output
+              toolOutputs.push({
+                tool_call_id: toolCall.id,
+                output: JSON.stringify({
+                  success: true,
+                  pdfUrl: result.pdfUrl,
+                  previewUrl: result.previewUrl
+                })
+              });
+              
+              console.log('Generated tool output:', toolOutputs[0]);
+            } catch (error) {
+              console.error('Error in generateCV:', error);
+              toolOutputs.push({
+                tool_call_id: toolCall.id,
+                output: JSON.stringify({
+                  success: false,
+                  error: error.message
+                })
+              });
+            }
           }
         }
 
-        await openai.beta.threads.runs.submitToolOutputs(
-          thread.id,
-          run.id,
-          { tool_outputs: toolOutputs }
-        );
+        if (toolOutputs.length > 0) {
+          await openai.beta.threads.runs.submitToolOutputs(
+            thread.id,
+            run.id,
+            { tool_outputs: toolOutputs }
+          );
+        } else {
+          throw new Error('No tool outputs generated');
+        }
       }
 
       await new Promise(resolve => setTimeout(resolve, 1000));
