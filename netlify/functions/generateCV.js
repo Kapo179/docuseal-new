@@ -2,7 +2,7 @@ const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 
-// Initialize S3 client with renamed environment variables
+// Initialize S3 client
 const s3Client = new S3Client({
   region: process.env.MY_AWS_REGION,
   credentials: {
@@ -26,13 +26,44 @@ async function uploadToS3(buffer, key, contentType) {
       Key: key,
       Body: buffer,
       ContentType: contentType,
-
     });
 
     await s3Client.send(command);
     return `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
   } catch (error) {
     console.error('S3 upload error:', error);
+    throw error;
+  }
+}
+
+function generateHTMLTemplate(cvData) {
+  // Your existing HTML template generation code
+  // ...
+}
+
+async function setupBrowser() {
+  try {
+    // Configure Chromium
+    await chromium.font('/var/task/fonts/');  // Optional: Add custom fonts if needed
+    
+    const executablePath = await chromium.executablePath;
+
+    // Launch browser with specific configurations for Netlify environment
+    const browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: {
+        width: 794,
+        height: 1123,
+        deviceScaleFactor: 2,
+      },
+      executablePath: executablePath,
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
+    });
+
+    return browser;
+  } catch (error) {
+    console.error('Browser setup error:', error);
     throw error;
   }
 }
@@ -461,24 +492,14 @@ module.exports = {
       const pdfKey = `cvs/${timestamp}-${sanitizedName}.pdf`;
       const pngKey = `previews/${timestamp}-${sanitizedName}.png`;
 
-      browser = await puppeteer.launch({
-        args: [
-          ...chromium.args,
-          '--hide-scrollbars',
-          '--disable-web-security',
-          '--font-render-hinting=none'
-        ],
-        defaultViewport: {
-          width: 794,
-          height: 1123,
-          deviceScaleFactor: 2
-        },
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless
-      });
+      browser = await setupBrowser();
+      console.log('Browser launched successfully');
 
       const page = await browser.newPage();
+      console.log('New page created');
+      
       await page.setContent(htmlTemplate);
+      console.log('HTML content set');
 
       // Generate PDF and PNG
       const pdfBuffer = await page.pdf({ 
@@ -491,20 +512,24 @@ module.exports = {
           left: '25mm'
         }
       });
+      console.log('PDF generated');
 
       const pngBuffer = await page.screenshot({
         type: 'png',
         fullPage: true,
         omitBackground: false
       });
+      console.log('PNG screenshot taken');
 
       await browser.close();
+      console.log('Browser closed');
 
       // Upload both files to S3 with new environment variable names
       const [pdfUrl, previewUrl] = await Promise.all([
         uploadToS3(pdfBuffer, pdfKey, 'application/pdf'),
         uploadToS3(pngBuffer, pngKey, 'image/png')
       ]);
+      console.log('Files uploaded to S3');
 
       return {
         statusCode: 200,
@@ -542,28 +567,17 @@ module.exports = {
       const pdfKey = `cvs/${timestamp}-${sanitizedName}.pdf`;
       const pngKey = `previews/${timestamp}-${sanitizedName}.png`;
 
-      // Launch browser
-      browser = await puppeteer.launch({
-        args: [
-          ...chromium.args,
-          '--hide-scrollbars',
-          '--disable-web-security',
-          '--font-render-hinting=none'
-        ],
-        defaultViewport: {
-          width: 794,
-          height: 1123,
-          deviceScaleFactor: 2
-        },
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless
-      });
+      // Launch browser using the setup function
+      browser = await setupBrowser();
+      console.log('Browser launched successfully');
 
       const page = await browser.newPage();
+      console.log('New page created');
       
       // Generate HTML from cvData
       const htmlTemplate = generateHTMLTemplate(cvData);
       await page.setContent(htmlTemplate);
+      console.log('HTML content set');
 
       // Generate PDF and PNG
       const pdfBuffer = await page.pdf({ 
@@ -576,20 +590,24 @@ module.exports = {
           left: '25mm'
         }
       });
+      console.log('PDF generated');
 
       const pngBuffer = await page.screenshot({
         type: 'png',
         fullPage: true,
         omitBackground: false
       });
+      console.log('PNG screenshot taken');
 
       await browser.close();
+      console.log('Browser closed');
 
       // Upload to S3
       const [pdfUrl, previewUrl] = await Promise.all([
         uploadToS3(pdfBuffer, pdfKey, 'application/pdf'),
         uploadToS3(pngBuffer, pngKey, 'image/png')
       ]);
+      console.log('Files uploaded to S3');
 
       return {
         pdfUrl,
@@ -597,6 +615,7 @@ module.exports = {
       };
 
     } catch (error) {
+      console.error('Error in generateCV:', error);
       if (browser) {
         await browser.close();
       }
