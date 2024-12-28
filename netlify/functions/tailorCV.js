@@ -3,6 +3,7 @@ const busboy = require('busboy');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { generateCV } = require('./generateCV');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
