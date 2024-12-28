@@ -22,6 +22,7 @@ export default defineConfig({
           'vendor-pdf': ['@react-pdf/renderer'],
           'vendor-utils': ['date-fns', 'uuid', 'zustand'],
           'vendor-ui': ['lucide-react'],
+          pdfjs: ['pdfjs-dist'],
         },
       },
     },
@@ -43,7 +44,8 @@ export default defineConfig({
       'date-fns',
       'uuid',
       'zustand',
-      'lucide-react'
+      'lucide-react',
+      'pdfjs-dist'
     ]
   }
 });

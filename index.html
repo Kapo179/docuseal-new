@@ -15,9 +15,7 @@
         https://accounts.google.com 
         https://*.gstatic.com 
         https://*.firebaseapp.com 
-        https://www.googletagmanager.com
-        https://cdnjs.cloudflare.com
-        https://cdnjs.cloudflare.com/ajax/libs/pdf.js/;
+        https://www.googletagmanager.com;
       connect-src 'self' 
         https://*.stripe.com 
         https://*.google.com 
@@ -29,8 +27,7 @@
         https://*.docuseal.com 
         wss: data: blob: 
         https://identitytoolkit.googleapis.com 
-        https://securetoken.googleapis.com
-        https://cdnjs.cloudflare.com;
+        https://securetoken.googleapis.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.gstatic.com;
       img-src 'self' data: https://* blob:;
       frame-src 'self' 
@@ -42,12 +39,10 @@
         blob: 
         data:;
       font-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com;
-      worker-src 'self' blob: https://cdnjs.cloudflare.com/ajax/libs/pdf.js/ https://cdnjs.cloudflare.com;
+      worker-src 'self' blob:;
       child-src 'self' blob:;
       object-src 'self' blob: data:;
-      script-src-elem 'self' 'unsafe-inline' 
-        https://cdnjs.cloudflare.com 
-        https://cdnjs.cloudflare.com/ajax/libs/pdf.js/;
+      script-src-elem 'self' 'unsafe-inline';
       media-src 'self' blob:">
     <!-- Try temporarily commenting this out -->
     <!-- <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups"> -->

@@ -9,8 +9,9 @@ import { tailorCV } from '../services/openai'
 import * as pdfjs from 'pdfjs-dist'
 import { AnimatedBackground } from './ui/animated-background'
 
-// Initialize PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+// Update PDF.js worker configuration
+const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.entry')
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 export function CVTailoringInterface() {
   const [file, setFile] = useState<File | null>(null)
