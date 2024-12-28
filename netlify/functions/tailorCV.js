@@ -16,27 +16,42 @@ exports.handler = async function(event, context) {
   }
 
   try {
+    console.log('Starting CV processing...');
+
     // Parse the multipart form data
     const form = formidable({ multiples: true });
     const { fields, files } = await new Promise((resolve, reject) => {
       form.parse(event, (err, fields, files) => {
-        if (err) reject(err);
+        if (err) {
+          console.error('Form parsing error:', err);
+          reject(err);
+        }
         resolve({ fields, files });
       });
     });
 
+    if (!files?.cv || !fields?.jobDetails) {
+      throw new Error('Missing required fields: CV file or job details');
+    }
+
     const cvFile = files.cv;
     const jobDetails = fields.jobDetails;
 
+    console.log('Creating OpenAI thread...');
     // Create a thread
     const thread = await openai.beta.threads.create();
 
+    console.log('Reading CV file...');
+    const cvContent = fs.readFileSync(cvFile.path, 'utf8');
+
+    console.log('Adding message to thread...');
     // Add the CV content and job details to the thread
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: `CV Content: ${fs.readFileSync(cvFile.path, 'utf8')}\n\nTarget Position: ${jobDetails}`
+      content: `CV Content: ${cvContent}\n\nTarget Position: ${jobDetails}`
     });
 
+    console.log('Running assistant...');
     // Run the assistant
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: ASSISTANT_ID
@@ -44,41 +59,64 @@ exports.handler = async function(event, context) {
 
     // Wait for the run to complete
     let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+    console.log('Initial run status:', runStatus.status);
+
     while (runStatus.status !== 'completed') {
       await new Promise(resolve => setTimeout(resolve, 1000));
       runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+      console.log('Updated run status:', runStatus.status);
       
       if (runStatus.status === 'failed') {
-        throw new Error('Assistant run failed');
+        console.error('Run failed:', runStatus);
+        throw new Error('Assistant run failed: ' + (runStatus.last_error?.message || 'Unknown error'));
       }
     }
 
+    console.log('Getting assistant response...');
     // Get the assistant's response
     const messages = await openai.beta.threads.messages.list(thread.id);
+    
+    if (!messages.data || messages.data.length === 0) {
+      throw new Error('No response from assistant');
+    }
+
     const assistantResponse = messages.data[0].content[0].text;
+    console.log('Assistant response received:', assistantResponse);
 
-    // Parse the JSON response and generate CV
-    const cvData = JSON.parse(assistantResponse);
-    const generatedCV = await generateCV(cvData);
+    try {
+      // Parse the JSON response
+      const cvData = JSON.parse(assistantResponse);
+      console.log('Successfully parsed assistant response');
 
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        success: true,
-        pdfUrl: generatedCV.pdfUrl,
-        previewUrl: generatedCV.previewUrl
-      })
-    };
+      // Generate CV
+      console.log('Generating CV...');
+      const generatedCV = await generateCV(cvData);
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: true,
+          pdfUrl: generatedCV.pdfUrl,
+          previewUrl: generatedCV.previewUrl
+        })
+      };
+    } catch (parseError) {
+      console.error('JSON parsing error:', parseError);
+      console.error('Raw response:', assistantResponse);
+      throw new Error('Failed to parse assistant response as JSON');
+    }
+
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in CV processing:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({
         success: false,
-        error: 'Failed to process CV'
+        error: 'Failed to process CV',
+        details: error.message
       })
     };
   }

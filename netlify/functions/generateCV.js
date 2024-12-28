@@ -532,3 +532,7 @@ exports.handler = async (event) => {
   }
 };
 
+exports.generateCV = async function(cvData) {
+  // Your existing generateCV implementation
+};
+
