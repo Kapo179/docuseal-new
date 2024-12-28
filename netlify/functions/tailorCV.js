@@ -1,6 +1,8 @@
 const OpenAI = require('openai');
-const formidable = require('formidable').default;
+const busboy = require('busboy');
 const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -16,26 +18,8 @@ exports.handler = async function(event, context) {
   try {
     console.log('Starting CV processing...');
 
-    // Initialize formidable with options
-    const form = formidable({
-      multiples: true,
-      keepExtensions: true,
-      maxFileSize: 10 * 1024 * 1024, // 10MB limit
-      filename: (name, ext, part, form) => {
-        return `${Date.now()}-${part.originalFilename}`;
-      }
-    });
-
-    // Parse the form data
-    const { fields, files } = await new Promise((resolve, reject) => {
-      form.parse(event, (err, fields, files) => {
-        if (err) {
-          console.error('Form parsing error:', err);
-          reject(err);
-        }
-        resolve({ fields, files });
-      });
-    });
+    // Parse multipart form data
+    const { files, fields } = await parseMultipartForm(event);
 
     if (!files?.cv || !fields?.jobDetails) {
       throw new Error('Missing required fields: CV file or job details');
@@ -207,3 +191,33 @@ exports.handler = async function(event, context) {
     };
   }
 };
+
+function parseMultipartForm(event) {
+  return new Promise((resolve, reject) => {
+    const fields = {};
+    const files = {};
+
+    const bb = busboy({ headers: event.headers });
+
+    bb.on('file', (name, file, info) => {
+      const filePath = path.join(os.tmpdir(), `${Date.now()}-${info.filename}`);
+      files[name] = { path: filePath, ...info };
+      file.pipe(fs.createWriteStream(filePath));
+    });
+
+    bb.on('field', (name, val) => {
+      fields[name] = val;
+    });
+
+    bb.on('close', () => {
+      resolve({ files, fields });
+    });
+
+    bb.on('error', (error) => {
+      reject(error);
+    });
+
+    bb.write(Buffer.from(event.body, 'base64'));
+    bb.end();
+  });
+}
