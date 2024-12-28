@@ -80,7 +80,6 @@ exports.handler = async function(event, context) {
     }
 
     console.log('Getting assistant response...');
-    // Get the assistant's response
     const messages = await openai.beta.threads.messages.list(thread.id);
     
     if (!messages.data || messages.data.length === 0) {
@@ -88,11 +87,24 @@ exports.handler = async function(event, context) {
     }
 
     const assistantResponse = messages.data[0].content[0].text;
-    console.log('Assistant response received:', assistantResponse);
+    console.log('Assistant raw response type:', typeof assistantResponse);
+    console.log('Assistant raw response:', assistantResponse);
+    console.log('Response length:', assistantResponse.length);
+    console.log('First 100 characters:', assistantResponse.substring(0, 100));
+    console.log('Response character codes:', Array.from(assistantResponse.substring(0, 20)).map(c => c.charCodeAt(0)));
 
     try {
+      // Try to clean any potential whitespace or hidden characters
+      const cleanedResponse = assistantResponse
+        .trim()
+        .replace(/^\uFEFF/, '') // Remove BOM if present
+        .replace(/^[^{]*/, '') // Remove anything before the first {
+        .replace(/[^}]*$/, ''); // Remove anything after the last }
+
+      console.log('Cleaned response:', cleanedResponse);
+
       // Parse the JSON response
-      const cvData = JSON.parse(assistantResponse);
+      const cvData = JSON.parse(cleanedResponse);
       console.log('Successfully parsed assistant response');
 
       // Generate CV
