@@ -10,8 +10,10 @@ import * as pdfjs from 'pdfjs-dist'
 import { AnimatedBackground } from './ui/animated-background'
 
 // Update PDF.js worker configuration
-const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.entry')
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.js',
+  import.meta.url
+).toString()
 
 export function CVTailoringInterface() {
   const [file, setFile] = useState<File | null>(null)
