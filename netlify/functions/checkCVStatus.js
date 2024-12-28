@@ -6,13 +6,21 @@ const openai = new OpenAI({
 });
 
 exports.handler = async function(event, context) {
-  const { threadId, runId } = JSON.parse(event.body);
-
   try {
+    console.log('Checking CV status...');
+    
+    // Log the incoming request
+    const { threadId, runId } = JSON.parse(event.body);
+    console.log('Thread ID:', threadId);
+    console.log('Run ID:', runId);
+
     const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
+    console.log('Run status:', runStatus.status);
     
     if (runStatus.status === 'completed') {
+      console.log('Run completed, getting messages...');
       const messages = await openai.beta.threads.messages.list(threadId);
+      console.log('Messages received:', messages.data.length);
       return {
         statusCode: 200,
         body: JSON.stringify({
@@ -23,7 +31,10 @@ exports.handler = async function(event, context) {
     }
 
     if (runStatus.status === 'requires_action') {
+      console.log('Function calls required...');
       const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
+      console.log('Tool calls:', toolCalls);
+
       const toolOutputs = [];
 
       for (const toolCall of toolCalls) {
@@ -75,7 +86,7 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // For any other status, just return it
+    console.log('Returning status:', runStatus.status);
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -84,12 +95,14 @@ exports.handler = async function(event, context) {
     };
 
   } catch (error) {
-    console.error('Error checking CV status:', error);
+    console.error('Error in checkCVStatus:', error);
+    console.error('Error stack:', error.stack);
     return {
       statusCode: 500,
       body: JSON.stringify({
         status: 'error',
-        error: error.message
+        error: error.message,
+        stack: error.stack
       })
     };
   }
