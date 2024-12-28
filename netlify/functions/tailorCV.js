@@ -57,10 +57,271 @@ Target Position: ${jobDetails}`
       tools: [{
         type: "function",
         function: {
-          name: "generateCV",
-          description: "Generate a CV PDF based on the provided data",
-          parameters: {
-            // Your existing schema here
+          "name": "generateCV",
+          "description": "Generate and assist in building comprehensive professional CV PDFs, as well as tailor current CVs & enhance current CV data for desired job positions",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "required": [
+              "name",
+              "contactDetails",
+              "professionalQualifications",
+              "education",
+              "workExperience",
+              "skills",
+              "hobbies",
+              "references"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Full name of the CV owner",
+                "example": "John Doe"
+              },
+              "contactDetails": {
+                "type": "object",
+                "description": "Contact details for the CV owner",
+                "required": [
+                  "email",
+                  "phone",
+                  "linkedin",
+                  "address"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Email address of the CV owner",
+                    "example": "john.doe@example.com"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Phone number of the CV owner",
+                    "example": "+123456789"
+                  },
+                  "linkedin": {
+                    "type": "string",
+                    "description": "LinkedIn profile URL of the CV owner",
+                    "example": "https://www.linkedin.com/in/johndoe"
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "Full address or location",
+                    "example": "123 Main St, City, Country"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "professionalQualifications": {
+                "type": "array",
+                "description": "List of professional certifications and qualifications",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "AWS Certified Developer",
+                  "Scrum Master Certification"
+                ]
+              },
+              "education": {
+                "type": "array",
+                "description": "List of educational qualifications",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "institution",
+                    "degree",
+                    "year",
+                    "location",
+                    "gpa",
+                    "details"
+                  ],
+                  "properties": {
+                    "institution": {
+                      "type": "string",
+                      "description": "Name of the institution",
+                      "example": "University of Example"
+                    },
+                    "degree": {
+                      "type": "string",
+                      "description": "Degree earned",
+                      "example": "BSc in Computer Science"
+                    },
+                    "location": {
+                      "type": "string",
+                      "description": "Institution location",
+                      "example": "Boston, MA"
+                    },
+                    "year": {
+                      "type": "string",
+                      "description": "Year of graduation",
+                      "example": "2023"
+                    },
+                    "gpa": {
+                      "type": "string",
+                      "description": "Grade Point Average",
+                      "example": "3.8/4.0"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Detailed information about the education entry",
+                      "example": [
+                        "Dean's List 2020-2021",
+                        "Research Assistant"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "workExperience": {
+                "type": "array",
+                "description": "List of work experiences",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "company",
+                    "position",
+                    "location",
+                    "subtitle",
+                    "duration",
+                    "responsibilities"
+                  ],
+                  "properties": {
+                    "company": {
+                      "type": "string",
+                      "description": "Name of the company",
+                      "example": "Example Corp"
+                    },
+                    "position": {
+                      "type": "string",
+                      "description": "Job title or position",
+                      "example": "Software Engineer"
+                    },
+                    "location": {
+                      "type": "string",
+                      "description": "Job location",
+                      "example": "San Francisco, CA"
+                    },
+                    "subtitle": {
+                      "type": "string",
+                      "description": "Additional role information",
+                      "example": "Full Stack Development Team"
+                    },
+                    "duration": {
+                      "type": "string",
+                      "description": "Duration of employment",
+                      "example": "2020-2023"
+                    },
+                    "responsibilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Key responsibilities and achievements",
+                      "example": [
+                        "Led development of microservices architecture",
+                        "Implemented CI/CD pipeline",
+                        "Mentored junior developers"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "skills": {
+                "type": "object",
+                "description": "Categorized professional skills",
+                "required": [
+                  "technical",
+                  "software",
+                  "languages",
+                  "certifications",
+                  "interests"
+                ],
+                "properties": {
+                  "technical": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Technical skills and programming languages",
+                    "example": [
+                      "JavaScript",
+                      "Python",
+                      "React"
+                    ]
+                  },
+                  "software": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Software and tools proficiency",
+                    "example": [
+                      "VS Code",
+                      "Git",
+                      "Docker"
+                    ]
+                  },
+                  "languages": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Language proficiencies",
+                    "example": [
+                      "English (Native)",
+                      "Spanish (Fluent)"
+                    ]
+                  },
+                  "certifications": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Professional certifications",
+                    "example": [
+                      "AWS Certified Developer",
+                      "MCSD"
+                    ]
+                  },
+                  "interests": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Personal interests and hobbies",
+                    "example": [
+                      "Photography",
+                      "Reading",
+                      "Hiking"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "hobbies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of hobbies and interests",
+                "example": [
+                  "Photography",
+                  "Reading",
+                  "Hiking"
+                ]
+              },
+              "references": {
+                "type": "string",
+                "description": "Reference availability statement",
+                "example": "References available upon request"
+              }
+            },
+            "additionalProperties": false
           }
         }
       }]
@@ -78,9 +339,18 @@ Target Position: ${jobDetails}`
             try {
               console.log('Parsing function arguments:', toolCall.function.arguments);
               const cvData = JSON.parse(toolCall.function.arguments);
+              
+              // Validate required fields
+              if (!cvData.name || !cvData.contactDetails) {
+                throw new Error('Missing required CV data fields');
+              }
+
               const result = await generateCV(cvData);
               
-              // Make sure we're sending a string output
+              if (!result || !result.pdfUrl || !result.previewUrl) {
+                throw new Error('Invalid result from generateCV');
+              }
+
               toolOutputs.push({
                 tool_call_id: toolCall.id,
                 output: JSON.stringify({
@@ -97,7 +367,8 @@ Target Position: ${jobDetails}`
                 tool_call_id: toolCall.id,
                 output: JSON.stringify({
                   success: false,
-                  error: error.message
+                  error: error.message,
+                  cvData: cvData // Log the data for debugging
                 })
               });
             }
