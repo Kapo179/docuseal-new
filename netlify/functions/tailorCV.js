@@ -48,7 +48,11 @@ ${cvContent}`
         const toolOutputs = await handleFunctionCall(runStatus, thread.id, run.id);
         return {
           statusCode: 200,
-          body: JSON.stringify(toolOutputs)
+          body: JSON.stringify({
+            success: true,
+            pdfUrl: JSON.parse(toolOutputs[0].output).pdfUrl,
+            previewUrl: JSON.parse(toolOutputs[0].output).previewUrl
+          })
         };
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -74,19 +78,47 @@ async function handleFunctionCall(runStatus, threadId, runId) {
 
   for (const toolCall of toolCalls) {
     if (toolCall.function.name === 'generateCV') {
-      const result = await generateCV(JSON.parse(toolCall.function.arguments));
-      toolOutputs.push({
-        tool_call_id: toolCall.id,
-        output: JSON.stringify(result)
-      });
+      try {
+        console.log('Processing function call:', toolCall.function.name);
+        const args = JSON.parse(toolCall.function.arguments);
+        console.log('Function arguments:', args);
+        
+        const result = await generateCV(args);
+        console.log('GenerateCV result:', result);
+
+        toolOutputs.push({
+          tool_call_id: toolCall.id,
+          output: JSON.stringify({
+            success: true,
+            pdfUrl: result.pdfUrl,
+            previewUrl: result.previewUrl
+          })
+        });
+      } catch (error) {
+        console.error('Error in generateCV:', error);
+        toolOutputs.push({
+          tool_call_id: toolCall.id,
+          output: JSON.stringify({
+            success: false,
+            error: error.message
+          })
+        });
+      }
     }
   }
 
+  // Submit tool outputs back to OpenAI
   await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
     tool_outputs: toolOutputs
   });
 
-  return toolOutputs[0].output;
+  // Return the first result
+  const output = JSON.parse(toolOutputs[0].output);
+  return {
+    success: output.success,
+    pdfUrl: output.pdfUrl,
+    previewUrl: output.previewUrl
+  };
 }
 
 // Helper function to parse form data
