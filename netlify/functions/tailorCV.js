@@ -1,6 +1,8 @@
 const OpenAI = require('openai');
 const busboy = require('busboy');
 const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const { generateCV } = require('./generateCV');
 
 const openai = new OpenAI({
@@ -13,7 +15,13 @@ exports.handler = async function(event, context) {
   try {
     // Parse the uploaded CV and job details
     const { files, fields } = await parseMultipartForm(event);
-    const cvContent = fs.readFileSync(files.cv.path, 'utf8');
+    
+    if (!files?.cv || !fields?.jobDetails) {
+      throw new Error('Missing required fields: CV file or job details');
+    }
+
+    // Read the CV content from the temporary file
+    const cvContent = files.cv.content.toString('utf8');
     const jobDetails = fields.jobDetails;
 
     // Create thread and add the CV content
@@ -118,6 +126,7 @@ function parseMultipartForm(event) {
   return new Promise((resolve, reject) => {
     const fields = {};
     const files = {};
+
     const bb = busboy({ headers: event.headers });
 
     bb.on('file', (name, file, info) => {
@@ -125,8 +134,9 @@ function parseMultipartForm(event) {
       file.on('data', (data) => chunks.push(data));
       file.on('end', () => {
         files[name] = {
-          path: info.filename,
-          content: Buffer.concat(chunks)
+          filename: info.filename,
+          content: Buffer.concat(chunks),
+          contentType: info.mimeType
         };
       });
     });
@@ -135,8 +145,13 @@ function parseMultipartForm(event) {
       fields[name] = val;
     });
 
-    bb.on('finish', () => resolve({ files, fields }));
-    bb.on('error', reject);
+    bb.on('close', () => {
+      resolve({ files, fields });
+    });
+
+    bb.on('error', (error) => {
+      reject(error);
+    });
 
     bb.write(Buffer.from(event.body, 'base64'));
     bb.end();
