@@ -10,26 +10,18 @@ const ASSISTANT_ID = 'asst_M3lC3fr10FG7E0qlo5e6Eglw';
 
 exports.handler = async function(event, context) {
   try {
-    // Parse the uploaded CV and job details
     const { files, fields } = await parseMultipartForm(event);
-    
-    if (!files?.cv || !fields?.jobDetails) {
-      throw new Error('Missing required fields: CV file or job details');
-    }
-
     const cvContent = files.cv.content.toString('utf8');
     const jobDetails = fields.jobDetails;
 
-    // Create thread and add message
+    // Create thread
     const thread = await openai.beta.threads.create();
+
+    // Add message with CV content and job details
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: `Please analyze this CV for the ${jobDetails} position and use the generateCV function to create an optimized version.
-      
-Focus on:
-- Highlighting relevant skills and experience for the position
-- Optimizing keywords for ATS systems
-- Emphasizing achievements that match the role
+      content: `Analyze this CV and create an optimized version for ${jobDetails} position.
+      Extract the information into a structured format that matches the generateCV function schema.
 
 CV Content:
 ${cvContent}`
@@ -40,25 +32,67 @@ ${cvContent}`
       assistant_id: ASSISTANT_ID
     });
 
-    // Wait for completion or function call
+    // Wait for completion or function calls
     let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
     while (runStatus.status !== 'completed') {
       if (runStatus.status === 'requires_action') {
-        // Handle function call and submit result
-        const toolOutputs = await handleFunctionCall(runStatus, thread.id, run.id);
-        return {
-          statusCode: 200,
-          body: JSON.stringify({
-            success: true,
-            pdfUrl: JSON.parse(toolOutputs[0].output).pdfUrl,
-            previewUrl: JSON.parse(toolOutputs[0].output).previewUrl
-          })
-        };
+        const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
+        const toolOutputs = [];
+
+        for (const toolCall of toolCalls) {
+          if (toolCall.function.name === 'generateCV') {
+            try {
+              // Parse the structured data from the Assistant
+              const cvData = JSON.parse(toolCall.function.arguments);
+              console.log('Structured CV data:', cvData);
+
+              // Call our actual generateCV function
+              const result = await generateCV(cvData);
+              console.log('GenerateCV result:', result);
+
+              // Send the result back to the Assistant
+              toolOutputs.push({
+                tool_call_id: toolCall.id,
+                output: JSON.stringify({
+                  success: true,
+                  pdfUrl: result.pdfUrl,
+                  previewUrl: result.previewUrl
+                })
+              });
+            } catch (error) {
+              console.error('Error in generateCV:', error);
+              toolOutputs.push({
+                tool_call_id: toolCall.id,
+                output: JSON.stringify({
+                  success: false,
+                  error: error.message
+                })
+              });
+            }
+          }
+        }
+
+        // Submit results back to the Assistant
+        await openai.beta.threads.runs.submitToolOutputs(thread.id, run.id, {
+          tool_outputs: toolOutputs
+        });
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
       runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
     }
 
+    // Get the final result from the last message
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const result = JSON.parse(messages.data[0].content[0].text);
+    
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        success: true,
+        pdfUrl: result.pdfUrl,
+        previewUrl: result.previewUrl
+      })
+    };
   } catch (error) {
     console.error('Error:', error);
     return {
@@ -71,68 +105,6 @@ ${cvContent}`
     };
   }
 };
-
-async function handleFunctionCall(runStatus, threadId, runId) {
-  const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
-  const toolOutputs = [];
-
-  console.log('Tool calls received:', toolCalls);
-
-  for (const toolCall of toolCalls) {
-    if (toolCall.function.name.replace('()', '') === 'generateCV') {
-      try {
-        console.log('Processing function call:', toolCall.function.name);
-        const args = JSON.parse(toolCall.function.arguments);
-        console.log('Function arguments:', args);
-        
-        const result = await generateCV(args);
-        console.log('GenerateCV result:', result);
-
-        if (!result) {
-          throw new Error('generateCV returned no result');
-        }
-
-        toolOutputs.push({
-          tool_call_id: toolCall.id,
-          output: JSON.stringify({
-            success: true,
-            pdfUrl: result.pdfUrl,
-            previewUrl: result.previewUrl
-          })
-        });
-      } catch (error) {
-        console.error('Error in generateCV:', error);
-        toolOutputs.push({
-          tool_call_id: toolCall.id,
-          output: JSON.stringify({
-            success: false,
-            error: error.message
-          })
-        });
-      }
-    }
-  }
-
-  if (toolOutputs.length === 0) {
-    console.error('No tool outputs generated');
-    throw new Error('No tool outputs generated');
-  }
-
-  console.log('Submitting tool outputs:', toolOutputs);
-
-  // Submit tool outputs back to OpenAI
-  await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
-    tool_outputs: toolOutputs
-  });
-
-  // Return the first result
-  const output = JSON.parse(toolOutputs[0].output);
-  return {
-    success: output.success,
-    pdfUrl: output.pdfUrl,
-    previewUrl: output.previewUrl
-  };
-}
 
 // Helper function to parse form data
 function parseMultipartForm(event) {
