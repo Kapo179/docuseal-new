@@ -63,8 +63,98 @@ Focus on:
     console.log('Running assistant...');
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: ASSISTANT_ID,
-      instructions: "Return only a valid JSON object matching the schema exactly. No markdown, no explanations, just the JSON.",
-      response_format: { type: "json_object" }
+      instructions: "Analyze the CV and optimize it for the target position. Return the optimized CV data that matches the required schema.",
+      tools: [{
+        type: "function",
+        function: {
+          name: "generateCV",
+          description: "Generate and assist in building comprehensive professional CV PDFs",
+          parameters: {
+            type: "object",
+            required: [
+              "name",
+              "contactDetails",
+              "professionalSummary",
+              "professionalQualifications",
+              "education",
+              "workExperience",
+              "skills",
+              "hobbies",
+              "references"
+            ],
+            properties: {
+              name: {
+                type: "string",
+                description: "Full name of the CV owner"
+              },
+              contactDetails: {
+                type: "object",
+                required: ["email", "phone", "linkedin", "address"],
+                properties: {
+                  email: { type: "string", format: "email" },
+                  phone: { type: "string" },
+                  linkedin: { type: "string", format: "uri" },
+                  address: { type: "string" }
+                }
+              },
+              professionalSummary: { type: "string" },
+              professionalQualifications: {
+                type: "array",
+                items: { type: "string" }
+              },
+              education: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["institution", "degree", "location", "year", "gpa", "details"],
+                  properties: {
+                    institution: { type: "string" },
+                    degree: { type: "string" },
+                    location: { type: "string" },
+                    year: { type: "string" },
+                    gpa: { type: "string" },
+                    details: {
+                      type: "array",
+                      items: { type: "string" }
+                    }
+                  }
+                }
+              },
+              workExperience: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["company", "position", "location", "subtitle", "duration", "responsibilities"],
+                  properties: {
+                    company: { type: "string" },
+                    position: { type: "string" },
+                    location: { type: "string" },
+                    subtitle: { type: "string" },
+                    duration: { type: "string" },
+                    responsibilities: { type: "string" }
+                  }
+                }
+              },
+              skills: {
+                type: "object",
+                required: ["technical", "software", "languages", "certifications", "interests"],
+                properties: {
+                  technical: { type: "array", items: { type: "string" } },
+                  software: { type: "array", items: { type: "string" } },
+                  languages: { type: "array", items: { type: "string" } },
+                  certifications: { type: "array", items: { type: "string" } },
+                  interests: { type: "array", items: { type: "string" } }
+                }
+              },
+              hobbies: {
+                type: "array",
+                items: { type: "string" }
+              },
+              references: { type: "string" }
+            }
+          }
+        }
+      }]
     });
 
     let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
