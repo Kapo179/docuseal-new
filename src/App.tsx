@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { Home } from './pages/Home';
 import { ContractSelector } from './components/ContractSelector';
 import { VehicleAgreement } from './components/VehicleAgreement';
 import { InfluencerAgreement } from './components/InfluencerAgreement';
@@ -9,11 +10,9 @@ import { SigningFlow } from './components/SigningFlow';
 import { EmbeddedSigning } from './components/EmbeddedSigning';
 import { SigningStatus } from './components/SigningStatus';
 import { PaymentSuccessPage } from './components/PaymentSuccessPage';
-import type { ContractType, FormStep } from './types';
 import ContractViewer from './components/ContractViewer';
-import LegalPage from './components/LegalPage'; // Import the LegalPage component
-
-
+import LegalPage from './components/LegalPage';
+import type { ContractType, FormStep } from './types';
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -36,7 +35,8 @@ export default function App() {
       <Suspense fallback={<LoadingFallback />}>
         <Router>
           <Routes>
-            <Route path="/" element={
+            <Route path="/" element={<Home />} />
+            <Route path="/contracts" element={
               !selectedContract ? (
                 <ContractSelector onSelect={setSelectedContract} />
               ) : selectedContract === 'influencer' ? (
@@ -49,7 +49,7 @@ export default function App() {
                 />
               )
             } />
-             <Route path="/contract/:templateId" element={<ContractViewer />} />
+            <Route path="/contract/:templateId" element={<ContractViewer />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/signing-setup" element={<SigningFlow />} />
             <Route 
@@ -69,7 +69,7 @@ export default function App() {
               } 
             />
             <Route path="/signing-status" element={<SigningStatus />} />
-            <Route path="/legal" element={<LegalPage />} /> {/* Add the LegalPage route */}
+            <Route path="/legal" element={<LegalPage />} />
           </Routes>
         </Router>
       </Suspense>
